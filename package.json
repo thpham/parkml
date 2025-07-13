@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspaces",
-    "build": "npm run build --workspaces",
+    "build": "npm run build --workspace=packages/shared && npm run build --workspace=apps/backend && npm run build --workspace=apps/frontend",
     "start": "npm run start --workspace=apps/backend",
     "test": "npm run test --workspaces",
     "lint": "npm run lint --workspaces",
