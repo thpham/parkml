@@ -1,0 +1,34 @@
+{
+  "name": "parkml",
+  "description": "ParkML Node.js TypeScript Application",
+  "keywords": ["node", "typescript", "express", "react"],
+  "website": "https://parkml.com",
+  "repository": "https://github.com/thpham/parkml",
+  "scripts": {
+    "dokku": {
+      "predeploy": "npm install && npm run build",
+      "postdeploy": "echo 'Deployment complete!'"
+    }
+  },
+  "env": {
+    "NODE_ENV": {
+      "description": "Node environment",
+      "value": "production"
+    },
+    "PORT": {
+      "description": "Port to run the server on",
+      "value": "5000"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "free"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}
