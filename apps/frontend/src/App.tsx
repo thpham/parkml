@@ -1,47 +1,129 @@
-import { useState, useEffect } from 'react';
-import { API_ENDPOINTS, ApiResponse } from '@parkml/shared';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Layout from './components/layout/Layout';
+import LoginForm from './components/auth/LoginForm';
+import RegisterForm from './components/auth/RegisterForm';
+import Dashboard from './components/dashboard/Dashboard';
+import SymptomForm from './components/symptoms/SymptomForm';
 import './App.css';
 
-function App() {
-  const [health, setHealth] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+// Protected Route Component
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+  
+  return user ? <>{children}</> : <Navigate to="/login" replace />;
+};
 
-  useEffect(() => {
-    fetchHealth();
-  }, []);
+// Public Route Component (redirect to dashboard if logged in)
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+  
+  return user ? <Navigate to="/dashboard" replace /> : <>{children}</>;
+};
 
-  const fetchHealth = async () => {
-    try {
-      const response = await fetch(API_ENDPOINTS.HEALTH);
-      const data: ApiResponse = await response.json();
-      if (data.success) {
-        setHealth(data.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch health status:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+// Auth Pages Component
+const AuthPages: React.FC = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>ParkML</h1>
-        <p>TypeScript Full-Stack Application</p>
-        {loading ? (
-          <p>Loading...</p>
-        ) : health ? (
-          <div className="health-status">
-            <p>Server Status: {health.status}</p>
-            <p>Environment: {health.environment}</p>
-          </div>
-        ) : (
-          <p>Failed to connect to server</p>
-        )}
-      </header>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-md mx-auto pt-16">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">ParkML</h1>
+          <p className="mt-2 text-gray-600">Parkinson's Disease Monitoring Platform</p>
+        </div>
+        <Routes>
+          <Route path="/login" element={<LoginForm />} />
+          <Route path="/register" element={<RegisterForm />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+        </Routes>
+        <div className="mt-6 text-center">
+          <Routes>
+            <Route path="/login" element={
+              <p className="text-sm text-gray-600">
+                Don't have an account?{' '}
+                <a href="/register" className="font-medium text-blue-600 hover:text-blue-500">
+                  Sign up
+                </a>
+              </p>
+            } />
+            <Route path="/register" element={
+              <p className="text-sm text-gray-600">
+                Already have an account?{' '}
+                <a href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+                  Sign in
+                </a>
+              </p>
+            } />
+          </Routes>
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+// Main App Component
+const AppContent: React.FC = () => {
+  const { user } = useAuth();
+  
+  return (
+    <Router>
+      <div className="min-h-screen bg-gray-50">
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={<PublicRoute><AuthPages /></PublicRoute>} />
+          <Route path="/register" element={<PublicRoute><AuthPages /></PublicRoute>} />
+          
+          {/* Protected Routes */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Layout>
+                <Dashboard />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/symptoms/:patientId" element={
+            <ProtectedRoute>
+              <Layout>
+                <SymptomForm patientId={""} />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          {/* Default redirect */}
+          <Route path="/" element={
+            user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+          } />
+        </Routes>
+      </div>
+      <Toaster position="top-right" />
+    </Router>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+};
 
 export default App;
