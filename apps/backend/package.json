@@ -12,12 +12,21 @@
   "dependencies": {
     "express": "^4.21.2",
     "cors": "^2.8.5",
-    "@parkml/shared": "*"
+    "@parkml/shared": "*",
+    "pg": "^8.13.1",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^9.0.1",
+    "dotenv": "^16.4.7"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",
     "@types/cors": "^2.8.18",
     "@types/node": "^22.10.6",
+    "@types/pg": "^8.12.1",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^8.18.2",
     "@typescript-eslint/parser": "^8.18.2",
     "eslint": "^8.57.1",
