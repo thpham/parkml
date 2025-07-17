@@ -1,0 +1,137 @@
+// ParkML Prisma Schema
+// Parkinson's Disease Monitoring Platform Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Users table - Authentication and user management
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  role         Role
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  patient                   Patient?
+  caregiverPatients         PatientCaregiver[]
+  healthcareProviderPatients PatientHealthcareProvider[]
+  symptomEntries            SymptomEntry[]
+
+  @@map("users")
+}
+
+// Patients table - Patient information
+model Patient {
+  id            String   @id @default(cuid())
+  userId        String   @unique @map("user_id")
+  name          String
+  dateOfBirth   DateTime @map("date_of_birth")
+  diagnosisDate DateTime @map("diagnosis_date")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  user                      User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  caregivers                PatientCaregiver[]
+  healthcareProviders       PatientHealthcareProvider[]
+  symptomEntries            SymptomEntry[]
+  weeklySummaries           WeeklySummary[]
+
+  @@map("patients")
+}
+
+// Junction table for Patient-Caregiver relationships
+model PatientCaregiver {
+  patientId   String   @map("patient_id")
+  caregiverId String   @map("caregiver_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relationships
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  caregiver User    @relation(fields: [caregiverId], references: [id], onDelete: Cascade)
+
+  @@id([patientId, caregiverId])
+  @@map("patient_caregivers")
+}
+
+// Junction table for Patient-Healthcare Provider relationships
+model PatientHealthcareProvider {
+  patientId              String   @map("patient_id")
+  healthcareProviderId   String   @map("healthcare_provider_id")
+  createdAt              DateTime @default(now()) @map("created_at")
+
+  // Relationships
+  patient            Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  healthcareProvider User    @relation(fields: [healthcareProviderId], references: [id], onDelete: Cascade)
+
+  @@id([patientId, healthcareProviderId])
+  @@map("patient_healthcare_providers")
+}
+
+// Symptom entries table - Daily symptom tracking
+model SymptomEntry {
+  id                   String   @id @default(cuid())
+  patientId            String   @map("patient_id")
+  entryDate            DateTime @map("entry_date")
+  completedBy          String   @map("completed_by")
+  motorSymptoms        String   @map("motor_symptoms") // JSON stored as string
+  nonMotorSymptoms     String   @map("non_motor_symptoms") // JSON stored as string
+  autonomicSymptoms    String   @map("autonomic_symptoms") // JSON stored as string
+  dailyActivities      String   @map("daily_activities") // JSON stored as string
+  environmentalFactors String   @map("environmental_factors") // JSON stored as string
+  safetyIncidents      String   @map("safety_incidents") // JSON stored as string
+  notes                String?
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  patient     Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  completedByUser User @relation(fields: [completedBy], references: [id])
+
+  @@map("symptom_entries")
+}
+
+// Weekly summaries table - Weekly symptom summaries
+model WeeklySummary {
+  id                      String              @id @default(cuid())
+  patientId               String              @map("patient_id")
+  weekStartDate           DateTime            @map("week_start_date")
+  weekEndDate             DateTime            @map("week_end_date")
+  bestDay                 String?             @map("best_day")
+  worstDay                String?             @map("worst_day")
+  overallProgression      ProgressionType?    @map("overall_progression")
+  newSymptoms             String?             @map("new_symptoms")
+  functionalChanges       String              @map("functional_changes") // JSON stored as string
+  medicationEffectiveness String             @map("medication_effectiveness") // JSON stored as string
+  caregiverConcerns       String              @map("caregiver_concerns") // JSON stored as string
+  notes                   String?
+  createdAt               DateTime            @default(now()) @map("created_at")
+  updatedAt               DateTime            @updatedAt @map("updated_at")
+
+  // Relationships
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@map("weekly_summaries")
+}
+
+// Enums
+enum Role {
+  patient
+  caregiver
+  healthcare_provider
+}
+
+enum ProgressionType {
+  better
+  same
+  worse
+}

@@ -1,6 +1,5 @@
 import { Router } from 'express';
-import { v4 as uuidv4 } from 'uuid';
-import db from '../config/database';
+import { prisma } from '../database/prisma-client';
 import { ApiResponse } from '@parkml/shared';
 import { authenticateToken, authorizeRole, AuthenticatedRequest } from '../middleware/auth';
 
@@ -9,42 +8,50 @@ const router = Router();
 // Get all patients (for healthcare providers and caregivers)
 router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    let query = '';
-    let params: any[] = [];
+    let patients: any[] = [];
 
     if (req.user?.role === 'healthcare_provider') {
-      query = `
-        SELECT p.id, p.user_id, p.name, p.date_of_birth, p.diagnosis_date, p.created_at, p.updated_at
-        FROM patients p
-        JOIN patient_healthcare_providers php ON p.id = php.patient_id
-        WHERE php.healthcare_provider_id = $1
-        ORDER BY p.name
-      `;
-      params = [req.user.userId];
+      patients = await prisma.patient.findMany({
+        where: {
+          healthcareProviders: {
+            some: {
+              healthcareProviderId: req.user.userId,
+            },
+          },
+        },
+        orderBy: { name: 'asc' },
+      });
     } else if (req.user?.role === 'caregiver') {
-      query = `
-        SELECT p.id, p.user_id, p.name, p.date_of_birth, p.diagnosis_date, p.created_at, p.updated_at
-        FROM patients p
-        JOIN patient_caregivers pc ON p.id = pc.patient_id
-        WHERE pc.caregiver_id = $1
-        ORDER BY p.name
-      `;
-      params = [req.user.userId];
+      patients = await prisma.patient.findMany({
+        where: {
+          caregivers: {
+            some: {
+              caregiverId: req.user.userId,
+            },
+          },
+        },
+        orderBy: { name: 'asc' },
+      });
     } else if (req.user?.role === 'patient') {
-      query = `
-        SELECT p.id, p.user_id, p.name, p.date_of_birth, p.diagnosis_date, p.created_at, p.updated_at
-        FROM patients p
-        WHERE p.user_id = $1
-        ORDER BY p.name
-      `;
-      params = [req.user.userId];
+      patients = await prisma.patient.findMany({
+        where: {
+          userId: req.user.userId,
+        },
+        orderBy: { name: 'asc' },
+      });
     }
-
-    const result = await db.query(query, params);
 
     const response: ApiResponse = {
       success: true,
-      data: result.rows,
+      data: patients.map(p => ({
+        id: p.id,
+        user_id: p.userId,
+        name: p.name,
+        date_of_birth: p.dateOfBirth,
+        diagnosis_date: p.diagnosisDate,
+        created_at: p.createdAt,
+        updated_at: p.updatedAt,
+      })),
     };
 
     res.json(response);
@@ -84,12 +91,11 @@ router.post('/', authenticateToken, authorizeRole(['patient', 'healthcare_provid
     }
 
     // Check if patient already exists for this user
-    const existingPatient = await db.query(
-      'SELECT id FROM patients WHERE user_id = $1',
-      [targetUserId]
-    );
+    const existingPatient = await prisma.patient.findUnique({
+      where: { userId: targetUserId },
+    });
 
-    if (existingPatient.rows.length > 0) {
+    if (existingPatient) {
       const response: ApiResponse = {
         success: false,
         error: 'Patient record already exists for this user',
@@ -98,25 +104,27 @@ router.post('/', authenticateToken, authorizeRole(['patient', 'healthcare_provid
     }
 
     // Create patient
-    const result = await db.query(
-      'INSERT INTO patients (id, user_id, name, date_of_birth, diagnosis_date) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [uuidv4(), targetUserId, name, new Date(dateOfBirth), new Date(diagnosisDate)]
-    );
-
-    const patient = result.rows[0];
+    const patient = await prisma.patient.create({
+      data: {
+        userId: targetUserId,
+        name,
+        dateOfBirth: new Date(dateOfBirth),
+        diagnosisDate: new Date(diagnosisDate),
+      },
+    });
 
     const response: ApiResponse = {
       success: true,
       data: {
         id: patient.id,
-        userId: patient.user_id,
+        userId: patient.userId,
         name: patient.name,
-        dateOfBirth: patient.date_of_birth,
-        diagnosisDate: patient.diagnosis_date,
+        dateOfBirth: patient.dateOfBirth,
+        diagnosisDate: patient.diagnosisDate,
         caregiverIds: [],
         healthcareProviderIds: [],
-        createdAt: patient.created_at,
-        updatedAt: patient.updated_at,
+        createdAt: patient.createdAt,
+        updatedAt: patient.updatedAt,
       },
     };
 
@@ -137,37 +145,52 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
     const { id } = req.params;
 
     // Check if user has access to this patient
-    let query = '';
-    let params: any[] = [];
+    let patient: any = null;
 
     if (req.user?.role === 'healthcare_provider') {
-      query = `
-        SELECT p.id, p.user_id, p.name, p.date_of_birth, p.diagnosis_date, p.created_at, p.updated_at
-        FROM patients p
-        JOIN patient_healthcare_providers php ON p.id = php.patient_id
-        WHERE p.id = $1 AND php.healthcare_provider_id = $2
-      `;
-      params = [id, req.user.userId];
+      patient = await prisma.patient.findFirst({
+        where: {
+          id,
+          healthcareProviders: {
+            some: {
+              healthcareProviderId: req.user.userId,
+            },
+          },
+        },
+        include: {
+          caregivers: { select: { caregiverId: true } },
+          healthcareProviders: { select: { healthcareProviderId: true } },
+        },
+      });
     } else if (req.user?.role === 'caregiver') {
-      query = `
-        SELECT p.id, p.user_id, p.name, p.date_of_birth, p.diagnosis_date, p.created_at, p.updated_at
-        FROM patients p
-        JOIN patient_caregivers pc ON p.id = pc.patient_id
-        WHERE p.id = $1 AND pc.caregiver_id = $2
-      `;
-      params = [id, req.user.userId];
+      patient = await prisma.patient.findFirst({
+        where: {
+          id,
+          caregivers: {
+            some: {
+              caregiverId: req.user.userId,
+            },
+          },
+        },
+        include: {
+          caregivers: { select: { caregiverId: true } },
+          healthcareProviders: { select: { healthcareProviderId: true } },
+        },
+      });
     } else if (req.user?.role === 'patient') {
-      query = `
-        SELECT p.id, p.user_id, p.name, p.date_of_birth, p.diagnosis_date, p.created_at, p.updated_at
-        FROM patients p
-        WHERE p.id = $1 AND p.user_id = $2
-      `;
-      params = [id, req.user.userId];
+      patient = await prisma.patient.findFirst({
+        where: {
+          id,
+          userId: req.user.userId,
+        },
+        include: {
+          caregivers: { select: { caregiverId: true } },
+          healthcareProviders: { select: { healthcareProviderId: true } },
+        },
+      });
     }
 
-    const result = await db.query(query, params);
-
-    if (result.rows.length === 0) {
+    if (!patient) {
       const response: ApiResponse = {
         success: false,
         error: 'Patient not found or access denied',
@@ -175,31 +198,18 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
       return res.status(404).json(response);
     }
 
-    // Get caregivers and healthcare providers
-    const caregivers = await db.query(
-      'SELECT caregiver_id FROM patient_caregivers WHERE patient_id = $1',
-      [id]
-    );
-
-    const healthcareProviders = await db.query(
-      'SELECT healthcare_provider_id FROM patient_healthcare_providers WHERE patient_id = $1',
-      [id]
-    );
-
-    const patient = result.rows[0];
-
     const response: ApiResponse = {
       success: true,
       data: {
         id: patient.id,
-        userId: patient.user_id,
+        userId: patient.userId,
         name: patient.name,
-        dateOfBirth: patient.date_of_birth,
-        diagnosisDate: patient.diagnosis_date,
-        caregiverIds: caregivers.rows.map(row => row.caregiver_id),
-        healthcareProviderIds: healthcareProviders.rows.map(row => row.healthcare_provider_id),
-        createdAt: patient.created_at,
-        updatedAt: patient.updated_at,
+        dateOfBirth: patient.dateOfBirth,
+        diagnosisDate: patient.diagnosisDate,
+        caregiverIds: patient.caregivers.map((c: any) => c.caregiverId),
+        healthcareProviderIds: patient.healthcareProviders.map((h: any) => h.healthcareProviderId),
+        createdAt: patient.createdAt,
+        updatedAt: patient.updatedAt,
       },
     };
 

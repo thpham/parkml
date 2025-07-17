@@ -1,6 +1,5 @@
 import { Router } from 'express';
-import { v4 as uuidv4 } from 'uuid';
-import db from '../config/database';
+import { prisma } from '../database/prisma-client';
 import { ApiResponse } from '@parkml/shared';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
 
@@ -20,34 +19,43 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
     }
 
     // Check if user has access to this patient
-    let accessQuery = '';
-    let accessParams: any[] = [];
+    let hasAccess = false;
 
     if (req.user?.role === 'healthcare_provider') {
-      accessQuery = `
-        SELECT 1 FROM patients p
-        JOIN patient_healthcare_providers php ON p.id = php.patient_id
-        WHERE p.id = $1 AND php.healthcare_provider_id = $2
-      `;
-      accessParams = [patientId, req.user.userId];
+      const patient = await prisma.patient.findFirst({
+        where: {
+          id: patientId as string,
+          healthcareProviders: {
+            some: {
+              healthcareProviderId: req.user.userId,
+            },
+          },
+        },
+      });
+      hasAccess = !!patient;
     } else if (req.user?.role === 'caregiver') {
-      accessQuery = `
-        SELECT 1 FROM patients p
-        JOIN patient_caregivers pc ON p.id = pc.patient_id
-        WHERE p.id = $1 AND pc.caregiver_id = $2
-      `;
-      accessParams = [patientId, req.user.userId];
+      const patient = await prisma.patient.findFirst({
+        where: {
+          id: patientId as string,
+          caregivers: {
+            some: {
+              caregiverId: req.user.userId,
+            },
+          },
+        },
+      });
+      hasAccess = !!patient;
     } else if (req.user?.role === 'patient') {
-      accessQuery = `
-        SELECT 1 FROM patients p
-        WHERE p.id = $1 AND p.user_id = $2
-      `;
-      accessParams = [patientId, req.user.userId];
+      const patient = await prisma.patient.findFirst({
+        where: {
+          id: patientId as string,
+          userId: req.user.userId,
+        },
+      });
+      hasAccess = !!patient;
     }
 
-    const accessResult = await db.query(accessQuery, accessParams);
-
-    if (accessResult.rows.length === 0) {
+    if (!hasAccess) {
       const response: ApiResponse = {
         success: false,
         error: 'Access denied to this patient',
@@ -55,50 +63,55 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
       return res.status(403).json(response);
     }
 
-    // Build query for symptom entries
-    let query = `
-      SELECT se.*, u.name as completed_by_name
-      FROM symptom_entries se
-      JOIN users u ON se.completed_by = u.id
-      WHERE se.patient_id = $1
-    `;
-    let params: any[] = [patientId];
-    let paramIndex = 2;
+    // Build query for symptom entries with date filtering
+    const whereClause: any = {
+      patientId: patientId as string,
+    };
 
     if (startDate) {
-      query += ` AND se.entry_date >= $${paramIndex}`;
-      params.push(new Date(startDate as string));
-      paramIndex++;
+      whereClause.entryDate = {
+        ...whereClause.entryDate,
+        gte: new Date(startDate as string),
+      };
     }
 
     if (endDate) {
-      query += ` AND se.entry_date <= $${paramIndex}`;
-      params.push(new Date(endDate as string));
-      paramIndex++;
+      whereClause.entryDate = {
+        ...whereClause.entryDate,
+        lte: new Date(endDate as string),
+      };
     }
 
-    query += ` ORDER BY se.entry_date DESC LIMIT $${paramIndex}`;
-    params.push(parseInt(limit as string));
-
-    const result = await db.query(query, params);
+    const symptomEntries = await prisma.symptomEntry.findMany({
+      where: whereClause,
+      include: {
+        completedByUser: {
+          select: { name: true },
+        },
+      },
+      orderBy: {
+        entryDate: 'desc',
+      },
+      take: parseInt(limit as string),
+    });
 
     const response: ApiResponse = {
       success: true,
-      data: result.rows.map(row => ({
-        id: row.id,
-        patientId: row.patient_id,
-        entryDate: row.entry_date,
-        completedBy: row.completed_by,
-        completedByName: row.completed_by_name,
-        motorSymptoms: row.motor_symptoms,
-        nonMotorSymptoms: row.non_motor_symptoms,
-        autonomicSymptoms: row.autonomic_symptoms,
-        dailyActivities: row.daily_activities,
-        environmentalFactors: row.environmental_factors,
-        safetyIncidents: row.safety_incidents,
-        notes: row.notes,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
+      data: symptomEntries.map((entry: any) => ({
+        id: entry.id,
+        patientId: entry.patientId,
+        entryDate: entry.entryDate,
+        completedBy: entry.completedBy,
+        completedByName: entry.completedByUser.name,
+        motorSymptoms: entry.motorSymptoms,
+        nonMotorSymptoms: entry.nonMotorSymptoms,
+        autonomicSymptoms: entry.autonomicSymptoms,
+        dailyActivities: entry.dailyActivities,
+        environmentalFactors: entry.environmentalFactors,
+        safetyIncidents: entry.safetyIncidents,
+        notes: entry.notes,
+        createdAt: entry.createdAt,
+        updatedAt: entry.updatedAt,
       })),
     };
 
@@ -138,34 +151,43 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
     }
 
     // Check if user has access to this patient
-    let accessQuery = '';
-    let accessParams: any[] = [];
+    let hasAccess = false;
 
     if (req.user?.role === 'healthcare_provider') {
-      accessQuery = `
-        SELECT 1 FROM patients p
-        JOIN patient_healthcare_providers php ON p.id = php.patient_id
-        WHERE p.id = $1 AND php.healthcare_provider_id = $2
-      `;
-      accessParams = [patientId, req.user.userId];
+      const patient = await prisma.patient.findFirst({
+        where: {
+          id: patientId,
+          healthcareProviders: {
+            some: {
+              healthcareProviderId: req.user.userId,
+            },
+          },
+        },
+      });
+      hasAccess = !!patient;
     } else if (req.user?.role === 'caregiver') {
-      accessQuery = `
-        SELECT 1 FROM patients p
-        JOIN patient_caregivers pc ON p.id = pc.patient_id
-        WHERE p.id = $1 AND pc.caregiver_id = $2
-      `;
-      accessParams = [patientId, req.user.userId];
+      const patient = await prisma.patient.findFirst({
+        where: {
+          id: patientId,
+          caregivers: {
+            some: {
+              caregiverId: req.user.userId,
+            },
+          },
+        },
+      });
+      hasAccess = !!patient;
     } else if (req.user?.role === 'patient') {
-      accessQuery = `
-        SELECT 1 FROM patients p
-        WHERE p.id = $1 AND p.user_id = $2
-      `;
-      accessParams = [patientId, req.user.userId];
+      const patient = await prisma.patient.findFirst({
+        where: {
+          id: patientId,
+          userId: req.user.userId,
+        },
+      });
+      hasAccess = !!patient;
     }
 
-    const accessResult = await db.query(accessQuery, accessParams);
-
-    if (accessResult.rows.length === 0) {
+    if (!hasAccess) {
       const response: ApiResponse = {
         success: false,
         error: 'Access denied to this patient',
@@ -174,12 +196,14 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
     }
 
     // Check if entry already exists for this date
-    const existingEntry = await db.query(
-      'SELECT id FROM symptom_entries WHERE patient_id = $1 AND entry_date = $2',
-      [patientId, new Date(entryDate)]
-    );
+    const existingEntry = await prisma.symptomEntry.findFirst({
+      where: {
+        patientId,
+        entryDate: new Date(entryDate),
+      },
+    });
 
-    if (existingEntry.rows.length > 0) {
+    if (existingEntry) {
       const response: ApiResponse = {
         success: false,
         error: 'Symptom entry already exists for this date',
@@ -188,45 +212,37 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
     }
 
     // Create symptom entry
-    const result = await db.query(
-      `INSERT INTO symptom_entries (
-        id, patient_id, entry_date, completed_by, motor_symptoms, non_motor_symptoms,
-        autonomic_symptoms, daily_activities, environmental_factors, safety_incidents, notes
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-      RETURNING *`,
-      [
-        uuidv4(),
+    const entry = await prisma.symptomEntry.create({
+      data: {
         patientId,
-        new Date(entryDate),
-        req.user?.userId,
-        JSON.stringify(motorSymptoms),
-        JSON.stringify(nonMotorSymptoms),
-        JSON.stringify(autonomicSymptoms),
-        JSON.stringify(dailyActivities),
-        JSON.stringify(environmentalFactors),
-        JSON.stringify(safetyIncidents || []),
-        notes || '',
-      ]
-    );
-
-    const entry = result.rows[0];
+        entryDate: new Date(entryDate),
+        completedBy: req.user?.userId!,
+        motorSymptoms: JSON.stringify(motorSymptoms),
+        nonMotorSymptoms: JSON.stringify(nonMotorSymptoms),
+        autonomicSymptoms: JSON.stringify(autonomicSymptoms),
+        dailyActivities: JSON.stringify(dailyActivities),
+        environmentalFactors: JSON.stringify(environmentalFactors),
+        safetyIncidents: JSON.stringify(safetyIncidents || []),
+        notes: notes || '',
+      },
+    });
 
     const response: ApiResponse = {
       success: true,
       data: {
         id: entry.id,
-        patientId: entry.patient_id,
-        entryDate: entry.entry_date,
-        completedBy: entry.completed_by,
-        motorSymptoms: entry.motor_symptoms,
-        nonMotorSymptoms: entry.non_motor_symptoms,
-        autonomicSymptoms: entry.autonomic_symptoms,
-        dailyActivities: entry.daily_activities,
-        environmentalFactors: entry.environmental_factors,
-        safetyIncidents: entry.safety_incidents,
+        patientId: entry.patientId,
+        entryDate: entry.entryDate,
+        completedBy: entry.completedBy,
+        motorSymptoms: entry.motorSymptoms,
+        nonMotorSymptoms: entry.nonMotorSymptoms,
+        autonomicSymptoms: entry.autonomicSymptoms,
+        dailyActivities: entry.dailyActivities,
+        environmentalFactors: entry.environmentalFactors,
+        safetyIncidents: entry.safetyIncidents,
         notes: entry.notes,
-        createdAt: entry.created_at,
-        updatedAt: entry.updated_at,
+        createdAt: entry.createdAt,
+        updatedAt: entry.updatedAt,
       },
     };
 
@@ -247,43 +263,61 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
     const { id } = req.params;
 
     // Get symptom entry with access check
-    let query = '';
-    let params: any[] = [];
+    let entry: any = null;
 
     if (req.user?.role === 'healthcare_provider') {
-      query = `
-        SELECT se.*, u.name as completed_by_name
-        FROM symptom_entries se
-        JOIN patients p ON se.patient_id = p.id
-        JOIN patient_healthcare_providers php ON p.id = php.patient_id
-        JOIN users u ON se.completed_by = u.id
-        WHERE se.id = $1 AND php.healthcare_provider_id = $2
-      `;
-      params = [id, req.user.userId];
+      entry = await prisma.symptomEntry.findFirst({
+        where: {
+          id,
+          patient: {
+            healthcareProviders: {
+              some: {
+                healthcareProviderId: req.user.userId,
+              },
+            },
+          },
+        },
+        include: {
+          completedByUser: {
+            select: { name: true },
+          },
+        },
+      });
     } else if (req.user?.role === 'caregiver') {
-      query = `
-        SELECT se.*, u.name as completed_by_name
-        FROM symptom_entries se
-        JOIN patients p ON se.patient_id = p.id
-        JOIN patient_caregivers pc ON p.id = pc.patient_id
-        JOIN users u ON se.completed_by = u.id
-        WHERE se.id = $1 AND pc.caregiver_id = $2
-      `;
-      params = [id, req.user.userId];
+      entry = await prisma.symptomEntry.findFirst({
+        where: {
+          id,
+          patient: {
+            caregivers: {
+              some: {
+                caregiverId: req.user.userId,
+              },
+            },
+          },
+        },
+        include: {
+          completedByUser: {
+            select: { name: true },
+          },
+        },
+      });
     } else if (req.user?.role === 'patient') {
-      query = `
-        SELECT se.*, u.name as completed_by_name
-        FROM symptom_entries se
-        JOIN patients p ON se.patient_id = p.id
-        JOIN users u ON se.completed_by = u.id
-        WHERE se.id = $1 AND p.user_id = $2
-      `;
-      params = [id, req.user.userId];
+      entry = await prisma.symptomEntry.findFirst({
+        where: {
+          id,
+          patient: {
+            userId: req.user.userId,
+          },
+        },
+        include: {
+          completedByUser: {
+            select: { name: true },
+          },
+        },
+      });
     }
 
-    const result = await db.query(query, params);
-
-    if (result.rows.length === 0) {
+    if (!entry) {
       const response: ApiResponse = {
         success: false,
         error: 'Symptom entry not found or access denied',
@@ -291,25 +325,23 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
       return res.status(404).json(response);
     }
 
-    const entry = result.rows[0];
-
     const response: ApiResponse = {
       success: true,
       data: {
         id: entry.id,
-        patientId: entry.patient_id,
-        entryDate: entry.entry_date,
-        completedBy: entry.completed_by,
-        completedByName: entry.completed_by_name,
-        motorSymptoms: entry.motor_symptoms,
-        nonMotorSymptoms: entry.non_motor_symptoms,
-        autonomicSymptoms: entry.autonomic_symptoms,
-        dailyActivities: entry.daily_activities,
-        environmentalFactors: entry.environmental_factors,
-        safetyIncidents: entry.safety_incidents,
+        patientId: entry.patientId,
+        entryDate: entry.entryDate,
+        completedBy: entry.completedBy,
+        completedByName: entry.completedByUser.name,
+        motorSymptoms: entry.motorSymptoms,
+        nonMotorSymptoms: entry.nonMotorSymptoms,
+        autonomicSymptoms: entry.autonomicSymptoms,
+        dailyActivities: entry.dailyActivities,
+        environmentalFactors: entry.environmentalFactors,
+        safetyIncidents: entry.safetyIncidents,
         notes: entry.notes,
-        createdAt: entry.created_at,
-        updatedAt: entry.updated_at,
+        createdAt: entry.createdAt,
+        updatedAt: entry.updatedAt,
       },
     };
 

@@ -1,8 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { v4 as uuidv4 } from 'uuid';
-import db from '../config/database';
+import { prisma } from '../database/prisma-client';
 import { ApiResponse } from '@parkml/shared';
 
 const router = Router();
@@ -22,12 +21,11 @@ router.post('/register', async (req, res) => {
     }
 
     // Check if user already exists
-    const existingUser = await db.query(
-      'SELECT id FROM users WHERE email = $1',
-      [email]
-    );
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
 
-    if (existingUser.rows.length > 0) {
+    if (existingUser) {
       const response: ApiResponse = {
         success: false,
         error: 'User already exists',
@@ -40,12 +38,14 @@ router.post('/register', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
     // Create user
-    const result = await db.query(
-      'INSERT INTO users (id, email, password_hash, name, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, name, role, created_at, updated_at',
-      [uuidv4(), email, passwordHash, name, role]
-    );
-
-    const user = result.rows[0];
+    const user = await prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        name,
+        role,
+      },
+    });
 
     // Generate JWT token
     const token = jwt.sign(
@@ -62,8 +62,8 @@ router.post('/register', async (req, res) => {
           email: user.email,
           name: user.name,
           role: user.role,
-          createdAt: user.created_at,
-          updatedAt: user.updated_at,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
         },
         token,
       },
@@ -95,12 +95,11 @@ router.post('/login', async (req, res) => {
     }
 
     // Find user
-    const result = await db.query(
-      'SELECT id, email, password_hash, name, role, created_at, updated_at FROM users WHERE email = $1',
-      [email]
-    );
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
 
-    if (result.rows.length === 0) {
+    if (!user) {
       const response: ApiResponse = {
         success: false,
         error: 'Invalid credentials',
@@ -108,10 +107,8 @@ router.post('/login', async (req, res) => {
       return res.status(401).json(response);
     }
 
-    const user = result.rows[0];
-
     // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
 
     if (!isValidPassword) {
       const response: ApiResponse = {
@@ -136,8 +133,8 @@ router.post('/login', async (req, res) => {
           email: user.email,
           name: user.name,
           role: user.role,
-          createdAt: user.created_at,
-          updatedAt: user.updated_at,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
         },
         token,
       },
