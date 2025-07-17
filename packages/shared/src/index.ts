@@ -4,12 +4,29 @@ export interface ApiResponse<T = any> {
   error?: string;
 }
 
-// User Management
+// Enhanced User Management
 export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'patient' | 'caregiver' | 'healthcare_provider';
+  role: 'super_admin' | 'clinic_admin' | 'professional_caregiver' | 'family_caregiver' | 'patient';
+  organizationId?: string;
+  organization?: Organization;
+  isActive: boolean;
+  lastLoginAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Organization {
+  id: string;
+  name: string;
+  description?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  settings?: any;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,13 +34,56 @@ export interface User {
 export interface Patient {
   id: string;
   userId: string;
+  organizationId: string;
   name: string;
   dateOfBirth: Date;
   diagnosisDate: Date;
+  emergencyContact?: any;
+  privacySettings?: any;
   caregiverIds: string[];
   healthcareProviderIds: string[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+// Enhanced User Management Types
+export interface CaregiverAssignment {
+  id: string;
+  patientId: string;
+  caregiverId: string;
+  caregiverType: 'professional' | 'family';
+  assignedBy?: string;
+  status: 'pending' | 'active' | 'inactive' | 'declined' | 'revoked';
+  permissions?: any;
+  startDate?: Date;
+  endDate?: Date;
+  notes?: string;
+  consentGiven: boolean;
+  consentDate?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface EmergencyAccess {
+  id: string;
+  userId: string;
+  patientId: string;
+  reason: string;
+  accessType: 'medical_emergency' | 'technical_support' | 'data_recovery' | 'audit_investigation';
+  startTime: Date;
+  endTime?: Date;
+  isActive: boolean;
+  approvedBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface UserStats {
+  caregiverAssignmentCount: number;
+  createdAssignmentCount: number;
+  sentInvitationCount: number;
+  symptomEntryCount: number;
+  auditLogCount: number;
 }
 
 // Symptom Tracking Types
@@ -271,6 +331,11 @@ export const API_ENDPOINTS = {
   PATIENTS: '/api/patients',
   SYMPTOM_ENTRIES: '/api/symptom-entries',
   WEEKLY_SUMMARIES: '/api/weekly-summaries',
+  ORGANIZATIONS: '/api/organizations',
+  ASSIGNMENTS: '/api/assignments',
+  CONSENT: '/api/consent',
+  EMERGENCY_ACCESS: '/api/emergency-access',
+  ANALYTICS: '/api/analytics',
 } as const;
 
 export const HTTP_STATUS = {

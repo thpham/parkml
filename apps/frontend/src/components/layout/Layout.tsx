@@ -1,6 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { LogOut, User, Home, PlusCircle } from 'lucide-react';
+import { 
+  LogOut, 
+  User, 
+  Home, 
+  PlusCircle, 
+  Settings, 
+  Users,
+  Building,
+  UserPlus,
+  AlertTriangle,
+  BarChart3,
+  ChevronDown
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface LayoutProps {
@@ -8,8 +20,24 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [showAdminMenu, setShowAdminMenu] = useState(false);
+  const adminMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close admin menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (adminMenuRef.current && !adminMenuRef.current.contains(event.target as Node)) {
+        setShowAdminMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -38,7 +66,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 Dashboard
               </button>
               
-              {user?.role === 'caregiver' && (
+              {(user?.role === 'professional_caregiver' || user?.role === 'family_caregiver') && (
                 <button
                   onClick={() => navigate('/symptoms/new')}
                   className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
@@ -46,6 +74,74 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <PlusCircle className="h-4 w-4 mr-1" />
                   Add Symptoms
                 </button>
+              )}
+              
+              {isAdmin && (
+                <div className="relative" ref={adminMenuRef}>
+                  <button
+                    onClick={() => setShowAdminMenu(!showAdminMenu)}
+                    className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    <Settings className="h-4 w-4 mr-1" />
+                    Admin
+                    <ChevronDown className="h-3 w-3 ml-1" />
+                  </button>
+                  
+                  {showAdminMenu && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                      <button
+                        onClick={() => {
+                          navigate('/admin/analytics');
+                          setShowAdminMenu(false);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <BarChart3 className="h-4 w-4 mr-2" />
+                        Analytics
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate('/admin/users');
+                          setShowAdminMenu(false);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        User Management
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate('/admin/organizations');
+                          setShowAdminMenu(false);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <Building className="h-4 w-4 mr-2" />
+                        Organizations
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate('/admin/assignments');
+                          setShowAdminMenu(false);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Assignments
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate('/admin/emergency-access');
+                          setShowAdminMenu(false);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <AlertTriangle className="h-4 w-4 mr-2" />
+                        Emergency Access
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
             </nav>
 

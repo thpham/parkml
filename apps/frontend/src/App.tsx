@@ -7,6 +7,11 @@ import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
 import Dashboard from './components/dashboard/Dashboard';
 import SymptomForm from './components/symptoms/SymptomForm';
+import OrganizationManagement from './components/admin/OrganizationManagement';
+import UserManagement from './components/admin/UserManagement';
+import CaregiverAssignments from './components/admin/CaregiverAssignments';
+import EmergencyAccess from './components/admin/EmergencyAccess';
+import Analytics from './components/admin/Analytics';
 import './App.css';
 
 // Protected Route Component
@@ -101,6 +106,47 @@ const AppContent: React.FC = () => {
             <ProtectedRoute>
               <Layout>
                 <SymptomForm patientId={""} />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          {/* Admin Routes */}
+          <Route path="/admin/organizations" element={
+            <ProtectedRoute>
+              <Layout>
+                <OrganizationManagement />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/users" element={
+            <ProtectedRoute>
+              <Layout>
+                <UserManagement />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/assignments" element={
+            <ProtectedRoute>
+              <Layout>
+                <CaregiverAssignments />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/emergency-access" element={
+            <ProtectedRoute>
+              <Layout>
+                <EmergencyAccess />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/analytics" element={
+            <ProtectedRoute>
+              <Layout>
+                <Analytics />
               </Layout>
             </ProtectedRoute>
           } />
