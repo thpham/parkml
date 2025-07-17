@@ -84,26 +84,42 @@ parkml/
 
 3. **Set up environment variables**
    ```bash
-   cp .env.example .env
+   # Copy example environment file for backend
+   cp apps/backend/.env.example apps/backend/.env
    # Edit .env with your configuration
    ```
 
 4. **Database setup**
    ```bash
-   # Create database and run migrations
-   npm run db:setup
+   # Create database
+   createdb parkml_dev
+   
+   # Run schema (optional for development)
+   psql -d parkml_dev -f apps/backend/src/database/schema.sql
    ```
 
 5. **Start development servers**
    ```bash
    npm run dev
    ```
+   
+   This starts both:
+   - Backend server on http://localhost:5000
+   - Frontend dev server on http://localhost:3000
+   
+   Open http://localhost:3000 in your browser to access the application.
 
 ### Development Commands
 
 ```bash
-# Start development environment
+# Start both backend and frontend in development mode
 npm run dev
+
+# Start backend only
+npm run dev:backend
+
+# Start frontend only
+npm run dev:frontend
 
 # Build for production
 npm run build
@@ -119,7 +135,13 @@ npm run typecheck
 
 # Start production server
 npm start
+
+# Clean build files and reset project
+npm run clean
+npm run reset
 ```
+
+For more detailed development information, see [DEVELOPMENT.md](./DEVELOPMENT.md).
 
 ## 📝 Data Collection Forms
 

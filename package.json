@@ -7,16 +7,30 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspaces",
+    "dev": "concurrently \"npm run dev --workspace=apps/backend\" \"npm run dev --workspace=apps/frontend\" --names \"backend,frontend\" --prefix-colors \"blue,green\"",
+    "dev:backend": "npm run dev --workspace=apps/backend",
+    "dev:frontend": "npm run dev --workspace=apps/frontend",
     "build": "npm run build --workspace=packages/shared && npm run build --workspace=apps/backend && npm run build --workspace=apps/frontend",
+    "build:backend": "npm run build --workspace=apps/backend",
+    "build:frontend": "npm run build --workspace=apps/frontend",
+    "build:shared": "npm run build --workspace=packages/shared",
     "start": "npm run start --workspace=apps/backend",
     "test": "npm run test --workspaces",
+    "test:backend": "npm run test --workspace=apps/backend",
+    "test:frontend": "npm run test --workspace=apps/frontend",
     "lint": "npm run lint --workspaces",
-    "typecheck": "npm run typecheck --workspaces"
+    "lint:backend": "npm run lint --workspace=apps/backend",
+    "lint:frontend": "npm run lint --workspace=apps/frontend",
+    "typecheck": "npm run typecheck --workspaces",
+    "typecheck:backend": "npm run typecheck --workspace=apps/backend",
+    "typecheck:frontend": "npm run typecheck --workspace=apps/frontend",
+    "clean": "rm -rf apps/*/dist packages/*/dist apps/*/node_modules packages/*/node_modules node_modules",
+    "reset": "npm run clean && npm install"
   },
   "devDependencies": {
     "@types/node": "^22.10.6",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "concurrently": "^9.1.0"
   },
   "engines": {
     "node": ">=18.0.0"
