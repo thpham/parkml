@@ -20,9 +20,10 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, token } = useAuth();
   const navigate = useNavigate();
   const [showAdminMenu, setShowAdminMenu] = useState(false);
+  const [pendingAssignments, setPendingAssignments] = useState(0);
   const adminMenuRef = useRef<HTMLDivElement>(null);
 
   // Close admin menu when clicking outside
@@ -38,6 +39,33 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Fetch pending assignments count for caregivers
+  useEffect(() => {
+    const fetchPendingAssignments = async () => {
+      if ((user?.role === 'professional_caregiver' || user?.role === 'family_caregiver') && token) {
+        try {
+          const response = await fetch('/api/assignments', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          const data = await response.json();
+          if (data.success && data.data) {
+            const pending = data.data.filter((assignment: any) => assignment.status === 'pending').length;
+            setPendingAssignments(pending);
+          }
+        } catch (error) {
+          console.error('Error fetching pending assignments:', error);
+        }
+      }
+    };
+
+    fetchPendingAssignments();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchPendingAssignments, 30000);
+    return () => clearInterval(interval);
+  }, [user, token]);
 
   const handleLogout = () => {
     logout();
@@ -67,13 +95,27 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </button>
               
               {(user?.role === 'professional_caregiver' || user?.role === 'family_caregiver') && (
-                <button
-                  onClick={() => navigate('/symptoms/new')}
-                  className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  <PlusCircle className="h-4 w-4 mr-1" />
-                  Add Symptoms
-                </button>
+                <>
+                  <button
+                    onClick={() => navigate('/caregiver/assignments')}
+                    className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium relative"
+                  >
+                    <Users className="h-4 w-4 mr-1" />
+                    My Assignments
+                    {pendingAssignments > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {pendingAssignments}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => navigate('/symptoms/new')}
+                    className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    <PlusCircle className="h-4 w-4 mr-1" />
+                    Add Symptoms
+                  </button>
+                </>
               )}
               
               {isAdmin && (

@@ -12,6 +12,7 @@ import UserManagement from './components/admin/UserManagement';
 import CaregiverAssignments from './components/admin/CaregiverAssignments';
 import EmergencyAccess from './components/admin/EmergencyAccess';
 import Analytics from './components/admin/Analytics';
+import CaregiverDashboard from './components/caregiver/CaregiverDashboard';
 import './App.css';
 
 // Protected Route Component
@@ -106,6 +107,15 @@ const AppContent: React.FC = () => {
             <ProtectedRoute>
               <Layout>
                 <SymptomForm patientId={""} />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          {/* Caregiver Routes */}
+          <Route path="/caregiver/assignments" element={
+            <ProtectedRoute>
+              <Layout>
+                <CaregiverDashboard />
               </Layout>
             </ProtectedRoute>
           } />
