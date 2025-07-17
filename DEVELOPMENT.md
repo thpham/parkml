@@ -25,8 +25,8 @@
 
 ### Prerequisites
 - Node.js ≥18.0.0
-- PostgreSQL (for database)
 - npm or yarn
+- PostgreSQL (optional, for production - SQLite is used by default for development)
 
 ### Environment Configuration
 
@@ -37,11 +37,31 @@
    ```
 
 2. **Database Setup**
+   
+   **For Development (SQLite - Default)**
+   
+   No setup required! SQLite database will be created automatically when you start the server.
+   The database file `parkml.db` will be created in the backend directory.
+   
+   **For Production (PostgreSQL)**
+   
+   Set `DB_TYPE=postgresql` in your `.env` file and configure the PostgreSQL connection:
+   ```bash
+   # In apps/backend/.env
+   DB_TYPE=postgresql
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_NAME=parkml
+   DB_USER=parkml_user
+   DB_PASSWORD=parkml_password
+   ```
+   
+   Then create the database:
    ```bash
    # Create database
    createdb parkml_dev
    
-   # Run schema (when available)
+   # Run schema
    psql -d parkml_dev -f apps/backend/src/database/schema.sql
    ```
 
@@ -107,11 +127,15 @@ parkml/
 
 ### Database Schema
 
-The database uses PostgreSQL with the following main tables:
+The database supports both SQLite (development) and PostgreSQL (production) with the following main tables:
 - `users` - User accounts (patients, caregivers, healthcare providers)
 - `patients` - Patient information
-- `symptom_entries` - Daily symptom tracking data (stored as JSONB)
+- `symptom_entries` - Daily symptom tracking data (stored as JSONB/TEXT)
 - `weekly_summaries` - Weekly symptom summaries
+
+**Database Compatibility**:
+- SQLite: JSON data stored as TEXT, automatic schema initialization
+- PostgreSQL: JSON data stored as JSONB, manual schema setup required
 
 ### Security
 
@@ -155,6 +179,13 @@ If port 5000 or 3000 is already in use:
 - Frontend: Change `port` in `apps/frontend/vite.config.ts`
 
 ### Database Connection Issues
+
+**For SQLite (Development)**:
+- Check file permissions in the backend directory
+- Ensure the SQLite database file isn't locked by another process
+- Delete `parkml.db` to reset the database if needed
+
+**For PostgreSQL (Production)**:
 - Ensure PostgreSQL is running
 - Check database credentials in `.env`
 - Verify database exists: `psql -l | grep parkml`
