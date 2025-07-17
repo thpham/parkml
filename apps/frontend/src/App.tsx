@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/layout/Layout';
@@ -41,6 +41,9 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 // Auth Pages Component
 const AuthPages: React.FC = () => {
+  const location = useLocation();
+  const isLoginPage = location.pathname === '/login';
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-md mx-auto pt-16">
@@ -48,30 +51,25 @@ const AuthPages: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">ParkML</h1>
           <p className="mt-2 text-gray-600">Parkinson's Disease Monitoring Platform</p>
         </div>
-        <Routes>
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/register" element={<RegisterForm />} />
-          <Route path="/" element={<Navigate to="/login" replace />} />
-        </Routes>
+        
+        {isLoginPage ? <LoginForm /> : <RegisterForm />}
+        
         <div className="mt-6 text-center">
-          <Routes>
-            <Route path="/login" element={
-              <p className="text-sm text-gray-600">
-                Don't have an account?{' '}
-                <a href="/register" className="font-medium text-blue-600 hover:text-blue-500">
-                  Sign up
-                </a>
-              </p>
-            } />
-            <Route path="/register" element={
-              <p className="text-sm text-gray-600">
-                Already have an account?{' '}
-                <a href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-                  Sign in
-                </a>
-              </p>
-            } />
-          </Routes>
+          {isLoginPage ? (
+            <p className="text-sm text-gray-600">
+              Don't have an account?{' '}
+              <a href="/register" className="font-medium text-blue-600 hover:text-blue-500">
+                Sign up
+              </a>
+            </p>
+          ) : (
+            <p className="text-sm text-gray-600">
+              Already have an account?{' '}
+              <a href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+                Sign in
+              </a>
+            </p>
+          )}
         </div>
       </div>
     </div>
