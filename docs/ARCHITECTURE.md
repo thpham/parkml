@@ -29,15 +29,16 @@ ParkML is a secure, HIPAA-compliant digital platform for Parkinson's disease sym
 - **Runtime**: Node.js 24.4.0
 - **Framework**: Express 4.21.2 with TypeScript
 - **Authentication**: JWT tokens with bcrypt password hashing
-- **Database**: Custom abstraction layer supporting dual databases
+- **Database**: Prisma ORM with type-safe queries and automatic migrations
 - **Security**: CORS protection, input validation, rate limiting
 - **Development**: tsx watch mode for hot reloading
 
 ### Database Layer
-- **Development**: SQLite 3 with better-sqlite3 driver
-- **Production**: PostgreSQL 14+ with pg driver
-- **Schema**: Automatic SQLite initialization, manual PostgreSQL setup
-- **Data Types**: JSON fields stored as TEXT (SQLite) or JSONB (PostgreSQL)
+- **ORM**: Prisma ORM for type-safe database operations
+- **Development**: SQLite 3 with automatic schema initialization
+- **Production**: PostgreSQL 14+ with automated migrations
+- **Schema Management**: Prisma migrations for schema evolution
+- **Type Safety**: Auto-generated TypeScript types for all database operations
 
 ## Project Structure
 
@@ -46,11 +47,12 @@ parkml/
 ├── apps/
 │   ├── backend/                 # Express API server
 │   │   ├── src/
-│   │   │   ├── database/        # Database abstraction layer
-│   │   │   │   ├── connection.ts    # Database factory & abstraction
-│   │   │   │   ├── schema.sql       # PostgreSQL schema
-│   │   │   │   ├── sqlite-schema.sql # SQLite schema
-│   │   │   │   └── test-connection.ts # Database testing utility
+│   │   │   ├── database/        # Database layer
+│   │   │   │   ├── prisma-client.ts # Prisma client singleton
+│   │   │   │   └── seed.ts          # Database seeding utility
+│   │   │   ├── prisma/          # Prisma configuration
+│   │   │   │   ├── schema.prisma    # Prisma schema definition
+│   │   │   │   └── migrations/      # Database migrations
 │   │   │   ├── routes/          # API route handlers
 │   │   │   │   ├── auth.ts          # Authentication endpoints
 │   │   │   │   ├── patients.ts      # Patient management
@@ -130,24 +132,31 @@ patient_caregivers      # Many-to-many: patients ↔ caregivers
 patient_healthcare_providers # Many-to-many: patients ↔ healthcare providers
 ```
 
-### Database Abstraction Layer
+### Prisma ORM Integration
 
 ```typescript
-interface DatabaseConnection {
-  query(text: string, params?: any[]): Promise<DatabaseResult>;
-  close(): Promise<void>;
-}
+// Generated Prisma Client
+import { PrismaClient } from '@prisma/client';
 
-class SQLiteConnection implements DatabaseConnection {
-  // SQLite-specific implementation
-  // Handles JSON field conversion
-  // Emulates PostgreSQL RETURNING clause
-}
+const prisma = new PrismaClient();
 
-class PostgreSQLConnection implements DatabaseConnection {
-  // PostgreSQL-specific implementation
-  // Uses pg driver with connection pooling
-}
+// Type-safe database operations
+const user = await prisma.user.create({
+  data: {
+    email: 'user@example.com',
+    name: 'John Doe',
+    role: 'patient'
+  }
+});
+
+// Automatic relationship handling
+const patient = await prisma.patient.create({
+  data: {
+    user: { connect: { id: user.id } },
+    name: 'John Doe',
+    dateOfBirth: new Date('1980-01-01')
+  }
+});
 ```
 
 ## API Architecture
@@ -208,12 +217,13 @@ Symptom Tracking:
    └── Browser refresh (Vite HMR)
 
 2. Database Operations
-   ├── SQLite auto-initialization
-   ├── Schema migrations
-   └── Data seeding (if needed)
+   ├── Prisma schema changes
+   ├── Automatic migration generation
+   ├── Database seeding with test accounts
+   └── Type regeneration
 
 3. Testing
-   ├── Database connection tests
+   ├── Prisma client tests
    ├── API endpoint tests
    └── Frontend component tests
 ```
@@ -222,21 +232,23 @@ Symptom Tracking:
 ```
 Development:
 ├── npm run dev              # Start both frontend & backend
-├── npm run test-db          # Test database connection
+├── npm run db:setup         # Initialize database with seeding
+├── npm run db:studio        # Open Prisma Studio
 └── npm run typecheck        # TypeScript validation
 
 Production:
 ├── npm run build            # Build all packages
 ├── npm run start            # Start production server
-└── Database migration       # PostgreSQL schema setup
+└── npx prisma migrate deploy # Apply database migrations
 ```
 
 ## Performance Considerations
 
 ### Database Optimization
-- **Indexes**: Strategic indexing on frequently queried fields
-- **Connection Pooling**: PostgreSQL connection pooling for production
-- **Query Optimization**: Efficient queries with proper JOIN strategies
+- **Indexes**: Strategic indexing on frequently queried fields via Prisma schema
+- **Connection Pooling**: Prisma-managed connection pooling for production
+- **Query Optimization**: Prisma-optimized queries with type-safe operations
+- **Schema Evolution**: Automated migrations with rollback capabilities
 
 ### Frontend Optimization
 - **Code Splitting**: Vite-based code splitting for smaller bundles
@@ -251,15 +263,18 @@ Production:
 ## Deployment Architecture
 
 ### Development Environment
-- **Database**: SQLite file-based database
+- **Database**: SQLite file-based database with Prisma ORM
 - **Services**: Concurrent frontend (3000) and backend (5000)
 - **Hot Reload**: Automatic reloading for development efficiency
+- **Database Tools**: Prisma Studio for database visualization
+- **Auto-seeding**: Pre-populated test accounts for immediate development
 
 ### Production Environment
-- **Database**: PostgreSQL with proper indexes and constraints
+- **Database**: PostgreSQL with Prisma-managed migrations
 - **Services**: Reverse proxy with load balancing
 - **Security**: HTTPS, security headers, input validation
 - **Monitoring**: Logging, error tracking, performance monitoring
+- **Deployment**: Dokku configuration with automated database migrations
 
 ---
 
