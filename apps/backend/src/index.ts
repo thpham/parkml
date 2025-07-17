@@ -8,6 +8,13 @@ import { API_ENDPOINTS, HTTP_STATUS, ApiResponse } from '@parkml/shared';
 import authRoutes from './routes/auth';
 import patientRoutes from './routes/patients';
 import symptomEntryRoutes from './routes/symptom-entries';
+import assignmentRoutes from './routes/assignments';
+import consentRoutes from './routes/consent';
+import organizationRoutes from './routes/organizations';
+import userRoutes from './routes/users';
+import analyticsRoutes from './routes/analytics';
+import emergencyAccessRoutes from './routes/emergency-access';
+import { initializeEmergencyAccessCleanup } from './services/emergency-access-cleanup';
 
 // Load environment variables
 dotenv.config();
@@ -45,6 +52,12 @@ app.get(API_ENDPOINTS.HEALTH, (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/patients', patientRoutes);
 app.use('/api/symptom-entries', symptomEntryRoutes);
+app.use('/api/assignments', assignmentRoutes);
+app.use('/api/consent', consentRoutes);
+app.use('/api/organizations', organizationRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/emergency-access', emergencyAccessRoutes);
 
 // Legacy users endpoint (for backward compatibility)
 app.get(API_ENDPOINTS.USERS, (_req, res) => {
@@ -75,4 +88,7 @@ if (process.env.NODE_ENV === 'production') {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Initialize emergency access cleanup service
+  initializeEmergencyAccessCleanup();
 });

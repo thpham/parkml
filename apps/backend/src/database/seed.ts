@@ -32,7 +32,8 @@ async function main() {
         email: adminEmail,
         passwordHash: hashedPassword,
         name: adminName,
-        role: 'healthcare_provider',
+        role: 'clinic_admin',
+        organizationId: 'default_org',
       },
     });
 
@@ -59,6 +60,7 @@ async function main() {
           passwordHash: hashedPassword,
           name: 'Test Patient',
           role: 'patient',
+          organizationId: 'default_org',
         },
       });
 
@@ -66,6 +68,7 @@ async function main() {
       await prisma.patient.create({
         data: {
           userId: patientUser.id,
+          organizationId: 'default_org',
           name: 'Test Patient',
           dateOfBirth: new Date('1960-01-01'),
           diagnosisDate: new Date('2020-01-01'),
@@ -93,7 +96,8 @@ async function main() {
           email: caregiverEmail,
           passwordHash: hashedPassword,
           name: 'Test Caregiver',
-          role: 'caregiver',
+          role: 'family_caregiver',
+          organizationId: 'default_org',
         },
       });
 
@@ -107,9 +111,9 @@ async function main() {
   
   // Show test credentials
   console.log('📋 Test accounts created:');
-  console.log('   👨‍⚕️ Healthcare Provider: admin@parkml.org / admin123');
+  console.log('   👨‍⚕️ Clinic Admin: admin@parkml.org / admin123');
   console.log('   🤒 Patient: patient@parkml.org / patient123');
-  console.log('   👨‍👩‍👧‍👦 Caregiver: caregiver@parkml.org / caregiver123\n');
+  console.log('   👨‍👩‍👧‍👦 Family Caregiver: caregiver@parkml.org / caregiver123\n');
 }
 
 main()

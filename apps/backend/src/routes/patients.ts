@@ -5,50 +5,152 @@ import { authenticateToken, authorizeRole, AuthenticatedRequest } from '../middl
 
 const router = Router();
 
-// Get all patients (for healthcare providers and caregivers)
+// Get all patients (organization-scoped)
 router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
+    if (!req.user) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'User not authenticated',
+      };
+      return res.status(401).json(response);
+    }
+
     let patients: any[] = [];
 
-    if (req.user?.role === 'healthcare_provider') {
-      patients = await prisma.patient.findMany({
-        where: {
-          healthcareProviders: {
-            some: {
-              healthcareProviderId: req.user.userId,
+    switch (req.user.role) {
+      case 'super_admin':
+        // Super admin can see all patients
+        patients = await prisma.patient.findMany({
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                name: true,
+                isActive: true
+              }
             },
+            organization: {
+              select: {
+                id: true,
+                name: true,
+                isActive: true
+              }
+            }
           },
-        },
-        orderBy: { name: 'asc' },
-      });
-    } else if (req.user?.role === 'caregiver') {
-      patients = await prisma.patient.findMany({
-        where: {
-          caregivers: {
-            some: {
-              caregiverId: req.user.userId,
+          orderBy: { name: 'asc' },
+        });
+        break;
+
+      case 'clinic_admin':
+        // Clinic admin can see patients in their organization
+        patients = await prisma.patient.findMany({
+          where: {
+            organizationId: req.user.organizationId,
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                name: true,
+                isActive: true
+              }
             },
+            organization: {
+              select: {
+                id: true,
+                name: true,
+                isActive: true
+              }
+            }
           },
-        },
-        orderBy: { name: 'asc' },
-      });
-    } else if (req.user?.role === 'patient') {
-      patients = await prisma.patient.findMany({
-        where: {
-          userId: req.user.userId,
-        },
-        orderBy: { name: 'asc' },
-      });
+          orderBy: { name: 'asc' },
+        });
+        break;
+
+      case 'professional_caregiver':
+      case 'family_caregiver':
+        // Caregivers can see patients assigned to them
+        patients = await prisma.patient.findMany({
+          where: {
+            caregiverAssignments: {
+              some: {
+                caregiverId: req.user.userId,
+                status: 'active'
+              }
+            }
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                name: true,
+                isActive: true
+              }
+            },
+            organization: {
+              select: {
+                id: true,
+                name: true,
+                isActive: true
+              }
+            }
+          },
+          orderBy: { name: 'asc' },
+        });
+        break;
+
+      case 'patient':
+        // Patients can only see their own record
+        patients = await prisma.patient.findMany({
+          where: {
+            userId: req.user.userId,
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                name: true,
+                isActive: true
+              }
+            },
+            organization: {
+              select: {
+                id: true,
+                name: true,
+                isActive: true
+              }
+            }
+          },
+          orderBy: { name: 'asc' },
+        });
+        break;
+
+      default:
+        const response: ApiResponse = {
+          success: false,
+          error: 'Unauthorized role',
+        };
+        return res.status(403).json(response);
     }
 
     const response: ApiResponse = {
       success: true,
-      data: patients.map(p => ({
+      data: patients.map((p: any) => ({
         id: p.id,
         user_id: p.userId,
+        organization_id: p.organizationId,
         name: p.name,
         date_of_birth: p.dateOfBirth,
         diagnosis_date: p.diagnosisDate,
+        emergency_contact: JSON.parse(p.emergencyContact || '{}'),
+        privacy_settings: JSON.parse(p.privacySettings || '{}'),
+        user: p.user,
+        organization: p.organization,
         created_at: p.createdAt,
         updated_at: p.updatedAt,
       })),
@@ -107,6 +209,7 @@ router.post('/', authenticateToken, authorizeRole(['patient', 'healthcare_provid
     const patient = await prisma.patient.create({
       data: {
         userId: targetUserId,
+        organizationId: req.user?.organizationId || 'default_org',
         name,
         dateOfBirth: new Date(dateOfBirth),
         diagnosisDate: new Date(diagnosisDate),
@@ -142,52 +245,187 @@ router.post('/', authenticateToken, authorizeRole(['patient', 'healthcare_provid
 // Get patient by ID
 router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const { id } = req.params;
+    if (!req.user) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'User not authenticated',
+      };
+      return res.status(401).json(response);
+    }
 
-    // Check if user has access to this patient
+    const { id } = req.params;
     let patient: any = null;
 
-    if (req.user?.role === 'healthcare_provider') {
-      patient = await prisma.patient.findFirst({
-        where: {
-          id,
-          healthcareProviders: {
-            some: {
-              healthcareProviderId: req.user.userId,
+    switch (req.user.role) {
+      case 'super_admin':
+        // Super admin can access any patient
+        patient = await prisma.patient.findUnique({
+          where: { id },
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                name: true,
+                isActive: true
+              }
             },
-          },
-        },
-        include: {
-          caregivers: { select: { caregiverId: true } },
-          healthcareProviders: { select: { healthcareProviderId: true } },
-        },
-      });
-    } else if (req.user?.role === 'caregiver') {
-      patient = await prisma.patient.findFirst({
-        where: {
-          id,
-          caregivers: {
-            some: {
-              caregiverId: req.user.userId,
+            organization: {
+              select: {
+                id: true,
+                name: true,
+                isActive: true
+              }
             },
+            caregiverAssignments: {
+              where: { status: 'active' },
+              include: {
+                caregiver: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true
+                  }
+                }
+              }
+            }
+          }
+        });
+        break;
+
+      case 'clinic_admin':
+        // Clinic admin can access patients in their organization
+        patient = await prisma.patient.findFirst({
+          where: {
+            id,
+            organizationId: req.user.organizationId,
           },
-        },
-        include: {
-          caregivers: { select: { caregiverId: true } },
-          healthcareProviders: { select: { healthcareProviderId: true } },
-        },
-      });
-    } else if (req.user?.role === 'patient') {
-      patient = await prisma.patient.findFirst({
-        where: {
-          id,
-          userId: req.user.userId,
-        },
-        include: {
-          caregivers: { select: { caregiverId: true } },
-          healthcareProviders: { select: { healthcareProviderId: true } },
-        },
-      });
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                name: true,
+                isActive: true
+              }
+            },
+            organization: {
+              select: {
+                id: true,
+                name: true,
+                isActive: true
+              }
+            },
+            caregiverAssignments: {
+              where: { status: 'active' },
+              include: {
+                caregiver: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true
+                  }
+                }
+              }
+            }
+          }
+        });
+        break;
+
+      case 'professional_caregiver':
+      case 'family_caregiver':
+        // Caregivers can access patients assigned to them
+        patient = await prisma.patient.findFirst({
+          where: {
+            id,
+            caregiverAssignments: {
+              some: {
+                caregiverId: req.user.userId,
+                status: 'active'
+              }
+            }
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                name: true,
+                isActive: true
+              }
+            },
+            organization: {
+              select: {
+                id: true,
+                name: true,
+                isActive: true
+              }
+            },
+            caregiverAssignments: {
+              where: { status: 'active' },
+              include: {
+                caregiver: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true
+                  }
+                }
+              }
+            }
+          }
+        });
+        break;
+
+      case 'patient':
+        // Patients can only access their own record
+        patient = await prisma.patient.findFirst({
+          where: {
+            id,
+            userId: req.user.userId,
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                name: true,
+                isActive: true
+              }
+            },
+            organization: {
+              select: {
+                id: true,
+                name: true,
+                isActive: true
+              }
+            },
+            caregiverAssignments: {
+              where: { status: 'active' },
+              include: {
+                caregiver: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true
+                  }
+                }
+              }
+            }
+          }
+        });
+        break;
+
+      default:
+        const response: ApiResponse = {
+          success: false,
+          error: 'Unauthorized role',
+        };
+        return res.status(403).json(response);
     }
 
     if (!patient) {
@@ -203,11 +441,15 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
       data: {
         id: patient.id,
         userId: patient.userId,
+        organizationId: patient.organizationId,
         name: patient.name,
         dateOfBirth: patient.dateOfBirth,
         diagnosisDate: patient.diagnosisDate,
-        caregiverIds: patient.caregivers.map((c: any) => c.caregiverId),
-        healthcareProviderIds: patient.healthcareProviders.map((h: any) => h.healthcareProviderId),
+        emergencyContact: JSON.parse(patient.emergencyContact || '{}'),
+        privacySettings: JSON.parse(patient.privacySettings || '{}'),
+        user: patient.user,
+        organization: patient.organization,
+        caregiverAssignments: patient.caregiverAssignments,
         createdAt: patient.createdAt,
         updatedAt: patient.updatedAt,
       },
