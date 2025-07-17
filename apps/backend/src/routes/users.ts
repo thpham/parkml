@@ -40,7 +40,7 @@ router.get('/',
 
       // Role filtering
       if (role) {
-        whereClause.role = role;
+        whereClause.role = Array.isArray(role) ? { in: role } : role;
       }
 
       // Active status filtering

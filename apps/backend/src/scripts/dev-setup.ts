@@ -89,10 +89,14 @@ async function setupDatabase() {
   }
 
   console.log('🎉 Development database setup complete!\n');
-  console.log('📋 Available test accounts:');
-  console.log('   👨‍⚕️ Healthcare Provider: admin@parkml.org / admin123');
-  console.log('   🤒 Patient: patient@parkml.org / patient123');
-  console.log('   👨‍👩‍👧‍👦 Caregiver: caregiver@parkml.org / caregiver123\n');
+  console.log('📋 Key test accounts (see seed output for complete list):');
+  console.log('   🌟 Super Admin: superadmin@parkml.org / superadmin123');
+  console.log('   👨‍⚕️ Clinic Admin: admin@parkml.org / admin123');
+  console.log('   👨‍⚕️ Doctor: doctor@parkml.org / doctor123');
+  console.log('   👫 Family Caregiver: spouse@parkml.org / spouse123');
+  console.log('   🤒 Patient: patient1@parkml.org / patient123');
+  console.log('');
+  console.log('💡 Run `npm run db:seed` to see all 12 test accounts across 3 organizations\n');
 }
 
 if (require.main === module) {
