@@ -2,7 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import pool from '../config/database';
+import db from '../config/database';
 import { ApiResponse } from '@parkml/shared';
 
 const router = Router();
@@ -22,7 +22,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Check if user already exists
-    const existingUser = await pool.query(
+    const existingUser = await db.query(
       'SELECT id FROM users WHERE email = $1',
       [email]
     );
@@ -40,7 +40,7 @@ router.post('/register', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
     // Create user
-    const result = await pool.query(
+    const result = await db.query(
       'INSERT INTO users (id, email, password_hash, name, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, name, role, created_at, updated_at',
       [uuidv4(), email, passwordHash, name, role]
     );
@@ -95,7 +95,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Find user
-    const result = await pool.query(
+    const result = await db.query(
       'SELECT id, email, password_hash, name, role, created_at, updated_at FROM users WHERE email = $1',
       [email]
     );

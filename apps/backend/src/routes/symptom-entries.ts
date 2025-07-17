@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import pool from '../config/database';
+import db from '../config/database';
 import { ApiResponse } from '@parkml/shared';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
 
@@ -45,7 +45,7 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
       accessParams = [patientId, req.user.userId];
     }
 
-    const accessResult = await pool.query(accessQuery, accessParams);
+    const accessResult = await db.query(accessQuery, accessParams);
 
     if (accessResult.rows.length === 0) {
       const response: ApiResponse = {
@@ -80,7 +80,7 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
     query += ` ORDER BY se.entry_date DESC LIMIT $${paramIndex}`;
     params.push(parseInt(limit as string));
 
-    const result = await pool.query(query, params);
+    const result = await db.query(query, params);
 
     const response: ApiResponse = {
       success: true,
@@ -163,7 +163,7 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
       accessParams = [patientId, req.user.userId];
     }
 
-    const accessResult = await pool.query(accessQuery, accessParams);
+    const accessResult = await db.query(accessQuery, accessParams);
 
     if (accessResult.rows.length === 0) {
       const response: ApiResponse = {
@@ -174,7 +174,7 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
     }
 
     // Check if entry already exists for this date
-    const existingEntry = await pool.query(
+    const existingEntry = await db.query(
       'SELECT id FROM symptom_entries WHERE patient_id = $1 AND entry_date = $2',
       [patientId, new Date(entryDate)]
     );
@@ -188,7 +188,7 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
     }
 
     // Create symptom entry
-    const result = await pool.query(
+    const result = await db.query(
       `INSERT INTO symptom_entries (
         id, patient_id, entry_date, completed_by, motor_symptoms, non_motor_symptoms,
         autonomic_symptoms, daily_activities, environmental_factors, safety_incidents, notes
@@ -281,7 +281,7 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
       params = [id, req.user.userId];
     }
 
-    const result = await pool.query(query, params);
+    const result = await db.query(query, params);
 
     if (result.rows.length === 0) {
       const response: ApiResponse = {

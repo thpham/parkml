@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import pool from '../config/database';
+import db from '../config/database';
 import { ApiResponse } from '@parkml/shared';
 import { authenticateToken, authorizeRole, AuthenticatedRequest } from '../middleware/auth';
 
@@ -40,7 +40,7 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
       params = [req.user.userId];
     }
 
-    const result = await pool.query(query, params);
+    const result = await db.query(query, params);
 
     const response: ApiResponse = {
       success: true,
@@ -84,7 +84,7 @@ router.post('/', authenticateToken, authorizeRole(['patient', 'healthcare_provid
     }
 
     // Check if patient already exists for this user
-    const existingPatient = await pool.query(
+    const existingPatient = await db.query(
       'SELECT id FROM patients WHERE user_id = $1',
       [targetUserId]
     );
@@ -98,7 +98,7 @@ router.post('/', authenticateToken, authorizeRole(['patient', 'healthcare_provid
     }
 
     // Create patient
-    const result = await pool.query(
+    const result = await db.query(
       'INSERT INTO patients (id, user_id, name, date_of_birth, diagnosis_date) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [uuidv4(), targetUserId, name, new Date(dateOfBirth), new Date(diagnosisDate)]
     );
@@ -165,7 +165,7 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
       params = [id, req.user.userId];
     }
 
-    const result = await pool.query(query, params);
+    const result = await db.query(query, params);
 
     if (result.rows.length === 0) {
       const response: ApiResponse = {
@@ -176,12 +176,12 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
     }
 
     // Get caregivers and healthcare providers
-    const caregivers = await pool.query(
+    const caregivers = await db.query(
       'SELECT caregiver_id FROM patient_caregivers WHERE patient_id = $1',
       [id]
     );
 
-    const healthcareProviders = await pool.query(
+    const healthcareProviders = await db.query(
       'SELECT healthcare_provider_id FROM patient_healthcare_providers WHERE patient_id = $1',
       [id]
     );
