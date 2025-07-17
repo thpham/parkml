@@ -1,0 +1,48 @@
+{
+  "name": "parkml",
+  "description": "ParkML - Parkinson's Disease Monitoring Platform",
+  "keywords": ["parkinson", "healthcare", "monitoring", "symptom-tracking"],
+  "website": "https://github.com/thpham/parkml",
+  "repository": "https://github.com/thpham/parkml",
+  "logo": "",
+  "success_url": "/",
+  "env": {
+    "NODE_ENV": {
+      "description": "Node environment",
+      "value": "production"
+    },
+    "DB_TYPE": {
+      "description": "Database type (postgresql for production)",
+      "value": "postgresql"
+    },
+    "JWT_SECRET": {
+      "description": "JWT secret key for authentication",
+      "generator": "secret"
+    },
+    "BCRYPT_ROUNDS": {
+      "description": "bcrypt salt rounds for password hashing",
+      "value": "12"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "addons": [
+    "dokku-postgres"
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "environments": {
+    "production": {
+      "addons": [
+        "dokku-postgres:create"
+      ]
+    }
+  }
+}
