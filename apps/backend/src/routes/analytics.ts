@@ -4,7 +4,6 @@ import { ApiResponse } from '@parkml/shared';
 import { 
   authenticateToken, 
   requireClinicAdmin,
-  requireSuperAdmin,
   AuthenticatedRequest 
 } from '../middleware/auth';
 
@@ -129,25 +128,25 @@ router.get('/organization/:id',
       });
 
       // Format user statistics
-      const userStatsByRole = userStats.reduce((acc: any, stat) => {
+      const userStatsByRole = userStats.reduce((acc: any, stat: any) => {
         acc[stat.role] = stat._count.id;
         return acc;
       }, {});
 
       // Format assignment statistics
-      const assignmentStatsByStatus = assignmentStats.reduce((acc: any, stat) => {
+      const assignmentStatsByStatus = assignmentStats.reduce((acc: any, stat: any) => {
         acc[stat.status] = stat._count.id;
         return acc;
       }, {});
 
       // Format invitation statistics
-      const invitationStatsByStatus = invitationStats.reduce((acc: any, stat) => {
+      const invitationStatsByStatus = invitationStats.reduce((acc: any, stat: any) => {
         acc[stat.status] = stat._count.id;
         return acc;
       }, {});
 
       // Format symptom entry timeline
-      const symptomEntryTimeline = symptomEntryStats.map(stat => ({
+      const symptomEntryTimeline = symptomEntryStats.map((stat: any) => ({
         date: stat.entryDate.toISOString().split('T')[0],
         count: stat._count.id
       }));
@@ -157,9 +156,9 @@ router.get('/organization/:id',
         data: {
           organization,
           summary: {
-            totalUsers: userStats.reduce((sum, stat) => sum + stat._count.id, 0),
+            totalUsers: userStats.reduce((sum: any, stat: any) => sum + stat._count.id, 0),
             totalPatients: patientCount,
-            totalAssignments: assignmentStats.reduce((sum, stat) => sum + stat._count.id, 0),
+            totalAssignments: assignmentStats.reduce((sum: any, stat: any) => sum + stat._count.id, 0),
             totalInvitations: invitationStats.reduce((sum, stat) => sum + stat._count.id, 0),
             recentActivityCount: recentActivity
           },
@@ -189,50 +188,97 @@ router.get('/organization/:id',
 // Get system-wide analytics (super admin only)
 router.get('/system', 
   authenticateToken, 
-  requireSuperAdmin,
-  async (_req: AuthenticatedRequest, res) => {
+  requireClinicAdmin,
+  async (req: AuthenticatedRequest, res) => {
     try {
+      if (!req.user) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'User not authenticated',
+        };
+        return res.status(401).json(response);
+      }
+
+      const { organizationId, timeRange = '30' } = req.query;
+      
+      // Calculate date range
+      const days = parseInt(timeRange as string);
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+
+      // Build where clause for organization filtering
+      let orgFilter: any = {};
+      if (req.user.role === 'clinic_admin') {
+        // Clinic admins can only see their organization
+        orgFilter = { organizationId: req.user.organizationId };
+      } else if (organizationId) {
+        // Super admins can filter by specific organization
+        orgFilter = { organizationId: organizationId as string };
+      }
       // Get organization statistics
-      const organizationStats = await prisma.organization.groupBy({
+      const organizationStatsGrouped = await prisma.organization.groupBy({
         by: ['isActive'],
+        where: organizationId ? { id: organizationId as string } : {},
         _count: {
           id: true
         }
       });
 
-      // Get user statistics across all organizations
+      // Get user statistics
       const userStats = await prisma.user.groupBy({
         by: ['role'],
+        where: {
+          ...orgFilter,
+          createdAt: {
+            gte: startDate
+          }
+        },
         _count: {
           id: true
         }
       });
 
       // Get patient count
-      const totalPatients = await prisma.patient.count();
+      const totalPatients = await prisma.patient.count({
+        where: {
+          ...orgFilter,
+          createdAt: {
+            gte: startDate
+          }
+        }
+      });
 
       // Get assignment statistics
       const assignmentStats = await prisma.caregiverAssignment.groupBy({
         by: ['status'],
+        where: {
+          createdAt: {
+            gte: startDate
+          },
+          ...(Object.keys(orgFilter).length > 0 ? {
+            patient: {
+              organizationId: orgFilter.organizationId
+            }
+          } : {})
+        },
         _count: {
           id: true
         }
       });
 
-      // Get recent activity (last 30 days)
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
+      // Get recent activity
       const recentActivity = await prisma.auditLog.count({
         where: {
+          ...orgFilter,
           createdAt: {
-            gte: thirtyDaysAgo
+            gte: startDate
           }
         }
       });
 
-      // Get top organizations by user count
-      const topOrganizations = await prisma.organization.findMany({
+      // Get top organizations by user count (only for super admins)
+      const topOrganizations = req.user.role === 'super_admin' ? await prisma.organization.findMany({
+        where: organizationId ? { id: organizationId as string } : {},
         select: {
           id: true,
           name: true,
@@ -252,14 +298,43 @@ router.get('/system',
           }
         },
         take: 10
-      });
+      }) : [];
 
-      // Get growth metrics (new users/patients per day for last 30 days)
+      // Get emergency access and assignment counts per organization (only for super admins)
+      const organizationStats = req.user.role === 'super_admin' ? await Promise.all(
+        topOrganizations.map(async (org) => {
+          const [emergencyAccessCount, assignmentCount] = await Promise.all([
+            prisma.emergencyAccess.count({
+              where: {
+                patient: {
+                  organizationId: org.id
+                }
+              }
+            }),
+            prisma.caregiverAssignment.count({
+              where: {
+                patient: {
+                  organizationId: org.id
+                }
+              }
+            })
+          ]);
+          
+          return {
+            ...org,
+            emergencyAccessCount,
+            assignmentCount
+          };
+        })
+      ) : [];
+
+      // Get growth metrics (new users/patients per day for specified period)
       const growthMetrics = await prisma.user.groupBy({
         by: ['createdAt'],
         where: {
+          ...orgFilter,
           createdAt: {
-            gte: thirtyDaysAgo
+            gte: startDate
           }
         },
         _count: {
@@ -271,17 +346,17 @@ router.get('/system',
       });
 
       // Format statistics
-      const organizationStatsByStatus = organizationStats.reduce((acc: any, stat) => {
+      const organizationStatsByStatus = organizationStatsGrouped.reduce((acc: any, stat: any) => {
         acc[stat.isActive ? 'active' : 'inactive'] = stat._count.id;
         return acc;
       }, {});
 
-      const userStatsByRole = userStats.reduce((acc: any, stat) => {
+      const userStatsByRole = userStats.reduce((acc: any, stat: any) => {
         acc[stat.role] = stat._count.id;
         return acc;
       }, {});
 
-      const assignmentStatsByStatus = assignmentStats.reduce((acc: any, stat) => {
+      const assignmentStatsByStatus = assignmentStats.reduce((acc: any, stat: any) => {
         acc[stat.status] = stat._count.id;
         return acc;
       }, {});
@@ -289,32 +364,41 @@ router.get('/system',
       const response: ApiResponse = {
         success: true,
         data: {
-          summary: {
-            totalOrganizations: organizationStats.reduce((sum, stat) => sum + stat._count.id, 0),
-            totalUsers: userStats.reduce((sum, stat) => sum + stat._count.id, 0),
-            totalPatients,
-            totalAssignments: assignmentStats.reduce((sum, stat) => sum + stat._count.id, 0),
-            recentActivityCount: recentActivity
-          },
-          organizationStatsByStatus,
-          userStatsByRole,
-          assignmentStatsByStatus,
-          topOrganizations: topOrganizations.map((org: any) => ({
+          totalOrganizations: organizationStatsGrouped.reduce((sum: number, stat: any) => sum + stat._count.id, 0),
+          totalUsers: userStats.reduce((sum: number, stat: any) => sum + stat._count.id, 0),
+          totalPatients,
+          totalAssignments: assignmentStats.reduce((sum: number, stat: any) => sum + stat._count.id, 0),
+          activeAssignments: assignmentStatsByStatus.active || 0,
+          totalEmergencyAccess: 0, // Will be populated by emergency access API
+          activeEmergencyAccess: 0, // Will be populated by emergency access API
+          organizations: organizationStats.map((org: any) => ({
             id: org.id,
             name: org.name,
             isActive: org.isActive,
             createdAt: org.createdAt,
             userCount: org._count.users,
             patientCount: org._count.patients,
-            auditLogCount: org._count.auditLogs
+            assignmentCount: org.assignmentCount,
+            emergencyAccessCount: org.emergencyAccessCount,
           })),
-          growthMetrics: growthMetrics.map(metric => ({
+          summary: {
+            totalOrganizations: organizationStatsGrouped.reduce((sum: number, stat: any) => sum + stat._count.id, 0),
+            totalUsers: userStats.reduce((sum: number, stat: any) => sum + stat._count.id, 0),
+            totalPatients,
+            totalAssignments: assignmentStats.reduce((sum: number, stat: any) => sum + stat._count.id, 0),
+            recentActivityCount: recentActivity
+          },
+          organizationStatsByStatus,
+          userStatsByRole,
+          assignmentStatsByStatus,
+          growthMetrics: growthMetrics.map((metric: any) => ({
             date: metric.createdAt.toISOString().split('T')[0],
             newUsers: metric._count.id
           })),
           period: {
-            startDate: thirtyDaysAgo.toISOString(),
-            endDate: new Date().toISOString()
+            startDate: startDate.toISOString(),
+            endDate: new Date().toISOString(),
+            timeRange: days
           }
         }
       };
@@ -416,7 +500,7 @@ router.get('/activity/:userId',
         }
       });
 
-      const activityByAction = activitySummary.reduce((acc: any, activity) => {
+      const activityByAction = activitySummary.reduce((acc: any, activity: any) => {
         acc[activity.action] = activity._count.id;
         return acc;
       }, {});
@@ -429,7 +513,7 @@ router.get('/activity/:userId',
             totalActions: auditLogs.length,
             actionCounts: activityByAction
           },
-          auditLogs: auditLogs.map(log => ({
+          auditLogs: auditLogs.map((log: any) => ({
             id: log.id,
             action: log.action,
             resource: log.resource,
@@ -449,6 +533,161 @@ router.get('/activity/:userId',
       res.json(response);
     } catch (error) {
       console.error('Get user activity error:', error);
+      const response: ApiResponse = {
+        success: false,
+        error: 'Internal server error',
+      };
+      res.status(500).json(response);
+    }
+  }
+);
+
+// Get emergency access analytics (admin only)
+router.get('/emergency-access', 
+  authenticateToken, 
+  requireClinicAdmin,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'User not authenticated',
+        };
+        return res.status(401).json(response);
+      }
+
+      // Build where clause for organization filtering
+      const whereClause: any = {};
+      if (req.user.role === 'clinic_admin') {
+        whereClause.patient = {
+          organizationId: req.user.organizationId
+        };
+      }
+
+      // Get emergency access statistics
+      const [totalAccess, activeAccess, accessByType, accessByOrganization, recentAccess] = await Promise.all([
+        prisma.emergencyAccess.count({
+          where: whereClause
+        }),
+        prisma.emergencyAccess.count({
+          where: {
+            ...whereClause,
+            isActive: true,
+            endTime: {
+              gt: new Date()
+            }
+          }
+        }),
+        prisma.emergencyAccess.groupBy({
+          by: ['accessType'],
+          where: whereClause,
+          _count: {
+            id: true
+          }
+        }),
+        // Group by organization (only for super admins)
+        req.user.role === 'super_admin' ? prisma.emergencyAccess.findMany({
+          where: whereClause,
+          include: {
+            patient: {
+              select: {
+                organizationId: true,
+                organization: {
+                  select: {
+                    id: true,
+                    name: true
+                  }
+                }
+              }
+            }
+          }
+        }).then(accesses => {
+          const orgCounts: Record<string, { organizationId: string, organizationName: string, count: number }> = {};
+          accesses.forEach(access => {
+            const orgId = (access as any).patient.organizationId;
+            const orgName = (access as any).patient.organization.name;
+            if (!orgCounts[orgId]) {
+              orgCounts[orgId] = { organizationId: orgId, organizationName: orgName, count: 0 };
+            }
+            orgCounts[orgId].count++;
+          });
+          return Object.values(orgCounts);
+        }) : Promise.resolve([]),
+        prisma.emergencyAccess.findMany({
+          where: {
+            ...whereClause,
+            createdAt: {
+              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
+            }
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                role: true
+              }
+            },
+            patient: {
+              select: {
+                id: true,
+                name: true,
+                organization: {
+                  select: {
+                    id: true,
+                    name: true
+                  }
+                }
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'desc'
+          },
+          take: 10
+        })
+      ]);
+
+      // Format the data to match frontend expectations
+      const byType = accessByType.reduce((acc: any, stat: any) => {
+        acc[stat.accessType] = stat._count.id;
+        return acc;
+      }, {});
+
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          total: totalAccess,
+          active: activeAccess,
+          expired: totalAccess - activeAccess,
+          byType,
+          byOrganization: accessByOrganization,
+          recentAccess: recentAccess.map((access: any) => ({
+            id: access.id,
+            accessType: access.accessType,
+            reason: access.reason,
+            isActive: access.isActive,
+            startTime: access.startTime,
+            endTime: access.endTime,
+            user: access.user,
+            patient: (access as any).patient,
+            createdAt: access.createdAt
+          })),
+          summary: {
+            totalRequests: totalAccess,
+            activeRequests: activeAccess,
+            expiredRequests: totalAccess - activeAccess,
+            medicalEmergencies: byType.medical_emergency || 0,
+            technicalSupport: byType.technical_support || 0,
+            dataRecovery: byType.data_recovery || 0,
+            auditInvestigation: byType.audit_investigation || 0
+          }
+        }
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error('Get emergency access analytics error:', error);
       const response: ApiResponse = {
         success: false,
         error: 'Internal server error',
