@@ -13,6 +13,7 @@ import CaregiverAssignments from './components/admin/CaregiverAssignments';
 import EmergencyAccess from './components/admin/EmergencyAccess';
 import Analytics from './components/admin/Analytics';
 import CaregiverDashboard from './components/caregiver/CaregiverDashboard';
+import PatientConsentDashboard from './components/patient/PatientConsentDashboard';
 import './App.css';
 
 // Protected Route Component
@@ -116,6 +117,15 @@ const AppContent: React.FC = () => {
             <ProtectedRoute>
               <Layout>
                 <CaregiverDashboard />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          {/* Patient Routes */}
+          <Route path="/patient/consent" element={
+            <ProtectedRoute>
+              <Layout>
+                <PatientConsentDashboard />
               </Layout>
             </ProtectedRoute>
           } />

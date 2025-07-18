@@ -21,9 +21,11 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout, isAdmin, token } = useAuth();
+  const isSuperAdmin = user?.role === 'super_admin';
   const navigate = useNavigate();
   const [showAdminMenu, setShowAdminMenu] = useState(false);
   const [pendingAssignments, setPendingAssignments] = useState(0);
+  const [pendingConsent, setPendingConsent] = useState(0);
   const adminMenuRef = useRef<HTMLDivElement>(null);
 
   // Close admin menu when clicking outside
@@ -67,6 +69,32 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     return () => clearInterval(interval);
   }, [user, token]);
 
+  // Fetch pending consent count for patients
+  useEffect(() => {
+    const fetchPendingConsent = async () => {
+      if (user?.role === 'patient' && token) {
+        try {
+          const response = await fetch('/api/consent/pending', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          const data = await response.json();
+          if (data.success && data.data) {
+            setPendingConsent(data.data.length);
+          }
+        } catch (error) {
+          console.error('Error fetching pending consent:', error);
+        }
+      }
+    };
+
+    fetchPendingConsent();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchPendingConsent, 30000);
+    return () => clearInterval(interval);
+  }, [user, token]);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -95,16 +123,31 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </button>
               
               {(user?.role === 'professional_caregiver' || user?.role === 'family_caregiver') && (
+                <button
+                  onClick={() => navigate('/caregiver/assignments')}
+                  className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium relative"
+                >
+                  <Users className="h-4 w-4 mr-1" />
+                  My Assignments
+                  {pendingAssignments > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {pendingAssignments}
+                    </span>
+                  )}
+                </button>
+              )}
+              
+              {user?.role === 'patient' && (
                 <>
                   <button
-                    onClick={() => navigate('/caregiver/assignments')}
+                    onClick={() => navigate('/patient/consent')}
                     className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium relative"
                   >
                     <Users className="h-4 w-4 mr-1" />
-                    My Assignments
-                    {pendingAssignments > 0 && (
+                    Caregiver Consent
+                    {pendingConsent > 0 && (
                       <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {pendingAssignments}
+                        {pendingConsent}
                       </span>
                     )}
                   </button>
@@ -151,16 +194,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         <Users className="h-4 w-4 mr-2" />
                         User Management
                       </button>
-                      <button
-                        onClick={() => {
-                          navigate('/admin/organizations');
-                          setShowAdminMenu(false);
-                        }}
-                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        <Building className="h-4 w-4 mr-2" />
-                        Organizations
-                      </button>
+                      {isSuperAdmin && (
+                        <button
+                          onClick={() => {
+                            navigate('/admin/organizations');
+                            setShowAdminMenu(false);
+                          }}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          <Building className="h-4 w-4 mr-2" />
+                          Organizations
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           navigate('/admin/assignments');
