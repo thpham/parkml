@@ -1,12 +1,28 @@
 import { Router } from 'express';
 import { prisma } from '../database/prisma-client';
-import { ApiResponse } from '@parkml/shared';
-import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
+import { ApiResponse, DataCategory } from '@parkml/shared';
+import { authenticateToken } from '../middleware/auth';
+import { 
+  requireDataAccess, 
+  AccessControlRequest,
+  hasDataCategoryAccess,
+  getMaxAccessLevel
+} from '../crypto/access-control-middleware';
 
 const router = Router();
 
 // Get symptom entries for a patient
-router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.get('/', 
+  authenticateToken, 
+  requireDataAccess([
+    DataCategory.MOTOR_SYMPTOMS,
+    DataCategory.NON_MOTOR_SYMPTOMS,
+    DataCategory.AUTONOMIC_SYMPTOMS,
+    DataCategory.DAILY_ACTIVITIES,
+    DataCategory.ENVIRONMENTAL_FACTORS,
+    DataCategory.SAFETY_INCIDENTS
+  ]), 
+  async (req: AccessControlRequest, res) => {
   try {
     const { patientId, startDate, endDate, limit = 50 } = req.query;
 
@@ -16,51 +32,6 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
         error: 'Patient ID is required',
       };
       return res.status(400).json(response);
-    }
-
-    // Check if user has access to this patient
-    let hasAccess = false;
-
-    if (req.user?.role === 'healthcare_provider') {
-      const patient = await prisma.patient.findFirst({
-        where: {
-          id: patientId as string,
-          healthcareProviders: {
-            some: {
-              healthcareProviderId: req.user.userId,
-            },
-          },
-        },
-      });
-      hasAccess = !!patient;
-    } else if (req.user?.role === 'caregiver') {
-      const patient = await prisma.patient.findFirst({
-        where: {
-          id: patientId as string,
-          caregivers: {
-            some: {
-              caregiverId: req.user.userId,
-            },
-          },
-        },
-      });
-      hasAccess = !!patient;
-    } else if (req.user?.role === 'patient') {
-      const patient = await prisma.patient.findFirst({
-        where: {
-          id: patientId as string,
-          userId: req.user.userId,
-        },
-      });
-      hasAccess = !!patient;
-    }
-
-    if (!hasAccess) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'Access denied to this patient',
-      };
-      return res.status(403).json(response);
     }
 
     // Build query for symptom entries with date filtering
@@ -103,15 +74,19 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
         entryDate: entry.entryDate,
         completedBy: entry.completedBy,
         completedByName: entry.completedByUser.name,
-        motorSymptoms: entry.motorSymptoms,
-        nonMotorSymptoms: entry.nonMotorSymptoms,
-        autonomicSymptoms: entry.autonomicSymptoms,
-        dailyActivities: entry.dailyActivities,
-        environmentalFactors: entry.environmentalFactors,
-        safetyIncidents: entry.safetyIncidents,
+        // Filter data based on accessible categories
+        motorSymptoms: hasDataCategoryAccess(req, DataCategory.MOTOR_SYMPTOMS) ? entry.motorSymptoms : null,
+        nonMotorSymptoms: hasDataCategoryAccess(req, DataCategory.NON_MOTOR_SYMPTOMS) ? entry.nonMotorSymptoms : null,
+        autonomicSymptoms: hasDataCategoryAccess(req, DataCategory.AUTONOMIC_SYMPTOMS) ? entry.autonomicSymptoms : null,
+        dailyActivities: hasDataCategoryAccess(req, DataCategory.DAILY_ACTIVITIES) ? entry.dailyActivities : null,
+        environmentalFactors: hasDataCategoryAccess(req, DataCategory.ENVIRONMENTAL_FACTORS) ? entry.environmentalFactors : null,
+        safetyIncidents: hasDataCategoryAccess(req, DataCategory.SAFETY_INCIDENTS) ? entry.safetyIncidents : null,
         notes: entry.notes,
         createdAt: entry.createdAt,
         updatedAt: entry.updatedAt,
+        // Add access control metadata
+        accessLevel: getMaxAccessLevel(req),
+        accessibleCategories: req.accessControl?.accessibleCategories || []
       })),
     };
 
@@ -127,7 +102,17 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
 });
 
 // Create new symptom entry
-router.post('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.post('/', 
+  authenticateToken, 
+  requireDataAccess([
+    DataCategory.MOTOR_SYMPTOMS,
+    DataCategory.NON_MOTOR_SYMPTOMS,
+    DataCategory.AUTONOMIC_SYMPTOMS,
+    DataCategory.DAILY_ACTIVITIES,
+    DataCategory.ENVIRONMENTAL_FACTORS,
+    DataCategory.SAFETY_INCIDENTS
+  ]), 
+  async (req: AccessControlRequest, res) => {
   try {
     const {
       patientId,
@@ -150,50 +135,7 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
       return res.status(400).json(response);
     }
 
-    // Check if user has access to this patient
-    let hasAccess = false;
-
-    if (req.user?.role === 'healthcare_provider') {
-      const patient = await prisma.patient.findFirst({
-        where: {
-          id: patientId,
-          healthcareProviders: {
-            some: {
-              healthcareProviderId: req.user.userId,
-            },
-          },
-        },
-      });
-      hasAccess = !!patient;
-    } else if (req.user?.role === 'caregiver') {
-      const patient = await prisma.patient.findFirst({
-        where: {
-          id: patientId,
-          caregivers: {
-            some: {
-              caregiverId: req.user.userId,
-            },
-          },
-        },
-      });
-      hasAccess = !!patient;
-    } else if (req.user?.role === 'patient') {
-      const patient = await prisma.patient.findFirst({
-        where: {
-          id: patientId,
-          userId: req.user.userId,
-        },
-      });
-      hasAccess = !!patient;
-    }
-
-    if (!hasAccess) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'Access denied to this patient',
-      };
-      return res.status(403).json(response);
-    }
+    // Access control is handled by middleware
 
     // Check if entry already exists for this date
     const existingEntry = await prisma.symptomEntry.findFirst({
@@ -216,7 +158,7 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
       data: {
         patientId,
         entryDate: new Date(entryDate),
-        completedBy: req.user?.userId!,
+        completedBy: req.user?.id!,
         motorSymptoms: JSON.stringify(motorSymptoms),
         nonMotorSymptoms: JSON.stringify(nonMotorSymptoms),
         autonomicSymptoms: JSON.stringify(autonomicSymptoms),
@@ -258,72 +200,56 @@ router.post('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
 });
 
 // Get symptom entry by ID
-router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.get('/:id', 
+  authenticateToken, 
+  async (req: AccessControlRequest, res) => {
   try {
     const { id } = req.params;
 
-    // Get symptom entry with access check
-    let entry: any = null;
-
-    if (req.user?.role === 'healthcare_provider') {
-      entry = await prisma.symptomEntry.findFirst({
-        where: {
-          id,
-          patient: {
-            healthcareProviders: {
-              some: {
-                healthcareProviderId: req.user.userId,
-              },
-            },
-          },
+    // Find the symptom entry first to get patient ID
+    const entry = await prisma.symptomEntry.findUnique({
+      where: { id },
+      include: {
+        completedByUser: {
+          select: { name: true },
         },
-        include: {
-          completedByUser: {
-            select: { name: true },
-          },
-        },
-      });
-    } else if (req.user?.role === 'caregiver') {
-      entry = await prisma.symptomEntry.findFirst({
-        where: {
-          id,
-          patient: {
-            caregivers: {
-              some: {
-                caregiverId: req.user.userId,
-              },
-            },
-          },
-        },
-        include: {
-          completedByUser: {
-            select: { name: true },
-          },
-        },
-      });
-    } else if (req.user?.role === 'patient') {
-      entry = await prisma.symptomEntry.findFirst({
-        where: {
-          id,
-          patient: {
-            userId: req.user.userId,
-          },
-        },
-        include: {
-          completedByUser: {
-            select: { name: true },
-          },
-        },
-      });
-    }
+      },
+    });
 
     if (!entry) {
       const response: ApiResponse = {
         success: false,
-        error: 'Symptom entry not found or access denied',
+        error: 'Symptom entry not found',
       };
       return res.status(404).json(response);
     }
+
+    // Create access control middleware dynamically for this patient
+    const accessMiddleware = requireDataAccess([
+      DataCategory.MOTOR_SYMPTOMS,
+      DataCategory.NON_MOTOR_SYMPTOMS,
+      DataCategory.AUTONOMIC_SYMPTOMS,
+      DataCategory.DAILY_ACTIVITIES,
+      DataCategory.ENVIRONMENTAL_FACTORS,
+      DataCategory.SAFETY_INCIDENTS
+    ]);
+
+    // Override patient ID in request for access control
+    req.params.patientId = entry.patientId;
+
+    // Check access control
+    await new Promise<void>((resolve, reject) => {
+      accessMiddleware(req, res, (error?: any) => {
+        if (error) reject(error);
+        else resolve();
+      });
+    }).catch(() => {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Access denied to this patient data',
+      };
+      return res.status(403).json(response);
+    });
 
     const response: ApiResponse = {
       success: true,
@@ -333,15 +259,19 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
         entryDate: entry.entryDate,
         completedBy: entry.completedBy,
         completedByName: entry.completedByUser.name,
-        motorSymptoms: entry.motorSymptoms,
-        nonMotorSymptoms: entry.nonMotorSymptoms,
-        autonomicSymptoms: entry.autonomicSymptoms,
-        dailyActivities: entry.dailyActivities,
-        environmentalFactors: entry.environmentalFactors,
-        safetyIncidents: entry.safetyIncidents,
+        // Filter data based on accessible categories
+        motorSymptoms: hasDataCategoryAccess(req, DataCategory.MOTOR_SYMPTOMS) ? entry.motorSymptoms : null,
+        nonMotorSymptoms: hasDataCategoryAccess(req, DataCategory.NON_MOTOR_SYMPTOMS) ? entry.nonMotorSymptoms : null,
+        autonomicSymptoms: hasDataCategoryAccess(req, DataCategory.AUTONOMIC_SYMPTOMS) ? entry.autonomicSymptoms : null,
+        dailyActivities: hasDataCategoryAccess(req, DataCategory.DAILY_ACTIVITIES) ? entry.dailyActivities : null,
+        environmentalFactors: hasDataCategoryAccess(req, DataCategory.ENVIRONMENTAL_FACTORS) ? entry.environmentalFactors : null,
+        safetyIncidents: hasDataCategoryAccess(req, DataCategory.SAFETY_INCIDENTS) ? entry.safetyIncidents : null,
         notes: entry.notes,
         createdAt: entry.createdAt,
         updatedAt: entry.updatedAt,
+        // Add access control metadata
+        accessLevel: getMaxAccessLevel(req),
+        accessibleCategories: req.accessControl?.accessibleCategories || []
       },
     };
 
