@@ -47,6 +47,7 @@ interface EmergencyAccessStats {
 
 const Analytics: React.FC = () => {
   const { user, token, isAdmin } = useAuth();
+  const isSuperAdmin = user?.role === 'super_admin';
   const [systemStats, setSystemStats] = useState<SystemStats | null>(null);
   const [emergencyStats, setEmergencyStats] = useState<EmergencyAccessStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -155,8 +156,15 @@ const Analytics: React.FC = () => {
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
-            <p className="text-gray-600">System performance and usage statistics</p>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isSuperAdmin ? 'System Analytics Dashboard' : 'Organization Analytics Dashboard'}
+            </h1>
+            <p className="text-gray-600">
+              {isSuperAdmin 
+                ? 'System-wide performance and usage statistics' 
+                : `Analytics for ${user?.organization?.name || 'your organization'}`
+              }
+            </p>
           </div>
           <div className="flex items-center space-x-4">
             <div>
@@ -172,28 +180,30 @@ const Analytics: React.FC = () => {
                 <option value="90">Last 90 days</option>
               </select>
             </div>
-            <div>
-              <label htmlFor="organization" className="sr-only">Filter by organization</label>
-              <select
-                id="organization"
-                value={selectedOrganization}
-                onChange={(e) => setSelectedOrganization(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">All Organizations</option>
-                {systemStats?.organizations?.map((org) => (
-                  <option key={org.id} value={org.id}>
-                    {org.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {isSuperAdmin && (
+              <div>
+                <label htmlFor="organization" className="sr-only">Filter by organization</label>
+                <select
+                  id="organization"
+                  value={selectedOrganization}
+                  onChange={(e) => setSelectedOrganization(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">All Organizations</option>
+                  {systemStats?.organizations?.map((org) => (
+                    <option key={org.id} value={org.id}>
+                      {org.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* System Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className={`grid grid-cols-1 gap-6 ${isSuperAdmin ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
             <div className="flex items-center">
@@ -234,25 +244,27 @@ const Analytics: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Building className="h-6 w-6 text-purple-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Organizations
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {systemStats?.totalOrganizations || 0}
-                  </dd>
-                </dl>
+        {isSuperAdmin && (
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <Building className="h-6 w-6 text-purple-400" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">
+                      Organizations
+                    </dt>
+                    <dd className="text-lg font-medium text-gray-900">
+                      {systemStats?.totalOrganizations || 0}
+                    </dd>
+                  </dl>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
@@ -276,7 +288,7 @@ const Analytics: React.FC = () => {
       </div>
 
       {/* Emergency Access Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className={`grid grid-cols-1 gap-6 ${isSuperAdmin ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-medium text-gray-900">Emergency Access Overview</h2>
@@ -317,114 +329,118 @@ const Analytics: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white shadow rounded-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-medium text-gray-900">Emergency Access by Organization</h2>
-            <Building className="h-5 w-5 text-blue-500" />
+        {isSuperAdmin && (
+          <div className="bg-white shadow rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-medium text-gray-900">Emergency Access by Organization</h2>
+              <Building className="h-5 w-5 text-blue-500" />
+            </div>
+            
+            <div className="space-y-3">
+              {emergencyStats?.byOrganization?.map((org) => (
+                <div key={org.organizationId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {org.organizationName}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Emergency Access Records
+                    </div>
+                  </div>
+                  <div className="text-lg font-bold text-gray-900">
+                    {org.count}
+                  </div>
+                </div>
+              ))}
+              
+              {(!emergencyStats?.byOrganization || emergencyStats.byOrganization.length === 0) && (
+                <div className="text-center py-4 text-gray-500">
+                  <Shield className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                  <p className="text-sm">No emergency access records found</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Organizations Table - Super Admin Only */}
+      {isSuperAdmin && (
+        <div className="bg-white shadow rounded-lg">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900">Organization Statistics</h2>
           </div>
           
-          <div className="space-y-3">
-            {emergencyStats?.byOrganization?.map((org) => (
-              <div key={org.organizationId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <div className="text-sm font-medium text-gray-900">
-                    {org.organizationName}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Emergency Access Records
-                  </div>
-                </div>
-                <div className="text-lg font-bold text-gray-900">
-                  {org.count}
-                </div>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Organization
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Users
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Patients
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Assignments
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Emergency Access
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {systemStats?.organizations?.map((org) => (
+                  <tr key={org.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <Building className="h-5 w-5 text-gray-400 mr-3" />
+                        <div className="text-sm font-medium text-gray-900">
+                          {org.name}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {org.userCount}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {org.patientCount}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {org.assignmentCount}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {org.emergencyAccessCount}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        org.isActive 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {org.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
             
-            {(!emergencyStats?.byOrganization || emergencyStats.byOrganization.length === 0) && (
-              <div className="text-center py-4 text-gray-500">
-                <Shield className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                <p className="text-sm">No emergency access records found</p>
+            {(!systemStats?.organizations || systemStats.organizations.length === 0) && (
+              <div className="text-center py-8 text-gray-500">
+                <Building className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <p className="text-sm">No organizations found</p>
               </div>
             )}
           </div>
         </div>
-      </div>
-
-      {/* Organizations Table */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Organization Statistics</h2>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Organization
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Users
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Patients
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Assignments
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Emergency Access
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {systemStats?.organizations?.map((org) => (
-                <tr key={org.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <Building className="h-5 w-5 text-gray-400 mr-3" />
-                      <div className="text-sm font-medium text-gray-900">
-                        {org.name}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {org.userCount}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {org.patientCount}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {org.assignmentCount}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {org.emergencyAccessCount}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                      org.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {org.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          
-          {(!systemStats?.organizations || systemStats.organizations.length === 0) && (
-            <div className="text-center py-8 text-gray-500">
-              <Building className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <p className="text-sm">No organizations found</p>
-            </div>
-          )}
-        </div>
-      </div>
+      )}
     </div>
   );
 };

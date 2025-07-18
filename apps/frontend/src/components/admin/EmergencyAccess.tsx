@@ -50,10 +50,10 @@ const EmergencyAccess: React.FC = () => {
         },
       });
 
-      const data: ApiResponse<EmergencyAccessWithDetails[]> = await response.json();
+      const data: ApiResponse<{ emergencyAccesses: EmergencyAccessWithDetails[], pagination: any }> = await response.json();
 
       if (data.success) {
-        setEmergencyAccess(data.data || []);
+        setEmergencyAccess(data.data?.emergencyAccesses || []);
       } else {
         toast.error(data.error || 'Failed to fetch emergency access records');
       }

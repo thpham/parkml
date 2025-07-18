@@ -4,13 +4,19 @@ import { Patient, SymptomEntry } from '@parkml/shared';
 import { Calendar, Users, Activity, TrendingUp, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import AdminDashboard from '../admin/AdminDashboard';
 
 const Dashboard: React.FC = () => {
-  const { user, token } = useAuth();
+  const { user, token, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [recentEntries, setRecentEntries] = useState<SymptomEntry[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Redirect admin users to admin dashboard
+  if (isAdmin) {
+    return <AdminDashboard />;
+  }
 
   useEffect(() => {
     if (user && token) {
@@ -115,8 +121,14 @@ const Dashboard: React.FC = () => {
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600">Welcome back, {user?.name}</p>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {user?.role === 'patient' ? 'Patient Dashboard' : 
+               user?.role === 'family_caregiver' ? 'Family Caregiver Dashboard' : 
+               'Professional Caregiver Dashboard'}
+            </h1>
+            <p className="text-gray-600">
+              Welcome back, {user?.name} ({user?.role?.replace('_', ' ')})
+            </p>
           </div>
           
           {user?.role === 'patient' && patients.length === 0 && (
@@ -132,26 +144,28 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Users className="h-6 w-6 text-gray-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Total Patients
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {patients.length}
-                  </dd>
-                </dl>
+      <div className={`grid grid-cols-1 gap-6 ${user?.role === 'patient' ? 'md:grid-cols-3' : 'md:grid-cols-4'}`}>
+        {user?.role !== 'patient' && (
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <Users className="h-6 w-6 text-gray-400" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">
+                      Assigned Patients
+                    </dt>
+                    <dd className="text-lg font-medium text-gray-900">
+                      {patients.length}
+                    </dd>
+                  </dl>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">
@@ -219,7 +233,9 @@ const Dashboard: React.FC = () => {
       {/* Patients List */}
       <div className="bg-white shadow rounded-lg">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Patients</h2>
+          <h2 className="text-lg font-medium text-gray-900">
+            {user?.role === 'patient' ? 'My Profile' : 'Assigned Patients'}
+          </h2>
         </div>
         
         {patients.length === 0 ? (
@@ -256,14 +272,16 @@ const Dashboard: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => navigate(`/symptoms/${patient.id}`)}
-                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-600 bg-blue-100 hover:bg-blue-200"
-                      >
-                        Add Symptoms
-                      </button>
-                    </div>
+                    {(user?.role === 'patient' || user?.role === 'family_caregiver') && (
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => navigate(`/symptoms/${patient.id}`)}
+                          className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-600 bg-blue-100 hover:bg-blue-200"
+                        >
+                          Add Symptoms
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </li>
               ))}
