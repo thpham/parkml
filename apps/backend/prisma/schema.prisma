@@ -24,35 +24,44 @@ model Organization {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relationships
-  users       User[]
-  patients    Patient[]
-  auditLogs   AuditLog[]
+  users                    User[]
+  patients                 Patient[]
+  auditLogs                AuditLog[]
+  emergencyAccess          EmergencyAccess[]
+  encryptionKeys           EncryptionKey[]
+  homomorphicComputations  HomomorphicComputation[]
+  proxyReEncryptionKeys    ProxyReEncryptionKey[]
 
   @@map("organizations")
 }
 
 // Enhanced Users table - Authentication and user management
 model User {
-  id             String       @id @default(cuid())
-  email          String       @unique
-  passwordHash   String       @map("password_hash")
-  name           String
-  role           Role
-  organizationId String?      @map("organization_id")
-  isActive       Boolean      @default(true) @map("is_active")
-  lastLoginAt    DateTime?    @map("last_login_at")
-  createdAt      DateTime     @default(now()) @map("created_at")
-  updatedAt      DateTime     @updatedAt @map("updated_at")
+  id                 String       @id @default(cuid())
+  email              String       @unique
+  passwordHash       String       @map("password_hash")
+  name               String?
+  role               Role
+  organizationId     String?      @map("organization_id")
+  isActive           Boolean      @default(true) @map("is_active")
+  lastLoginAt        DateTime?    @map("last_login_at")
+  encryptionMetadata String?      @map("encryption_metadata") // JSON - Encryption metadata for migration tracking
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
 
   // Relationships
   organization                Organization?                @relation(fields: [organizationId], references: [id])
   patient                     Patient?
   caregiverAssignments        CaregiverAssignment[]        @relation("CaregiverAssignments")
+  encryptionKeys              EncryptionKey[]
+  emergencyAccess             EmergencyAccess[]
+  emergencyApprovals          EmergencyApproval[]
+  delegations                 ProxyReEncryptionKey[]       @relation("UserDelegations")
+  receivedDelegations         ProxyReEncryptionKey[]       @relation("UserDelegated")
   createdAssignments          CaregiverAssignment[]        @relation("AssignmentCreator")
   sentInvitations             Invitation[]                 @relation("InvitationSender")
   receivedInvitations         Invitation[]                 @relation("InvitationReceiver")
   symptomEntries              SymptomEntry[]
-  emergencyAccess             EmergencyAccess[]
   auditLogs                   AuditLog[]
 
   // Legacy relationships - will be deprecated after migration
@@ -64,16 +73,19 @@ model User {
 
 // Enhanced Patients table - Patient information
 model Patient {
-  id              String   @id @default(cuid())
-  userId          String   @unique @map("user_id")
-  organizationId  String   @map("organization_id")
-  name            String
-  dateOfBirth     DateTime @map("date_of_birth")
-  diagnosisDate   DateTime @map("diagnosis_date")
-  emergencyContact String?  @default("{}") @map("emergency_contact") // JSON stored as string
-  privacySettings String   @default("{}") @map("privacy_settings") // JSON stored as string
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id                 String   @id @default(cuid())
+  userId             String   @unique @map("user_id")
+  organizationId     String   @map("organization_id")
+  name               String
+  email              String?  // Patient email for direct communication
+  dateOfBirth        DateTime @map("date_of_birth")
+  diagnosisDate      DateTime @map("diagnosis_date")
+  emergencyContact   String?  @default("{}") @map("emergency_contact") // JSON stored as string
+  emergencyPhone     String?  @map("emergency_phone") // Emergency contact phone
+  privacySettings    String   @default("{}") @map("privacy_settings") // JSON stored as string
+  encryptionMetadata String?  @map("encryption_metadata") // JSON - Encryption metadata for migration tracking
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
 
   // Relationships
   user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -141,23 +153,49 @@ model Invitation {
 
 // Emergency access system
 model EmergencyAccess {
-  id          String              @id @default(cuid())
-  userId      String              @map("user_id")
-  patientId   String              @map("patient_id")
-  reason      String              // Emergency reason/justification
-  accessType  EmergencyAccessType @map("access_type")
-  startTime   DateTime            @map("start_time")
-  endTime     DateTime?           @map("end_time")
-  isActive    Boolean             @default(true) @map("is_active")
-  approvedBy  String?             @map("approved_by") // For future approval workflow
-  createdAt   DateTime            @default(now()) @map("created_at")
-  updatedAt   DateTime            @updatedAt @map("updated_at")
+  id                String              @id @default(cuid())
+  userId            String              @map("user_id")
+  patientId         String              @map("patient_id")
+  reason            String              // Emergency reason/justification
+  accessType        EmergencyAccessType @map("access_type")
+  startTime         DateTime            @map("start_time")
+  endTime           DateTime?           @map("end_time")
+  isActive          Boolean             @default(true) @map("is_active")
+  approvedBy        String?             @map("approved_by") // For future approval workflow
+  justification     String?             // Detailed justification for emergency access
+  urgencyLevel      String?             @map("urgency_level") // critical, high, medium
+  organizationId    String?             @map("organization_id")
+  revokedAt         DateTime?           @map("revoked_at")
+  revokedBy         String?             @map("revoked_by")
+  revocationReason  String?             @map("revocation_reason")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
 
   // Relationships
-  user    User    @relation(fields: [userId], references: [id])
-  patient Patient @relation(fields: [patientId], references: [id])
+  user              User                @relation(fields: [userId], references: [id])
+  patient           Patient             @relation(fields: [patientId], references: [id])
+  organization      Organization?       @relation(fields: [organizationId], references: [id])
+  approvals         EmergencyApproval[]
 
   @@map("emergency_access")
+}
+
+// Emergency access approval system
+model EmergencyApproval {
+  id                String        @id @default(cuid())
+  emergencyAccessId String        @map("emergency_access_id")
+  approverId        String        @map("approver_id")
+  approverRole      String        @map("approver_role")
+  approvalReason    String        @map("approval_reason")
+  digitalSignature  String        @map("digital_signature")
+  createdAt         DateTime      @default(now()) @map("created_at")
+
+  // Relationships
+  emergencyAccess   EmergencyAccess @relation(fields: [emergencyAccessId], references: [id])
+  approver          User            @relation(fields: [approverId], references: [id])
+
+  @@unique([emergencyAccessId, approverId])
+  @@map("emergency_approvals")
 }
 
 // Audit logging system
@@ -214,15 +252,21 @@ model SymptomEntry {
   patientId            String   @map("patient_id")
   entryDate            DateTime @map("entry_date")
   completedBy          String   @map("completed_by")
-  motorSymptoms        String   @map("motor_symptoms") // JSON stored as string
-  nonMotorSymptoms     String   @map("non_motor_symptoms") // JSON stored as string
-  autonomicSymptoms    String   @map("autonomic_symptoms") // JSON stored as string
-  dailyActivities      String   @map("daily_activities") // JSON stored as string
-  environmentalFactors String   @map("environmental_factors") // JSON stored as string
-  safetyIncidents      String   @map("safety_incidents") // JSON stored as string
+  motorSymptoms        String?  @map("motor_symptoms") // JSON stored as string
+  nonMotorSymptoms     String?  @map("non_motor_symptoms") // JSON stored as string
+  autonomicSymptoms    String?  @map("autonomic_symptoms") // JSON stored as string
+  dailyActivities      String?  @map("daily_activities") // JSON stored as string
+  medicationData       String?  @map("medication_data") // JSON stored as string
+  environmentalFactors String?  @map("environmental_factors") // JSON stored as string
+  safetyIncidents      String?  @map("safety_incidents") // JSON stored as string
   notes                String?
   createdAt            DateTime @default(now()) @map("created_at")
   updatedAt            DateTime @updatedAt @map("updated_at")
+
+  // Encryption metadata
+  isEncrypted        Boolean? @default(false) @map("is_encrypted")
+  encryptionPolicy   String?  @map("encryption_policy") // JSON stored as string
+  encryptionMetadata String?  @map("encryption_metadata") // JSON - Encryption metadata for migration tracking
 
   // Relationships
   patient         Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
@@ -294,4 +338,154 @@ enum ProgressionType {
   better
   same
   worse
+}
+
+// Encryption system models
+model EncryptionKey {
+  id              String   @id @default(cuid())
+  userId          String?  @map("user_id")
+  organizationId  String   @map("organization_id")
+  keyType         String   @map("key_type") // 'master', 'patient', 'delegation', 'emergency', 'organization', 'research'
+  encryptedKey    String   @map("encrypted_key") // ABE-encrypted key material
+  publicKey       String?  @map("public_key") // Public key component (for asymmetric schemes)
+  attributes      String   @map("attributes") // JSON - Access control attributes
+  derivationPath  String?  @map("derivation_path") // Key derivation metadata
+  expiresAt       DateTime? @map("expires_at")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  // Relationships
+  user         User?        @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@map("encryption_keys")
+}
+
+// Proxy Re-Encryption keys for patient-controlled access delegation
+model ProxyReEncryptionKey {
+  id                String    @id @default(cuid())
+  delegatorId       String    @map("delegator_id") // Patient who is delegating access
+  delegateeId       String    @map("delegatee_id") // User receiving access
+  dataCategories    String    @map("data_categories") // JSON - Data categories included in delegation
+  accessLevel       String    @map("access_level") // Access level granted
+  keyData           String    @map("key_data") // Encrypted re-encryption key
+  reason            String    @map("reason") // Reason for delegation
+  validFrom         DateTime  @default(now()) @map("valid_from")
+  validUntil        DateTime  @map("valid_until")
+  organizationId    String    @map("organization_id")
+  isRevoked         Boolean   @default(false) @map("is_revoked")
+  revokedAt         DateTime? @map("revoked_at")
+  revokedBy         String?   @map("revoked_by")
+  revocationReason  String?   @map("revocation_reason")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  
+  // Relationships
+  delegator     User         @relation("UserDelegations", fields: [delegatorId], references: [id])
+  delegatee     User         @relation("UserDelegated", fields: [delegateeId], references: [id])
+  organization  Organization @relation(fields: [organizationId], references: [id])
+
+  @@map("proxy_re_encryption_keys")
+}
+
+// Homomorphic computation requests for privacy-preserving analytics
+model HomomorphicComputation {
+  id               String   @id @default(cuid())
+  computationType  String   @map("computation_type") // 'sum', 'mean', 'count', 'variance', 'correlation', 'regression'
+  organizationId   String?  @map("organization_id")
+  dataCategories   String   @map("data_categories") // JSON - Data categories to include
+  cohortCriteria   String   @map("cohort_criteria") // JSON - Patient cohort criteria
+  requesterId      String   @map("requester_id")
+  purpose          String   @map("purpose")
+  status           String   @default("pending") @map("status") // 'pending', 'running', 'completed', 'failed'
+  encryptedResult  String?  @map("encrypted_result") // Encrypted computation result
+  errorMessage     String?  @map("error_message")
+  computedAt       DateTime? @map("computed_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+  
+  // Relationships
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  @@map("homomorphic_computations")
+}
+
+// Cryptographic audit trail for all encryption operations
+model CryptoAuditEntry {
+  id                    String   @id @default(cuid())
+  operation             String   @map("operation") // 'encrypt', 'decrypt', 'key_generation', 'key_delegation', 'key_revocation', 'emergency_access'
+  userId                String   @map("user_id")
+  patientId             String?  @map("patient_id")
+  organizationId        String   @map("organization_id")
+  dataCategories        String   @map("data_categories") // JSON
+  accessLevel           String   @map("access_level")
+  encryptionContext     String   @map("encryption_context") // JSON - Encryption context details
+  success               Boolean  @map("success")
+  errorMessage          String?  @map("error_message")
+  ipAddress             String   @map("ip_address")
+  userAgent             String   @map("user_agent")
+  cryptographicProof    String   @map("cryptographic_proof") // Cryptographic signature of the audit entry
+  emergencyDetails      String?  @map("emergency_details") // JSON - Emergency access specific details
+  timestamp             DateTime @default(now()) @map("timestamp")
+
+  @@map("crypto_audit_entries")
+}
+
+// Enums for encryption system
+enum KeyType {
+  master
+  patient
+  delegation
+  emergency
+  organization
+  research
+}
+
+enum AccessLevel {
+  patient_full
+  caregiver_professional
+  caregiver_family
+  emergency_access
+  research_anonymized
+  analytics_aggregated
+}
+
+enum ComputationType {
+  sum
+  mean
+  count
+  variance
+  correlation
+  regression
+}
+
+// Data migration tracking for encryption system
+model DataMigration {
+  id               String    @id @default(cuid())
+  status           String    @default("pending") // 'pending', 'running', 'completed', 'failed', 'cancelled'
+  config           String    // JSON - Migration configuration
+  totalRecords     Int       @default(0) @map("total_records")
+  processedRecords Int       @default(0) @map("processed_records")
+  encryptedRecords Int       @default(0) @map("encrypted_records")
+  failedRecords    Int       @default(0) @map("failed_records")
+  errorMessage     String?   @map("error_message")
+  startedAt        DateTime  @default(now()) @map("started_at")
+  completedAt      DateTime? @map("completed_at")
+  lastUpdated      DateTime  @updatedAt @map("last_updated")
+
+  @@map("data_migrations")
+}
+
+// Performance audit tracking for encryption system
+model PerformanceAudit {
+  id               String   @id @default(cuid())
+  auditId          String   @unique @map("audit_id")
+  timestamp        DateTime @default(now())
+  overallScore     Int      @map("overall_score") // 0-100
+  metrics          String   // JSON - Performance metrics
+  recommendations  String   // JSON - Performance recommendations
+  securityFindings String   @map("security_findings") // JSON - Security audit findings
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@map("performance_audits")
 }

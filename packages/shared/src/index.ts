@@ -335,7 +335,12 @@ export const API_ENDPOINTS = {
   ASSIGNMENTS: '/api/assignments',
   CONSENT: '/api/consent',
   EMERGENCY_ACCESS: '/api/emergency-access',
+  EMERGENCY_ACCESS_CRYPTO: '/api/emergency-access-crypto',
+  PROXY_RE_ENCRYPTION: '/api/proxy-re-encryption',
   ANALYTICS: '/api/analytics',
+  ACCESS_CONTROL_DEMO: '/api/access-control-demo',
+  DATA_MIGRATION: '/api/data-migration',
+  PERFORMANCE_AUDIT: '/api/performance-audit',
 } as const;
 
 export const HTTP_STATUS = {
@@ -346,3 +351,6 @@ export const HTTP_STATUS = {
   NOT_FOUND: 404,
   INTERNAL_SERVER_ERROR: 500,
 } as const;
+
+// Crypto types exports
+export * from './crypto/types';

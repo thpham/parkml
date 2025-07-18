@@ -6,8 +6,10 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "build": "npm run build:js && npm run build:types",
+    "build:js": "tsup src/index.ts --format cjs,esm",
+    "build:types": "tsc src/index.ts src/crypto/types.ts --declaration --emitDeclarationOnly --outDir dist",
+    "dev": "tsup src/index.ts --format cjs,esm --watch",
     "lint": "eslint . --ext ts --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc --noEmit"
   },
