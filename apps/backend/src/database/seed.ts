@@ -35,7 +35,7 @@ async function main() {
   // Create organizations first
   console.log('🏢 Creating organizations...');
   
-  const defaultOrg = await prisma.organization.upsert({
+  await prisma.organization.upsert({
     where: { id: 'default_org' },
     update: {},
     create: {
@@ -363,7 +363,7 @@ async function main() {
   await prisma.emergencyAccess.create({
     data: {
       patientId: patient1.id,
-      requestedById: professionalCaregiver1.id,
+      userId: professionalCaregiver1.id,
       accessType: 'medical_emergency',
       reason: 'Patient experienced severe symptoms and required immediate data access for treatment',
       startTime: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
@@ -376,7 +376,7 @@ async function main() {
   await prisma.emergencyAccess.create({
     data: {
       patientId: patient2.id,
-      requestedById: professionalCaregiver2.id,
+      userId: professionalCaregiver2.id,
       accessType: 'technical_support',
       reason: 'System malfunction requiring data recovery for patient care continuity',
       startTime: new Date(Date.now() - 24 * 60 * 60 * 1000), // 24 hours ago
@@ -389,7 +389,7 @@ async function main() {
   await prisma.emergencyAccess.create({
     data: {
       patientId: patient3.id,
-      requestedById: superAdmin.id,
+      userId: superAdmin.id,
       accessType: 'audit_investigation',
       reason: 'Scheduled audit investigation for compliance verification',
       startTime: new Date(Date.now() + 60 * 60 * 1000), // 1 hour from now

@@ -38,11 +38,13 @@ router.get('/pending',
         return res.status(404).json(response);
       }
 
-      // Get pending assignments that need consent
+      // Get assignments that need patient consent (pending or active without consent)
       const pendingAssignments = await prisma.caregiverAssignment.findMany({
         where: {
           patientId: patient.id,
-          status: 'pending',
+          status: {
+            in: ['pending', 'active']
+          },
           consentGiven: false
         },
         include: {
@@ -150,11 +152,11 @@ router.post('/approve/:assignmentId',
         return res.status(403).json(response);
       }
 
-      // Check if assignment is in pending state
-      if (assignment.status !== 'pending') {
+      // Check if assignment needs patient consent (pending or active without consent)
+      if (!['pending', 'active'].includes(assignment.status) || assignment.consentGiven) {
         const response: ApiResponse = {
           success: false,
-          error: 'Assignment is not in pending state',
+          error: 'Assignment does not require patient consent',
         };
         return res.status(400).json(response);
       }
@@ -293,11 +295,11 @@ router.post('/decline/:assignmentId',
         return res.status(403).json(response);
       }
 
-      // Check if assignment is in pending state
-      if (assignment.status !== 'pending') {
+      // Check if assignment can be declined (pending or active without consent)
+      if (!['pending', 'active'].includes(assignment.status) || assignment.consentGiven) {
         const response: ApiResponse = {
           success: false,
-          error: 'Assignment is not in pending state',
+          error: 'Assignment cannot be declined at this time',
         };
         return res.status(400).json(response);
       }

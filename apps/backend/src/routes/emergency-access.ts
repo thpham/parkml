@@ -191,7 +191,8 @@ router.get('/',
 
       // Organization filtering for clinic admins
       if (req.user.role === 'clinic_admin') {
-        whereClause.user = {
+        // Clinic admins should see emergency access for patients in their organization
+        whereClause.patient = {
           organizationId: req.user.organizationId
         };
       }
@@ -243,6 +244,21 @@ router.get('/',
                   }
                 }
               }
+            },
+            patient: {
+              select: {
+                id: true,
+                name: true,
+                dateOfBirth: true,
+                diagnosisDate: true,
+                organizationId: true,
+                organization: {
+                  select: {
+                    id: true,
+                    name: true
+                  }
+                }
+              }
             }
           },
           orderBy: { createdAt: 'desc' },
@@ -264,6 +280,7 @@ router.get('/',
             endTime: access.endTime,
             isActive: access.isActive,
             user: access.user,
+            patient: (access as any).patient,
             createdAt: access.createdAt,
             updatedAt: access.updatedAt
           })),
@@ -574,7 +591,8 @@ router.get('/stats/summary',
 
       // Organization filtering for clinic admins
       if (req.user.role === 'clinic_admin') {
-        whereClause.user = {
+        // Clinic admins should see stats for patients in their organization
+        whereClause.patient = {
           organizationId: req.user.organizationId
         };
       }

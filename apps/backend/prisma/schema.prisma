@@ -81,6 +81,7 @@ model Patient {
   caregiverAssignments CaregiverAssignment[]
   symptomEntries      SymptomEntry[]
   weeklySummaries     WeeklySummary[]
+  emergencyAccess     EmergencyAccess[]
 
   // Legacy relationships - will be deprecated after migration
   caregivers                PatientCaregiver[]
@@ -153,7 +154,8 @@ model EmergencyAccess {
   updatedAt   DateTime            @updatedAt @map("updated_at")
 
   // Relationships
-  user User @relation(fields: [userId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id])
 
   @@map("emergency_access")
 }
