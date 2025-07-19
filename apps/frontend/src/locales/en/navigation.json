@@ -1,0 +1,29 @@
+{
+  "app": {
+    "name": "ParkML",
+    "subtitle": "Symptom Tracker"
+  },
+  "menu": {
+    "dashboard": "Dashboard",
+    "myAssignments": "My Assignments",
+    "caregiverConsent": "Caregiver Consent",
+    "addSymptoms": "Add Symptoms",
+    "admin": "Admin",
+    "analytics": "Analytics",
+    "userManagement": "User Management",
+    "organizations": "Organizations",
+    "assignments": "Assignments",
+    "emergencyAccess": "Emergency Access",
+    "administration": "Administration",
+    "logout": "Logout"
+  },
+  "language": {
+    "english": "English",
+    "french": "Français",
+    "german": "Deutsch",
+    "spanish": "Español",
+    "chinese": "中文",
+    "selectLanguage": "Select Language",
+    "currentLanguage": "Current Language"
+  }
+}

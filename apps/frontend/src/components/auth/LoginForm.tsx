@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../hooks/useTranslation';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 
@@ -11,6 +12,7 @@ interface LoginFormData {
 
 const LoginForm: React.FC = () => {
   const { login } = useAuth();
+  const { t } = useTranslation(['auth', 'common']);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -24,94 +26,100 @@ const LoginForm: React.FC = () => {
     setIsSubmitting(true);
     try {
       await login(data.email, data.password);
-      toast.success('Successfully logged in!');
+      toast.success(t('login.successMessage'));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Login failed');
+      toast.error(error instanceof Error ? error.message : t('login.errorMessage'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Sign In</h2>
-        <p className="text-gray-600 mt-2">Access your ParkML account</p>
-      </div>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-            Email Address
-          </label>
-          <input
-            {...register('email', {
-              required: 'Email is required',
-              pattern: {
-                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                message: 'Invalid email address',
-              },
-            })}
-            type="email"
-            id="email"
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Enter your email"
-          />
-          {errors.email && (
-            <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-          )}
+    <div className="card w-full max-w-md mx-auto mt-8 bg-base-100 shadow-xl">
+      <div className="card-body">
+        <div className="text-center mb-6">
+          <h2 className="card-title text-2xl justify-center">{t('login.title')}</h2>
+          <p className="text-base-content/70 mt-2">{t('login.subtitle')}</p>
         </div>
 
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-            Password
-          </label>
-          <div className="relative mt-1">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="form-control w-full">
+            <label className="label" htmlFor="email">
+              <span className="label-text">{t('form.emailLabel')}</span>
+            </label>
             <input
-              {...register('password', {
-                required: 'Password is required',
-                minLength: {
-                  value: 6,
-                  message: 'Password must be at least 6 characters',
+              {...register('email', {
+                required: t('validation.emailRequired'),
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: t('validation.emailInvalid'),
                 },
               })}
-              type={showPassword ? 'text' : 'password'}
-              id="password"
-              className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter your password"
+              type="email"
+              id="email"
+              className={`input input-bordered w-full ${errors.email ? 'input-error' : ''}`}
+              placeholder={t('form.emailPlaceholder')}
             />
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5 text-gray-400" />
-              ) : (
-                <Eye className="h-5 w-5 text-gray-400" />
-              )}
-            </button>
+            {errors.email && (
+              <label className="label">
+                <span className="label-text-alt text-error">{errors.email.message}</span>
+              </label>
+            )}
           </div>
-          {errors.password && (
-            <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-          )}
-        </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? (
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-          ) : (
-            <>
-              <LogIn className="h-4 w-4 mr-2" />
-              Sign In
-            </>
-          )}
-        </button>
-      </form>
+          <div className="form-control w-full">
+            <label className="label" htmlFor="password">
+              <span className="label-text">{t('form.passwordLabel')}</span>
+            </label>
+            <div className="relative">
+              <input
+                {...register('password', {
+                  required: t('validation.passwordRequired'),
+                  minLength: {
+                    value: 6,
+                    message: t('validation.passwordMinLength'),
+                  },
+                })}
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                className={`input input-bordered w-full pr-10 ${errors.password ? 'input-error' : ''}`}
+                placeholder={t('form.passwordPlaceholder')}
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5 opacity-50" />
+                ) : (
+                  <Eye className="h-5 w-5 opacity-50" />
+                )}
+              </button>
+            </div>
+            {errors.password && (
+              <label className="label">
+                <span className="label-text-alt text-error">{errors.password.message}</span>
+              </label>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="btn btn-primary w-full"
+          >
+            {isSubmitting ? (
+              <span className="loading loading-spinner loading-sm"></span>
+            ) : (
+              <>
+                <LogIn className="h-4 w-4" />
+                {t('login.submitButton')}
+              </>
+            )}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

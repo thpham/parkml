@@ -1,0 +1,90 @@
+{
+  "buttons": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "update": "Mettre à jour",
+    "yes": "Oui",
+    "no": "Non",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "refresh": "Actualiser",
+    "export": "Exporter",
+    "import": "Importer",
+    "approve": "Approuver",
+    "decline": "Refuser",
+    "accept": "Accepter",
+    "revoke": "Révoquer",
+    "activate": "Activer",
+    "deactivate": "Désactiver"
+  },
+  "status": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "warning": "Avertissement",
+    "info": "Information",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "pending": "En attente",
+    "expired": "Expiré",
+    "healthy": "Sain",
+    "operational": "Opérationnel",
+    "running": "En cours"
+  },
+  "form": {
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "name": "Nom",
+    "description": "Description",
+    "date": "Date",
+    "time": "Heure",
+    "status": "Statut",
+    "actions": "Actions",
+    "notes": "Notes",
+    "email": "E-mail",
+    "phone": "Téléphone",
+    "address": "Adresse",
+    "additionalObservations": "Observations supplémentaires..."
+  },
+  "validation": {
+    "required": "Ce champ est requis",
+    "invalidEmail": "Veuillez saisir une adresse e-mail valide",
+    "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères",
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "invalidPhoneNumber": "Veuillez saisir un numéro de téléphone valide",
+    "fieldRequired": "{{field}} est requis",
+    "invalidFormat": "Format {{field}} invalide"
+  },
+  "messages": {
+    "saveSuccess": "Modifications enregistrées avec succès",
+    "saveError": "Échec de l'enregistrement des modifications",
+    "deleteSuccess": "Élément supprimé avec succès",
+    "deleteError": "Échec de la suppression de l'élément",
+    "loadError": "Échec du chargement des données",
+    "noData": "Aucune donnée disponible",
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer cet élément ?",
+    "createSuccess": "{{item}} créé avec succès",
+    "updateSuccess": "{{item}} mis à jour avec succès",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce {{item}} ?",
+    "operationSuccess": "Opération terminée avec succès",
+    "operationError": "Échec de l'opération",
+    "networkError": "Erreur réseau. Veuillez vérifier votre connexion.",
+    "unexpectedError": "Une erreur inattendue s'est produite",
+    "accessDenied": "Accès refusé"
+  },
+  "misc": {
+    "never": "Jamais",
+    "none": "Aucun",
+    "unknown": "Inconnu",
+    "noDescription": "Aucune description",
+    "yourClinic": "votre clinique"
+  },
+  "language": {
+    "selectLanguage": "Sélectionner la langue",
+    "currentLanguage": "Langue actuelle"
+  }
+}

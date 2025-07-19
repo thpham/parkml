@@ -1,0 +1,86 @@
+{
+  "types": {
+    "caregiver": "aidant",
+    "professional": "Professionnel",
+    "family": "Familial"
+  },
+  "assignments": {
+    "title": "Affectations d'Aidants",
+    "myAssignments": "Mes Affectations",
+    "createAssignment": "Créer une Affectation",
+    "totalAssignments": "Total des Affectations",
+    "pendingRequests": "Demandes en Attente",
+    "activeAssignments": "Affectations Actives",
+    "patients": "Patients",
+    "pendingRequestsTitle": "Demandes d'Affectation en Attente ({{count}})",
+    "requireResponse": "Ces affectations nécessitent votre réponse",
+    "assignmentType": "Type d'Affectation",
+    "professional": "Professionnel",
+    "family": "Familial",
+    "requestedDate": "Demandé le : {{date}}",
+    "byUser": "Par : {{user}}",
+    "patientName": "Patient : {{name}}",
+    "startedDate": "Commencé le : {{date}}",
+    "consentDate": "Consentement : {{date}}",
+    "consent": "Consentement",
+    "given": "Donné",
+    "noActiveAssignments": "Aucune affectation active",
+    "noCurrentAssignments": "Vous n'avez actuellement aucune affectation de patient active.",
+    "caregiver": "Aidant",
+    "assignedTo": "{{caregiver}} → {{patient}}",
+    "createdDate": "Créé le : {{date}}",
+    "manageAssignments": "Gérer les affectations d'aidants et le consentement des patients",
+    "assignmentsCount": "Affectations ({{count}})",
+    "noAssignmentsFound": "Aucune affectation trouvée",
+    "noAssignmentsMatch": "Aucune affectation ne correspond à vos filtres actuels.",
+    "searchPlaceholder": "Rechercher par nom de patient ou d'aidant...",
+    "allStatus": "Tous les Statuts",
+    "allTypes": "Tous les Types",
+    "declined": "Refusé",
+    "revoked": "Révoqué"
+  },
+  "dashboard": {
+    "title": "Mes Affectations",
+    "subtitle": "Gérez vos affectations de soins aux patients et vos responsabilités",
+    "caregiverSuffix": "Aidant",
+    "stats": {
+      "totalAssignments": "Total des Affectations",
+      "pendingRequests": "Demandes en Attente", 
+      "activeAssignments": "Affectations Actives",
+      "patients": "Patients"
+    },
+    "pendingRequests": {
+      "title": "Demandes d'Affectation en Attente ({{count}})",
+      "subtitle": "Ces affectations nécessitent votre réponse",
+      "patient": "Patient :",
+      "assignmentType": "Type d'Affectation :",
+      "requested": "Demandé :",
+      "by": "Par :",
+      "notes": "Notes :",
+      "accept": "Accepter",
+      "decline": "Refuser"
+    },
+    "activeAssignments": {
+      "title": "Affectations Actives ({{count}})",
+      "noActiveTitle": "Aucune affectation active",
+      "noActiveMessage": "Vous n'avez actuellement aucune affectation de patient active.",
+      "started": "Commencé :",
+      "consent": "Consentement :",
+      "consentStatus": "Consentement",
+      "given": "Donné", 
+      "pending": "En Attente",
+      "active": "Actif",
+      "caregiverSuffix": "aidant"
+    },
+    "ariaLabels": {
+      "pendingAssignment": "{{patient}} affectation en attente",
+      "activeAssignment": "{{patient}} affectation active"
+    }
+  },
+  "messages": {
+    "assignmentAccepted": "Affectation acceptée avec succès",
+    "assignmentDeclined": "Affectation refusée avec succès", 
+    "updateError": "Échec de la mise à jour de l'affectation",
+    "fetchError": "Échec de la récupération des affectations"
+  }
+}

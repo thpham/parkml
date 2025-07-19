@@ -1,0 +1,29 @@
+{
+  "app": {
+    "name": "ParkML",
+    "subtitle": "Suivi des Symptômes"
+  },
+  "menu": {
+    "dashboard": "Tableau de bord",
+    "myAssignments": "Mes Affectations",
+    "caregiverConsent": "Consentement Aidant",
+    "addSymptoms": "Ajouter Symptômes",
+    "admin": "Administration",
+    "analytics": "Analyses",
+    "userManagement": "Gestion Utilisateurs",
+    "organizations": "Organisations",
+    "assignments": "Affectations",
+    "emergencyAccess": "Accès d'Urgence",
+    "administration": "Administration",
+    "logout": "Déconnexion"
+  },
+  "language": {
+    "english": "English",
+    "french": "Français",
+    "german": "Deutsch",
+    "spanish": "Español",
+    "chinese": "中文",
+    "selectLanguage": "Sélectionner la langue",
+    "currentLanguage": "Langue actuelle"
+  }
+}

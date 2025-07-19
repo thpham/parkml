@@ -1,0 +1,71 @@
+{
+  "types": {
+    "caregiver": "caregiver"
+  },
+  "common": {
+    "system": "System",
+    "notAvailable": "N/A"
+  },
+  "consent": {
+    "title": "Caregiver Consent Management",
+    "subtitle": "Review and approve caregiver assignments for your care",
+    "headerText": "Patient Consent",
+    "stats": {
+      "totalAssignments": "Total Assignments",
+      "pendingConsent": "Pending Consent",
+      "approvedCaregivers": "Approved Caregivers",
+      "declined": "Declined"
+    },
+    "requests": {
+      "pendingTitle": "Pending Consent Requests",
+      "pendingSubtitle": "These caregiver assignments require your consent",
+      "pendingCount": "Pending Consent Requests ({{count}})",
+      "requireResponse": "These assignments require your response"
+    },
+    "approved": {
+      "title": "Approved Caregivers",
+      "count": "Approved Caregivers ({{count}})",
+      "noApprovedTitle": "No approved caregivers",
+      "noApprovedMessage": "You haven't approved any caregiver assignments yet."
+    },
+    "labels": {
+      "requestedLabel": "Requested:",
+      "byLabel": "By:",
+      "approvedLabel": "Approved:",
+      "startedLabel": "Started:",
+      "caregiverNameLabel": "Caregiver Name",
+      "caregiverTypeLabel": "Caregiver Type",
+      "assignedByLabel": "Assigned By",
+      "email": "Email:",
+      "notes": "Notes:"
+    },
+    "actions": {
+      "reviewButton": "Review",
+      "approveButton": "Approve",
+      "declineButton": "Decline",
+      "revokeConsentButton": "Revoke Consent",
+      "declineAssignmentButton": "Decline Assignment",
+      "approveAssignmentButton": "Approve Assignment"
+    },
+    "modal": {
+      "assignmentDetailsTitle": "Assignment Details",
+      "whatThisMeans": "What this means:",
+      "consentMessage1": "By approving this assignment, you give consent for",
+      "consentMessage2": "to access your health information and assist with your care as a",
+      "consentMessage3": "caregiver."
+    },
+    "status": {
+      "approvedStatus": "approved",
+      "declinedStatus": "declined",
+      "pendingConsentStatus": "Pending Your Consent"
+    },
+    "errors": {
+      "fetchAssignmentsError": "Failed to fetch assignments",
+      "fetchConsentError": "Failed to fetch pending consent requests",
+      "actionAssignmentError": "Failed to {{action}} assignment"
+    },
+    "success": {
+      "assignmentActionSuccess": "Assignment {{status}} successfully"
+    }
+  }
+}

@@ -1,0 +1,246 @@
+{
+  "title": "Symptom Tracking",
+  "formTitle": "Symptom Entry Form",
+  "patientId": "Patient ID",
+  "categories": {
+    "motorSymptoms": "Motor Symptoms",
+    "nonMotorSymptoms": "Non-Motor Symptoms",
+    "autonomicSymptoms": "Autonomic Symptoms",
+    "dailyActivities": "Daily Activities",
+    "environmentalFactors": "Environmental Factors",
+    "safetyIncidents": "Safety Incidents"
+  },
+  "types": {
+    "tremors": "Tremors",
+    "balancePosture": "Balance and Posture",
+    "rigidity": "Rigidity",
+    "bradykinesia": "Bradykinesia",
+    "posturalInstability": "Postural Instability",
+    "freezingEpisodes": "Freezing Episodes",
+    "dyskinesia": "Dyskinesia",
+    "dystonia": "Dystonia",
+    "gaitProblems": "Gait Problems",
+    "speechProblems": "Speech Problems",
+    "swallowingDifficulties": "Swallowing Difficulties"
+  },
+  "severity": {
+    "mild": "Mild",
+    "moderate": "Moderate",
+    "severe": "Severe",
+    "none": "None"
+  },
+  "form": {
+    "timeObserved": "Time Observed",
+    "severity": "Severity",
+    "severityScale": "Severity (1-5)",
+    "selectSeverity": "Select severity",
+    "location": "Location",
+    "duration": "Duration",
+    "triggers": "Triggers/Situations",
+    "additionalNotes": "Additional Notes",
+    "notes": "Notes",
+    "fallsToday": "Number of Falls Today",
+    "posture": "Posture",
+    "balanceProblems": "Balance Problems",
+    "walkingPattern": "Walking Pattern",
+    "type": "Type"
+  },
+  "severityLevels": {
+    "1": "1 - Barely perceptible",
+    "2": "2 - Mild", 
+    "3": "3 - Moderate",
+    "4": "4 - Marked",
+    "5": "5 - Severe"
+  },
+  "locations": {
+    "rightHand": "Right hand",
+    "leftHand": "Left hand", 
+    "rightLeg": "Right leg",
+    "leftLeg": "Left leg",
+    "head": "Head",
+    "jaw": "Jaw"
+  },
+  "tremorTypes": {
+    "atRest": "At rest",
+    "duringMovement": "During movement",
+    "maintainingPosition": "Maintaining position"
+  },
+  "postureTypes": {
+    "normal": "Normal",
+    "hunched": "Hunched",
+    "leaningSideways": "Leaning sideways",
+    "other": "Other"
+  },
+  "balanceProblemsTypes": {
+    "none": "None",
+    "slightSwaying": "Slight swaying",
+    "needsSupport": "Needs support",
+    "falls": "Falls"
+  },
+  "walkingPatterns": {
+    "normal": "Normal",
+    "shuffling": "Shuffling",
+    "smallSteps": "Small steps",
+    "freezingEpisodes": "Freezing episodes"
+  },
+  "placeholders": {
+    "duration": "e.g., 15 minutes, continuous, intermittent",
+    "triggers": "What situations or activities trigger the tremor?",
+    "tremorNotes": "Additional observations about tremors...",
+    "balanceNotes": "Additional observations about balance and posture...",
+    "bladderBowelNotes": "Additional observations about bladder/bowel function...",
+    "selectStatus": "Select status",
+    "activePeriods": "Describe when you were most active today...",
+    "sideEffects": "Any side effects noticed today...",
+    "environmentalChanges": "Any changes in environment that might affect symptoms...",
+    "stressfulEvents": "Any stressful events or situations today...",
+    "cognitiveNotes": "Additional observations about cognitive function...",
+    "sleepNotes": "Additional observations about sleep patterns...",
+    "incidentLocation": "Where did the incident occur?",
+    "incidentCircumstances": "Describe what happened and the circumstances...",
+    "incidentNotes": "Any additional details about the incident..."
+  },
+  "autonomic": {
+    "title": "Autonomic Symptoms",
+    "bladderBowel": {
+      "title": "Bladder/Bowel Function",
+      "urination": "Urination",
+      "bowelMovements": "Bowel Movements",
+      "notes": "Notes"
+    },
+    "urinationTypes": {
+      "normal": "Normal",
+      "frequent": "Frequent", 
+      "urgent": "Urgent",
+      "incontinence": "Incontinence"
+    },
+    "bowelTypes": {
+      "normal": "Normal",
+      "constipation": "Constipation",
+      "frequent": "Frequent",
+      "incontinence": "Incontinence"
+    }
+  },
+  "dailyActivities": {
+    "title": "Daily Activities",
+    "activityLevel": {
+      "title": "Activity Level",
+      "totalRestTime": "Total Rest Time (hours)",
+      "energyLevel": "Energy Level (1-5)",
+      "activePeriods": "Active Periods"
+    },
+    "medicationCompliance": {
+      "title": "Medication Compliance",
+      "morning": "Morning Medications",
+      "afternoon": "Afternoon Medications", 
+      "evening": "Evening Medications",
+      "sideEffects": "Side Effects Observed"
+    },
+    "energyLevels": {
+      "selectLevel": "Select energy level",
+      "1": "1 - Very low energy",
+      "2": "2 - Low energy",
+      "3": "3 - Moderate energy",
+      "4": "4 - High energy",
+      "5": "5 - Very high energy"
+    },
+    "medicationStatus": {
+      "takenAsPrescribed": "Taken as prescribed",
+      "forgotten": "Forgotten",
+      "delayed": "Delayed"
+    }
+  },
+  "environmental": {
+    "title": "Environmental Factors",
+    "weatherEnvironment": {
+      "title": "Weather and Environment",
+      "temperature": "Temperature (°C)",
+      "humidity": "Humidity",
+      "weatherConditions": "Weather Conditions",
+      "environmentalChanges": "Environmental Changes",
+      "stressfulEvents": "Stressful Events"
+    },
+    "humidityLevels": {
+      "selectLevel": "Select humidity level",
+      "high": "High",
+      "normal": "Normal",
+      "low": "Low"
+    },
+    "weatherTypes": {
+      "sunny": "Sunny",
+      "cloudy": "Cloudy",
+      "rainy": "Rainy",
+      "hot": "Hot",
+      "cold": "Cold"
+    }
+  },
+  "nonMotor": {
+    "title": "Non-Motor Symptoms",
+    "cognitive": {
+      "title": "Cognitive Function",
+      "timeObserved": "Time Observed",
+      "alertness": "Alertness",
+      "memoryRecentEvents": "Memory - Recent Events",
+      "concentrationAttention": "Concentration/Attention",
+      "notes": "Notes"
+    },
+    "sleep": {
+      "title": "Sleep Patterns",
+      "bedtime": "Bedtime",
+      "wakeTime": "Wake Time",
+      "totalSleepHours": "Total Sleep Hours",
+      "sleepQuality": "Sleep Quality",
+      "notes": "Notes"
+    },
+    "alertnessLevels": {
+      "selectLevel": "Select alertness level",
+      "alert": "Alert",
+      "drowsy": "Drowsy", 
+      "confused": "Confused",
+      "disoriented": "Disoriented"
+    },
+    "qualityLevels": {
+      "good": "Good",
+      "fair": "Fair",
+      "poor": "Poor"
+    },
+    "sleepQualityTypes": {
+      "restful": "Restful",
+      "restless": "Restless",
+      "frequentAwakenings": "Frequent awakenings"
+    }
+  },
+  "safety": {
+    "title": "Safety Incidents",
+    "incidentReport": {
+      "title": "Incident Report",
+      "incidentType": "Incident Type",
+      "timeOfIncident": "Time of Incident",
+      "location": "Location",
+      "circumstances": "Circumstances",
+      "injuryLevel": "Injury Level",
+      "additionalNotes": "Additional Notes"
+    },
+    "incidentTypes": {
+      "selectType": "Select incident type",
+      "fall": "Fall",
+      "nearFall": "Near fall",
+      "choking": "Choking",
+      "medicationError": "Medication error",
+      "other": "Other"
+    },
+    "injuryLevels": {
+      "none": "No injury",
+      "minor": "Minor injury",
+      "significant": "Significant injury"
+    }
+  },
+  "messages": {
+    "loginRequired": "Please log in to submit symptoms",
+    "submitError": "Failed to submit symptoms",
+    "submitSuccess": "Symptoms recorded successfully!",
+    "saving": "Saving...",
+    "saveSymptomEntry": "Save Symptom Entry"
+  },
+  "additionalNotes": "Additional Notes"
+}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { UseFormRegister, Control, FieldErrors } from 'react-hook-form';
 import { SymptomEntry } from '@parkml/shared';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 interface MotorSymptomsSectionProps {
   register: UseFormRegister<Partial<SymptomEntry>>;
@@ -11,236 +12,248 @@ interface MotorSymptomsSectionProps {
 const MotorSymptomsSection: React.FC<MotorSymptomsSectionProps> = ({
   register,
 }) => {
+  const { t } = useTranslation('symptoms');
   return (
-    <div className="space-y-6">
-      <h2 className="text-lg font-medium text-gray-900">Motor Symptoms</h2>
+    <div className="space-y-4 sm:space-y-6">
+      <h2 className="text-lg sm:text-xl font-medium">{t('categories.motorSymptoms')}</h2>
       
       {/* Tremors Section */}
-      <div className="bg-gray-50 p-4 rounded-lg">
-        <h3 className="text-md font-medium text-gray-800 mb-4">Tremors</h3>
+      <div className="card bg-base-200">
+        <div className="card-body p-4 sm:p-6">
+          <h3 className="card-title text-sm sm:text-md mb-3 sm:mb-4">{t('types.tremors')}</h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Time Observed
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">{t('form.timeObserved')}</span>
+              </label>
+              <input
+                {...register('motorSymptoms.tremors.0.timeObserved')}
+                type="time"
+                className="input input-bordered w-full"
+              />
+            </div>
+            
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">{t('form.severityScale')}</span>
+              </label>
+              <select
+                {...register('motorSymptoms.tremors.0.severity')}
+                className="select select-bordered w-full"
+              >
+                <option value="">{t('form.selectSeverity')}</option>
+                <option value="1">{t('severityLevels.1')}</option>
+                <option value="2">{t('severityLevels.2')}</option>
+                <option value="3">{t('severityLevels.3')}</option>
+                <option value="4">{t('severityLevels.4')}</option>
+                <option value="5">{t('severityLevels.5')}</option>
+              </select>
+            </div>
+          </div>
+        
+          <div className="form-control mt-4">
+            <label className="label">
+              <span className="label-text">{t('form.location')}</span>
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {[
+                { value: 'right_hand', key: 'rightHand' },
+                { value: 'left_hand', key: 'leftHand' },
+                { value: 'right_leg', key: 'rightLeg' },
+                { value: 'left_leg', key: 'leftLeg' },
+                { value: 'head', key: 'head' },
+                { value: 'jaw', key: 'jaw' }
+              ].map((location) => (
+                <label key={location.value} className="label cursor-pointer justify-start">
+                  <input
+                    {...register(`motorSymptoms.tremors.0.location` as any)}
+                    type="checkbox"
+                    value={location.value}
+                    className="checkbox checkbox-primary"
+                  />
+                  <span className="label-text ml-2">
+                    {t(`locations.${location.key}`)}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        
+          <div className="form-control mt-4">
+            <label className="label">
+              <span className="label-text">{t('form.type')}</span>
+            </label>
+            <div className="space-y-2">
+              {[
+                { value: 'at_rest', key: 'atRest' },
+                { value: 'during_movement', key: 'duringMovement' },
+                { value: 'maintaining_position', key: 'maintainingPosition' },
+              ].map((type) => (
+                <label key={type.value} className="label cursor-pointer justify-start">
+                  <input
+                    {...register('motorSymptoms.tremors.0.type')}
+                    type="radio"
+                    value={type.value}
+                    className="radio radio-primary"
+                  />
+                  <span className="label-text ml-2">{t(`tremorTypes.${type.key}`)}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        
+          <div className="form-control mt-4">
+            <label className="label">
+              <span className="label-text">{t('form.duration')}</span>
             </label>
             <input
-              {...register('motorSymptoms.tremors.0.timeObserved')}
-              type="time"
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              {...register('motorSymptoms.tremors.0.duration')}
+              type="text"
+              className="input input-bordered w-full"
+              placeholder={t('placeholders.duration')}
             />
           </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Severity (1-5)
+        
+          <div className="form-control mt-4">
+            <label className="label">
+              <span className="label-text">{t('form.triggers')}</span>
             </label>
-            <select
-              {...register('motorSymptoms.tremors.0.severity')}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">Select severity</option>
-              <option value="1">1 - Barely perceptible</option>
-              <option value="2">2 - Mild</option>
-              <option value="3">3 - Moderate</option>
-              <option value="4">4 - Marked</option>
-              <option value="5">5 - Severe</option>
-            </select>
+            <textarea
+              {...register('motorSymptoms.tremors.0.triggers')}
+              rows={3}
+              className="textarea textarea-bordered w-full"
+              placeholder={t('placeholders.triggers')}
+            />
           </div>
-        </div>
         
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Location
-          </label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {['right_hand', 'left_hand', 'right_leg', 'left_leg', 'head', 'jaw'].map((location) => (
-              <label key={location} className="flex items-center">
-                <input
-                  {...register(`motorSymptoms.tremors.0.location` as any)}
-                  type="checkbox"
-                  value={location}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="ml-2 text-sm text-gray-700 capitalize">
-                  {location.replace('_', ' ')}
-                </span>
-              </label>
-            ))}
+          <div className="form-control mt-4">
+            <label className="label">
+              <span className="label-text">{t('form.notes')}</span>
+            </label>
+            <textarea
+              {...register('motorSymptoms.tremors.0.notes')}
+              rows={3}
+              className="textarea textarea-bordered w-full"
+              placeholder={t('placeholders.tremorNotes')}
+            />
           </div>
-        </div>
-        
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Type
-          </label>
-          <div className="space-y-2">
-            {[
-              { value: 'at_rest', label: 'At rest' },
-              { value: 'during_movement', label: 'During movement' },
-              { value: 'maintaining_position', label: 'Maintaining position' },
-            ].map((type) => (
-              <label key={type.value} className="flex items-center">
-                <input
-                  {...register('motorSymptoms.tremors.0.type')}
-                  type="radio"
-                  value={type.value}
-                  className="border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="ml-2 text-sm text-gray-700">{type.label}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-        
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Duration
-          </label>
-          <input
-            {...register('motorSymptoms.tremors.0.duration')}
-            type="text"
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            placeholder="e.g., 15 minutes, continuous, intermittent"
-          />
-        </div>
-        
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Triggers/Situations
-          </label>
-          <textarea
-            {...register('motorSymptoms.tremors.0.triggers')}
-            rows={3}
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            placeholder="What situations or activities trigger the tremor?"
-          />
-        </div>
-        
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Notes
-          </label>
-          <textarea
-            {...register('motorSymptoms.tremors.0.notes')}
-            rows={3}
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Additional observations about tremors..."
-          />
         </div>
       </div>
       
       {/* Balance and Posture Section */}
-      <div className="bg-gray-50 p-4 rounded-lg">
-        <h3 className="text-md font-medium text-gray-800 mb-4">Balance and Posture</h3>
+      <div className="card bg-base-200">
+        <div className="card-body">
+          <h3 className="card-title text-md">{t('types.balancePosture')}</h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Time Observed
-            </label>
-            <input
-              {...register('motorSymptoms.balance.timeObserved')}
-              type="time"
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">{t('form.timeObserved')}</span>
+              </label>
+              <input
+                {...register('motorSymptoms.balance.timeObserved')}
+                type="time"
+                className="input input-bordered w-full"
+              />
+            </div>
+            
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">{t('form.fallsToday')}</span>
+              </label>
+              <input
+                {...register('motorSymptoms.balance.fallsToday')}
+                type="number"
+                min="0"
+                className="input input-bordered w-full"
+              />
+            </div>
           </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Number of Falls Today
-            </label>
-            <input
-              {...register('motorSymptoms.balance.fallsToday')}
-              type="number"
-              min="0"
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-        </div>
         
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Posture
+        <div className="form-control mt-4">
+          <label className="label">
+            <span className="label-text">{t('form.posture')}</span>
           </label>
           <div className="space-y-2">
             {[
-              { value: 'normal', label: 'Normal' },
-              { value: 'hunched', label: 'Hunched' },
-              { value: 'leaning_sideways', label: 'Leaning sideways' },
-              { value: 'other', label: 'Other' },
+              { value: 'normal', key: 'normal' },
+              { value: 'hunched', key: 'hunched' },
+              { value: 'leaning_sideways', key: 'leaningSideways' },
+              { value: 'other', key: 'other' },
             ].map((posture) => (
-              <label key={posture.value} className="flex items-center">
+              <label key={posture.value} className="label cursor-pointer justify-start">
                 <input
                   {...register('motorSymptoms.balance.posture')}
                   type="radio"
                   value={posture.value}
-                  className="border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="radio radio-primary"
                 />
-                <span className="ml-2 text-sm text-gray-700">{posture.label}</span>
+                <span className="label-text ml-2">{t(`postureTypes.${posture.key}`)}</span>
               </label>
             ))}
           </div>
         </div>
         
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Balance Problems
+        <div className="form-control mt-4">
+          <label className="label">
+            <span className="label-text">{t('form.balanceProblems')}</span>
           </label>
           <div className="space-y-2">
             {[
-              { value: 'none', label: 'None' },
-              { value: 'slight_swaying', label: 'Slight swaying' },
-              { value: 'needs_support', label: 'Needs support' },
-              { value: 'falls', label: 'Falls' },
+              { value: 'none', key: 'none' },
+              { value: 'slight_swaying', key: 'slightSwaying' },
+              { value: 'needs_support', key: 'needsSupport' },
+              { value: 'falls', key: 'falls' },
             ].map((problem) => (
-              <label key={problem.value} className="flex items-center">
+              <label key={problem.value} className="label cursor-pointer justify-start">
                 <input
                   {...register('motorSymptoms.balance.balanceProblems')}
                   type="radio"
                   value={problem.value}
-                  className="border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="radio radio-primary"
                 />
-                <span className="ml-2 text-sm text-gray-700">{problem.label}</span>
+                <span className="label-text ml-2">{t(`balanceProblemsTypes.${problem.key}`)}</span>
               </label>
             ))}
           </div>
         </div>
         
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Walking Pattern
+        <div className="form-control mt-4">
+          <label className="label">
+            <span className="label-text">{t('form.walkingPattern')}</span>
           </label>
           <div className="space-y-2">
             {[
-              { value: 'normal', label: 'Normal' },
-              { value: 'shuffling', label: 'Shuffling' },
-              { value: 'small_steps', label: 'Small steps' },
-              { value: 'freezing_episodes', label: 'Freezing episodes' },
+              { value: 'normal', key: 'normal' },
+              { value: 'shuffling', key: 'shuffling' },
+              { value: 'small_steps', key: 'smallSteps' },
+              { value: 'freezing_episodes', key: 'freezingEpisodes' },
             ].map((pattern) => (
-              <label key={pattern.value} className="flex items-center">
+              <label key={pattern.value} className="label cursor-pointer justify-start">
                 <input
                   {...register('motorSymptoms.balance.walkingPattern')}
                   type="radio"
                   value={pattern.value}
-                  className="border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="radio radio-primary"
                 />
-                <span className="ml-2 text-sm text-gray-700">{pattern.label}</span>
+                <span className="label-text ml-2">{t(`walkingPatterns.${pattern.key}`)}</span>
               </label>
             ))}
           </div>
         </div>
         
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Notes
+        <div className="form-control mt-4">
+          <label className="label">
+            <span className="label-text">{t('form.notes')}</span>
           </label>
           <textarea
             {...register('motorSymptoms.balance.notes')}
             rows={3}
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Additional observations about balance and posture..."
+            className="textarea textarea-bordered w-full"
+            placeholder={t('placeholders.balanceNotes')}
           />
+        </div>
         </div>
       </div>
     </div>

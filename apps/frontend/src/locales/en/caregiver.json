@@ -1,0 +1,86 @@
+{
+  "types": {
+    "caregiver": "caregiver",
+    "professional": "Professional",
+    "family": "Family"
+  },
+  "assignments": {
+    "title": "Caregiver Assignments",
+    "myAssignments": "My Assignments",
+    "createAssignment": "Create Assignment",
+    "totalAssignments": "Total Assignments",
+    "pendingRequests": "Pending Requests",
+    "activeAssignments": "Active Assignments",
+    "patients": "Patients",
+    "pendingRequestsTitle": "Pending Assignment Requests ({{count}})",
+    "requireResponse": "These assignments require your response",
+    "assignmentType": "Assignment Type",
+    "professional": "Professional",
+    "family": "Family",
+    "requestedDate": "Requested: {{date}}",
+    "byUser": "By: {{user}}",
+    "patientName": "Patient: {{name}}",
+    "startedDate": "Started: {{date}}",
+    "consentDate": "Consent: {{date}}",
+    "consent": "Consent",
+    "given": "Given",
+    "noActiveAssignments": "No active assignments",
+    "noCurrentAssignments": "You currently have no active patient assignments.",
+    "caregiver": "Caregiver",
+    "assignedTo": "{{caregiver}} → {{patient}}",
+    "createdDate": "Created: {{date}}",
+    "manageAssignments": "Manage caregiver assignments and patient consent",
+    "assignmentsCount": "Assignments ({{count}})",
+    "noAssignmentsFound": "No assignments found",
+    "noAssignmentsMatch": "No assignments match your current filters.",
+    "searchPlaceholder": "Search by patient or caregiver name...",
+    "allStatus": "All Status",
+    "allTypes": "All Types",
+    "declined": "Declined",
+    "revoked": "Revoked"
+  },
+  "dashboard": {
+    "title": "My Assignments",
+    "subtitle": "Manage your patient care assignments and responsibilities",
+    "caregiverSuffix": "Caregiver",
+    "stats": {
+      "totalAssignments": "Total Assignments",
+      "pendingRequests": "Pending Requests", 
+      "activeAssignments": "Active Assignments",
+      "patients": "Patients"
+    },
+    "pendingRequests": {
+      "title": "Pending Assignment Requests ({{count}})",
+      "subtitle": "These assignments require your response",
+      "patient": "Patient:",
+      "assignmentType": "Assignment Type:",
+      "requested": "Requested:",
+      "by": "By:",
+      "notes": "Notes:",
+      "accept": "Accept",
+      "decline": "Decline"
+    },
+    "activeAssignments": {
+      "title": "Active Assignments ({{count}})",
+      "noActiveTitle": "No active assignments",
+      "noActiveMessage": "You currently have no active patient assignments.",
+      "started": "Started:",
+      "consent": "Consent:",
+      "consentStatus": "Consent",
+      "given": "Given", 
+      "pending": "Pending",
+      "active": "Active",
+      "caregiverSuffix": "caregiver"
+    },
+    "ariaLabels": {
+      "pendingAssignment": "{{patient}} pending assignment",
+      "activeAssignment": "{{patient}} active assignment"
+    }
+  },
+  "messages": {
+    "assignmentAccepted": "Assignment accepted successfully",
+    "assignmentDeclined": "Assignment declined successfully", 
+    "updateError": "Failed to update assignment",
+    "fetchError": "Failed to fetch assignments"
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "types": {
+    "caregiver": "aidant"
+  },
+  "common": {
+    "system": "Système",
+    "notAvailable": "N/D"
+  },
+  "consent": {
+    "title": "Gestion du Consentement des Aidants",
+    "subtitle": "Examinez et approuvez les affectations d'aidants pour vos soins",
+    "headerText": "Consentement du Patient",
+    "stats": {
+      "totalAssignments": "Affectations Totales",
+      "pendingConsent": "Consentement en Attente",
+      "approvedCaregivers": "Aidants Approuvés",
+      "declined": "Refusés"
+    },
+    "requests": {
+      "pendingTitle": "Demandes de Consentement en Attente",
+      "pendingSubtitle": "Ces affectations d'aidants nécessitent votre consentement",
+      "pendingCount": "Demandes de Consentement en Attente ({{count}})",
+      "requireResponse": "Ces affectations nécessitent votre réponse"
+    },
+    "approved": {
+      "title": "Aidants Approuvés",
+      "count": "Aidants Approuvés ({{count}})",
+      "noApprovedTitle": "Aucun aidant approuvé",
+      "noApprovedMessage": "Vous n'avez encore approuvé aucune affectation d'aidant."
+    },
+    "labels": {
+      "requestedLabel": "Demandé :",
+      "byLabel": "Par :",
+      "approvedLabel": "Approuvé :",
+      "startedLabel": "Commencé :",
+      "caregiverNameLabel": "Nom de l'Aidant",
+      "caregiverTypeLabel": "Type d'Aidant",
+      "assignedByLabel": "Affecté par",
+      "email": "Email :",
+      "notes": "Notes :"
+    },
+    "actions": {
+      "reviewButton": "Examiner",
+      "approveButton": "Approuver",
+      "declineButton": "Refuser",
+      "revokeConsentButton": "Révoquer le Consentement",
+      "declineAssignmentButton": "Refuser l'Affectation",
+      "approveAssignmentButton": "Approuver l'Affectation"
+    },
+    "modal": {
+      "assignmentDetailsTitle": "Détails de l'Affectation",
+      "whatThisMeans": "Ce que cela signifie :",
+      "consentMessage1": "En approuvant cette affectation, vous donnez votre consentement à",
+      "consentMessage2": "pour accéder à vos informations de santé et vous assister dans vos soins en tant qu'",
+      "consentMessage3": "aidant."
+    },
+    "status": {
+      "approvedStatus": "approuvé",
+      "declinedStatus": "refusé",
+      "pendingConsentStatus": "En Attente de Votre Consentement"
+    },
+    "errors": {
+      "fetchAssignmentsError": "Échec de récupération des affectations",
+      "fetchConsentError": "Échec de récupération des demandes de consentement en attente",
+      "actionAssignmentError": "Échec de {{action}} l'affectation"
+    },
+    "success": {
+      "assignmentActionSuccess": "Affectation {{status}} avec succès"
+    }
+  }
+}

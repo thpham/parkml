@@ -1,0 +1,320 @@
+{
+  "dashboard": {
+    "systemAdministrationTitle": "System Administration",
+    "clinicAdministrationTitle": "Clinic Administration",
+    "systemOverviewSubtitle": "System-wide overview and management tools",
+    "organizationManagementSubtitle": "Organization management for",
+    "accessDeniedMessage": "You don't have permission to access the admin dashboard.",
+    "loadError": "Failed to load admin dashboard data",
+    "quickActionsTitle": "Quick Actions",
+    "systemStatusTitle": "System Status"
+  },
+  "system": {
+    "databaseConnection": "Database Connection",
+    "apiServices": "API Services",
+    "emergencyAccessCleanup": "Emergency Access Cleanup",
+    "healthy": "Healthy",
+    "operational": "Operational",
+    "running": "Running"
+  },
+  "stats": {
+    "totalUsers": "Total Users",
+    "organizationUsers": "Organization Users",
+    "totalPatients": "Total Patients",
+    "organizationPatients": "Organization Patients",
+    "organizations": "Organizations",
+    "pendingAssignments": "Pending Assignments",
+    "emergencyAccess": "Emergency Access",
+    "recentActivity": "Recent Activity",
+    "activeAssignments": "Active Assignments",
+    "total": "Total"
+  },
+  "actions": {
+    "userManagement": "User Management",
+    "userManagementDescriptionSuper": "Manage users and roles",
+    "userManagementDescriptionClinic": "Manage organization users",
+    "organizations": "Organizations",
+    "organizationsDescription": "Manage clinics & organizations",
+    "assignments": "Assignments",
+    "assignmentsDescriptionSuper": "Manage caregiver assignments",
+    "assignmentsDescriptionClinic": "Manage organization assignments",
+    "emergencyAccess": "Emergency Access",
+    "emergencyAccessDescription": "Monitor emergency access",
+    "analytics": "Analytics",
+    "analyticsDescriptionSuper": "View system analytics",
+    "analyticsDescriptionClinic": "View organization analytics"
+  },
+  "alerts": {
+    "requiresAttention": "Requires attention",
+    "monitorClosely": "Monitor closely"
+  },
+  "users": {
+    "title": "User Management",
+    "description": "Manage system users and their permissions",
+    "patients": "Patients",
+    "caregivers": "Caregivers",
+    "admins": "Administrators",
+    "profile": "Profile",
+    "settings": "Settings",
+    "permissions": "Permissions",
+    "noPermission": "You don't have permission to manage users.",
+    "noUsersFound": "No users found",
+    "noUsersMatchFilters": "No users match your current filters.",
+    "noOrganization": "No organization",
+    "usersCount": "Users ({{count}})",
+    "showingUsers": "Showing {{showing}} of {{total}} users",
+    "showingPage": "Showing page {{page}} of {{totalPages}}",
+    "searchUsers": "Search users",
+    "searchPlaceholder": "Search by name or email...",
+    "searchLabel": "Search users",
+    "filterByRole": "Filter by role",
+    "filterByStatus": "Filter by status",
+    "allRoles": "All Roles",
+    "allStatus": "All Status",
+    "editUser": "Edit User",
+    "updateUser": "Update User",
+    "confirmDeactivate": "Are you sure you want to deactivate this user?",
+    "never": "Never",
+    "active": "Active",
+    "inactive": "Inactive",
+    "cancel": "Cancel",
+    "name": "Name",
+    "nameRequired": "Name *",
+    "email": "Email",
+    "emailRequired": "Email *",
+    "role": "Role",
+    "roleRequired": "Role *",
+    "activeLabel": "Active",
+    "roles": {
+      "superAdmin": "Super Admin",
+      "clinicAdmin": "Clinic Admin",
+      "professionalCaregiver": "Professional Caregiver",
+      "familyCaregiver": "Family Caregiver",
+      "patient": "Patient"
+    },
+    "tableHeaders": {
+      "user": "User",
+      "role": "Role",
+      "organization": "Organization",
+      "status": "Status",
+      "lastLogin": "Last Login",
+      "actions": "Actions"
+    },
+    "pagination": {
+      "showingPage": "Showing page {{page}} of {{totalPages}}"
+    },
+    "errors": {
+      "fetchUsers": "Failed to fetch users",
+      "updateUser": "Failed to update user",
+      "deactivateUser": "Failed to deactivate user",
+      "reactivateUser": "Failed to reactivate user"
+    },
+    "success": {
+      "userUpdated": "User updated successfully",
+      "userDeactivated": "User deactivated successfully",
+      "userReactivated": "User reactivated successfully"
+    }
+  },
+  "organizations": {
+    "title": "Organization Management",
+    "subtitle": "Manage healthcare organizations and clinics",
+    "createButton": "Create Organization",
+    "sectionTitle": "Organizations",
+    "noOrganizationsTitle": "No organizations",
+    "noOrganizationsMessage": "Create your first organization to get started.",
+    "organizationCount": "Organizations ({{count}})",
+    "createdLabel": "Created:",
+    "editTitle": "Edit Organization",
+    "createTitle": "Create Organization",
+    "nameLabel": "Name",
+    "descriptionLabel": "Description",
+    "addressLabel": "Address",
+    "phoneLabel": "Phone",
+    "emailLabel": "Email",
+    "errors": {
+      "fetchError": "Failed to fetch organizations",
+      "createError": "Failed to create organization",
+      "updateError": "Failed to update organization",
+      "statusUpdateError": "Failed to update organization status",
+      "accessDeniedMessage": "You don't have permission to manage organizations."
+    },
+    "success": {
+      "createSuccess": "Organization created successfully",
+      "updateSuccess": "Organization updated successfully",
+      "activated": "activated",
+      "deactivated": "deactivated"
+    }
+  },
+  "emergency": {
+    "title": "Emergency Access",
+    "subtitle": "Manage emergency access requests and monitoring",
+    "requestButton": "Request Emergency Access",
+    "searchPlaceholder": "Search by patient or reason...",
+    "allTypes": "All Types",
+    "allStatus": "All Status",
+    "accessTypes": {
+      "medicalEmergency": "Medical Emergency",
+      "technicalSupport": "Technical Support",
+      "dataRecovery": "Data Recovery",
+      "auditInvestigation": "Audit Investigation"
+    },
+    "recordsTitle": "Emergency Access Records",
+    "recordsCount": "Emergency Access Records ({{count}})",
+    "noRecordsTitle": "No emergency access records",
+    "noRecordsMessage": "No emergency access requests found.",
+    "patientNotFound": "Patient not found",
+    "requestedLabel": "Requested:",
+    "endedLabel": "Ended:",
+    "active": "Active",
+    "expired": "Expired",
+    "revoke": "Revoke",
+    "revokeButton": "Revoke",
+    "timeRemaining": {
+      "hoursMinutes": "{{hours}}h {{minutes}}m remaining",
+      "minutesOnly": "{{minutes}}m remaining",
+      "expired": "Expired"
+    },
+    "requestTitle": "Request Emergency Access",
+    "patientLabel": "Patient",
+    "selectPatient": "Select patient",
+    "accessTypeLabel": "Access Type",
+    "durationLabel": "Duration (hours)",
+    "reasonLabel": "Reason",
+    "reasonPlaceholder": "Provide detailed justification for emergency access...",
+    "warningMessage": "Emergency access is logged and audited. Only use in genuine emergencies and provide complete justification.",
+    "requesting": "Requesting...",
+    "requestAccessButton": "Request Access",
+    "cancel": "Cancel",
+    "warning": "Warning:",
+    "requiredField": "*",
+    "revokeConfirmation": "Are you sure you want to revoke this emergency access?",
+    "ariaLabels": {
+      "searchEmergencyAccess": "Search emergency access records",
+      "filterByAccessType": "Filter by access type",
+      "filterByStatus": "Filter by status",
+      "emergencyAccessRecord": "{{accessType}} emergency access record"
+    },
+    "errors": {
+      "fetchError": "Failed to fetch emergency access records",
+      "requestError": "Failed to request emergency access",
+      "revokeError": "Failed to revoke emergency access"
+    },
+    "success": {
+      "requestSuccess": "Emergency access requested successfully",
+      "revokeSuccess": "Emergency access revoked successfully"
+    }
+  },
+  "analytics": {
+    "systemDashboardTitle": "System Analytics Dashboard",
+    "organizationDashboardTitle": "Organization Analytics Dashboard",
+    "systemOverviewSubtitle": "System-wide performance and usage statistics",
+    "organizationOverviewSubtitle": "Analytics for",
+    "timeRanges": {
+      "last7Days": "Last 7 days",
+      "last30Days": "Last 30 days",
+      "last90Days": "Last 90 days"
+    },
+    "allOrganizations": "All Organizations",
+    "emergencyAccessOverview": "Emergency Access Overview",
+    "byType": "By Type",
+    "emergencyAccessByOrganization": "Emergency Access by Organization",
+    "emergencyAccessRecords": "Emergency Access Records",
+    "noEmergencyRecords": "No emergency access records found",
+    "organizationStatistics": "Organization Statistics",
+    "tableHeaders": {
+      "organizationHeader": "Organization",
+      "usersHeader": "Users",
+      "patientsHeader": "Patients",
+      "assignmentsHeader": "Assignments",
+      "emergencyAccessHeader": "Emergency Access",
+      "statusHeader": "Status"
+    },
+    "noOrganizations": "No organizations found",
+    "filters": {
+      "timeRangeLabel": "Time range",
+      "organizationLabel": "Filter by organization",
+      "yourOrganization": "your organization"
+    },
+    "stats": {
+      "totalUsers": "Total Users",
+      "totalPatients": "Total Patients",
+      "organizations": "Organizations", 
+      "activeAssignments": "Active Assignments",
+      "total": "Total",
+      "active": "Active",
+      "expired": "Expired"
+    },
+    "accessTypes": {
+      "medicalEmergency": "Medical Emergency",
+      "technicalSupport": "Technical Support", 
+      "dataRecovery": "Data Recovery",
+      "auditInvestigation": "Audit Investigation"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "errors": {
+      "systemStatsError": "Failed to fetch system statistics",
+      "emergencyStatsError": "Failed to fetch emergency access statistics",
+      "accessDeniedMessage": "You don't have permission to view analytics.",
+      "accessDeniedTitle": "Access Denied"
+    }
+  },
+  "assignments": {
+    "title": "Caregiver Assignments",
+    "subtitle": "Manage caregiver assignments and patient consent",
+    "createButton": "Create Assignment",
+    "searchPlaceholder": "Search by patient or caregiver name...",
+    "searchLabel": "Search assignments",
+    "filterByStatus": "Filter by status", 
+    "filterByType": "Filter by caregiver type",
+    "allStatus": "All Status",
+    "allTypes": "All Types",
+    "assignedTo": "assigned to",
+    "caregiverSuffix": "caregiver",
+    "assignmentsCount": "Assignments ({{count}})",
+    "noAssignmentsTitle": "No assignments found",
+    "noAssignmentsMessage": "No assignments match your current filters.",
+    "createdLabel": "Created:",
+    "startedLabel": "Started:",
+    "consentLabel": "Consent",
+    "consentGiven": "Given",
+    "consentPending": "Pending",
+    "notes": "Notes:",
+    "approve": "Approve",
+    "decline": "Decline",
+    "revoke": "Revoke",
+    "createTitle": "Create Assignment",
+    "patientLabel": "Patient",
+    "selectPatient": "Select patient",
+    "caregiverLabel": "Caregiver",
+    "selectCaregiver": "Select caregiver",
+    "caregiverTypeLabel": "Caregiver Type",
+    "notesLabel": "Notes",
+    "creating": "Creating...",
+    "createAssignmentButton": "Create Assignment",
+    "cancel": "Cancel",
+    "requiredField": "*",
+    "status": {
+      "pending": "Pending",
+      "active": "Active",
+      "inactive": "Inactive",
+      "declined": "Declined",
+      "revoked": "Revoked"
+    },
+    "caregiverTypes": {
+      "professional": "Professional",
+      "family": "Family"
+    },
+    "errors": {
+      "fetchError": "Failed to fetch assignments",
+      "createError": "Failed to create assignment",
+      "updateError": "Failed to update assignment"
+    },
+    "success": {
+      "createSuccess": "Assignment created successfully",
+      "updateSuccess": "Assignment {{status}} successfully"
+    }
+  }
+}

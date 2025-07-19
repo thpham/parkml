@@ -1,0 +1,44 @@
+{
+  "title": "Tableau de bord",
+  "welcome": "Bienvenue sur ParkML",
+  "overview": "Vue d'ensemble",
+  "recentActivity": "Activité récente",
+  "statistics": "Statistiques",
+  "types": {
+    "patientDashboard": "Tableau de bord Patient",
+    "familyCaregiverDashboard": "Tableau de bord Aidant Familial",
+    "professionalCaregiverDashboard": "Tableau de bord Aidant Professionnel"
+  },
+  "greeting": {
+    "welcomeBack": "Bon retour, {{name}} ({{role}})",
+    "createPatientRecord": "Créer un dossier patient",
+    "assignedPatients": "Patients assignés",
+    "myProfile": "Mon profil",
+    "addSymptoms": "Ajouter des symptômes",
+    "diagnosed": "Diagnostiqué"
+  },
+  "stats": {
+    "assignedPatients": "Patients assignés",
+    "recentEntries": "Entrées récentes",
+    "thisMonth": "Ce mois-ci",
+    "compliance": "Observance"
+  },
+  "noPatients": {
+    "title": "Aucun patient",
+    "createRecord": "Créez votre dossier patient pour commencer le suivi des symptômes.",
+    "noneAssigned": "Aucun patient ne vous est encore assigné."
+  },
+  "prompts": {
+    "enterName": "Saisissez le nom du patient :",
+    "enterBirthDate": "Saisissez la date de naissance (AAAA-MM-JJ) :",
+    "enterDiagnosisDate": "Saisissez la date de diagnostic (AAAA-MM-JJ) :"
+  },
+  "errors": {
+    "loadDashboard": "Échec du chargement des données du tableau de bord",
+    "onlyPatients": "Seuls les patients peuvent créer leur propre dossier",
+    "createPatient": "Échec de la création du dossier patient"
+  },
+  "success": {
+    "patientCreated": "Dossier patient créé avec succès"
+  }
+}

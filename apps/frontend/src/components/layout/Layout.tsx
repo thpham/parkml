@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   LogOut, 
@@ -11,9 +11,13 @@ import {
   UserPlus,
   AlertTriangle,
   BarChart3,
-  ChevronDown
+  ChevronDown,
+  Menu,
+  X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import LanguageSelector from '../shared/LanguageSelector';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -21,26 +25,13 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout, isAdmin, token } = useAuth();
+  const { t, isLoading, error } = useTranslation(['navigation', 'common']);
   const isSuperAdmin = user?.role === 'super_admin';
   const navigate = useNavigate();
-  const [showAdminMenu, setShowAdminMenu] = useState(false);
   const [pendingAssignments, setPendingAssignments] = useState(0);
   const [pendingConsent, setPendingConsent] = useState(0);
-  const adminMenuRef = useRef<HTMLDivElement>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Close admin menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (adminMenuRef.current && !adminMenuRef.current.contains(event.target as Node)) {
-        setShowAdminMenu(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
 
   // Fetch pending assignments count for caregivers
   useEffect(() => {
@@ -100,162 +91,367 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     navigate('/login');
   };
 
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    setIsMobileMenuOpen(false); // Close mobile menu after navigation
+  };
+
+  // Show loading while translations are loading
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <span className="loading loading-spinner loading-lg mb-4"></span>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if translations failed to load
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-error mb-4">Translation Error</div>
+          <p className="text-gray-600">{error}</p>
+          <button onClick={() => window.location.reload()} className="btn btn-primary mt-4">
+            Reload
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">ParkML</h1>
-              <span className="ml-2 text-sm text-gray-500">Symptom Tracker</span>
+    <div className="min-h-screen">
+      {/* Mobile-Responsive Navigation with Drawer */}
+      <div className="drawer">
+        <input id="mobile-drawer" type="checkbox" className="drawer-toggle" checked={isMobileMenuOpen} onChange={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
+        
+        <div className="drawer-content flex flex-col">
+          {/* Top Navigation Bar */}
+          <div className="navbar bg-base-100 shadow-lg">
+            <div className="navbar-start">
+              {/* Mobile Menu Button */}
+              <label htmlFor="mobile-drawer" className="btn btn-square btn-ghost lg:hidden">
+                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </label>
+              
+              {/* Logo */}
+              <div className="flex items-center ml-2 lg:ml-0">
+                <h1 className="text-xl font-bold">{t('app.name')}</h1>
+                <span className="ml-2 text-sm opacity-60 hidden sm:inline">{t('app.subtitle')}</span>
+              </div>
             </div>
 
-            {/* Navigation */}
-            <nav className="flex space-x-8">
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                <Home className="h-4 w-4 mr-1" />
-                Dashboard
-              </button>
+            {/* Desktop Navigation Center */}
+            <div className="navbar-center hidden lg:flex">
+              <div className="menu menu-horizontal px-1 space-x-2">
+                <button
+                  onClick={() => handleNavigation('/dashboard')}
+                  className="btn btn-ghost btn-sm"
+                >
+                  <Home className="h-4 w-4" />
+                  {t('menu.dashboard')}
+                </button>
+                
+                {(user?.role === 'professional_caregiver' || user?.role === 'family_caregiver') && (
+                  <button
+                    onClick={() => handleNavigation('/caregiver/assignments')}
+                    className="btn btn-ghost btn-sm relative"
+                  >
+                    <Users className="h-4 w-4" />
+                    {t('menu.myAssignments')}
+                    {pendingAssignments > 0 && (
+                      <div className="badge badge-error badge-sm absolute -top-2 -right-2">
+                        {pendingAssignments}
+                      </div>
+                    )}
+                  </button>
+                )}
+                
+                {user?.role === 'patient' && (
+                  <>
+                    <button
+                      onClick={() => handleNavigation('/patient/consent')}
+                      className="btn btn-ghost btn-sm relative"
+                    >
+                      <Users className="h-4 w-4" />
+                      {t('menu.caregiverConsent')}
+                      {pendingConsent > 0 && (
+                        <div className="badge badge-error badge-sm absolute -top-2 -right-2">
+                          {pendingConsent}
+                        </div>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleNavigation('/symptoms/new')}
+                      className="btn btn-ghost btn-sm"
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                      {t('menu.addSymptoms')}
+                    </button>
+                  </>
+                )}
+                
+                {isAdmin && (
+                  <div className="dropdown dropdown-end">
+                    <div tabIndex={0} role="button" className="btn btn-ghost btn-sm">
+                      <Settings className="h-4 w-4" />
+                      {t('menu.admin')}
+                      <ChevronDown className="h-3 w-3" />
+                    </div>
+                    <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                      <li>
+                        <button
+                          onClick={() => handleNavigation('/admin/analytics')}
+                          className="flex items-center"
+                        >
+                          <BarChart3 className="h-4 w-4" />
+                          {t('menu.analytics')}
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          onClick={() => handleNavigation('/admin/users')}
+                          className="flex items-center"
+                        >
+                          <Users className="h-4 w-4" />
+                          {t('menu.userManagement')}
+                        </button>
+                      </li>
+                      {isSuperAdmin && (
+                        <li>
+                          <button
+                            onClick={() => handleNavigation('/admin/organizations')}
+                            className="flex items-center"
+                          >
+                            <Building className="h-4 w-4" />
+                            {t('menu.organizations')}
+                          </button>
+                        </li>
+                      )}
+                      <li>
+                        <button
+                          onClick={() => handleNavigation('/admin/assignments')}
+                          className="flex items-center"
+                        >
+                          <UserPlus className="h-4 w-4" />
+                          {t('menu.assignments')}
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          onClick={() => handleNavigation('/admin/emergency-access')}
+                          className="flex items-center"
+                        >
+                          <AlertTriangle className="h-4 w-4" />
+                          {t('menu.emergencyAccess')}
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* User Menu */}
+            <div className="navbar-end">
+              <div className="flex items-center space-x-2">
+                {/* Language Selector */}
+                <LanguageSelector compact className="hidden sm:flex" />
+                
+                <div className="hidden sm:flex items-center text-sm">
+                  <User className="h-4 w-4 mr-1" />
+                  <span className="font-medium">{user?.name}</span>
+                  <span className="ml-2 opacity-60 capitalize hidden md:inline">({user?.role})</span>
+                </div>
+                
+                <button
+                  onClick={handleLogout}
+                  className="btn btn-ghost btn-sm text-error"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden sm:inline">{t('menu.logout')}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+            {children}
+          </main>
+        </div>
+
+        {/* Mobile Drawer Sidebar */}
+        <div className="drawer-side lg:hidden">
+          <label htmlFor="mobile-drawer" className="drawer-overlay"></label>
+          <aside className="w-64 min-h-full bg-base-200">
+            {/* Mobile Menu Header */}
+            <div className="p-4 bg-base-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold">{t('app.name')}</h2>
+                  <p className="text-sm opacity-60">{t('app.subtitle')}</p>
+                </div>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="btn btn-ghost btn-sm"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Mobile Menu Items */}
+            <ul className="menu p-4 space-y-2">
+              {/* User Info */}
+              <li className="mb-4">
+                <div className="flex items-center p-2 bg-base-100 rounded-lg">
+                  <User className="h-8 w-8 mr-3" />
+                  <div>
+                    <div className="font-medium">{user?.name}</div>
+                    <div className="text-sm opacity-60 capitalize">{user?.role}</div>
+                  </div>
+                </div>
+              </li>
+
+              {/* Navigation Items */}
+              <li>
+                <button
+                  onClick={() => handleNavigation('/dashboard')}
+                  className="flex items-center p-3 hover:bg-base-100 rounded-lg w-full"
+                >
+                  <Home className="h-5 w-5 mr-3" />
+                  {t('menu.dashboard')}
+                </button>
+              </li>
               
               {(user?.role === 'professional_caregiver' || user?.role === 'family_caregiver') && (
-                <button
-                  onClick={() => navigate('/caregiver/assignments')}
-                  className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium relative"
-                >
-                  <Users className="h-4 w-4 mr-1" />
-                  My Assignments
-                  {pendingAssignments > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {pendingAssignments}
-                    </span>
-                  )}
-                </button>
+                <li>
+                  <button
+                    onClick={() => handleNavigation('/caregiver/assignments')}
+                    className="flex items-center p-3 hover:bg-base-100 rounded-lg w-full relative"
+                  >
+                    <Users className="h-5 w-5 mr-3" />
+                    {t('menu.myAssignments')}
+                    {pendingAssignments > 0 && (
+                      <div className="badge badge-error badge-sm ml-auto">
+                        {pendingAssignments}
+                      </div>
+                    )}
+                  </button>
+                </li>
               )}
               
               {user?.role === 'patient' && (
                 <>
-                  <button
-                    onClick={() => navigate('/patient/consent')}
-                    className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium relative"
-                  >
-                    <Users className="h-4 w-4 mr-1" />
-                    Caregiver Consent
-                    {pendingConsent > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {pendingConsent}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => navigate('/symptoms/new')}
-                    className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    <PlusCircle className="h-4 w-4 mr-1" />
-                    Add Symptoms
-                  </button>
+                  <li>
+                    <button
+                      onClick={() => handleNavigation('/patient/consent')}
+                      className="flex items-center p-3 hover:bg-base-100 rounded-lg w-full relative"
+                    >
+                      <Users className="h-5 w-5 mr-3" />
+                      {t('menu.caregiverConsent')}
+                      {pendingConsent > 0 && (
+                        <div className="badge badge-error badge-sm ml-auto">
+                          {pendingConsent}
+                        </div>
+                      )}
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => handleNavigation('/symptoms/new')}
+                      className="flex items-center p-3 hover:bg-base-100 rounded-lg w-full"
+                    >
+                      <PlusCircle className="h-5 w-5 mr-3" />
+                      {t('menu.addSymptoms')}
+                    </button>
+                  </li>
                 </>
               )}
               
               {isAdmin && (
-                <div className="relative" ref={adminMenuRef}>
-                  <button
-                    onClick={() => setShowAdminMenu(!showAdminMenu)}
-                    className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    <Settings className="h-4 w-4 mr-1" />
-                    Admin
-                    <ChevronDown className="h-3 w-3 ml-1" />
-                  </button>
-                  
-                  {showAdminMenu && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                      <button
-                        onClick={() => {
-                          navigate('/admin/analytics');
-                          setShowAdminMenu(false);
-                        }}
-                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        <BarChart3 className="h-4 w-4 mr-2" />
-                        Analytics
-                      </button>
-                      <button
-                        onClick={() => {
-                          navigate('/admin/users');
-                          setShowAdminMenu(false);
-                        }}
-                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        <Users className="h-4 w-4 mr-2" />
-                        User Management
-                      </button>
-                      {isSuperAdmin && (
-                        <button
-                          onClick={() => {
-                            navigate('/admin/organizations');
-                            setShowAdminMenu(false);
-                          }}
-                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          <Building className="h-4 w-4 mr-2" />
-                          Organizations
-                        </button>
-                      )}
-                      <button
-                        onClick={() => {
-                          navigate('/admin/assignments');
-                          setShowAdminMenu(false);
-                        }}
-                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        <UserPlus className="h-4 w-4 mr-2" />
-                        Assignments
-                      </button>
-                      <button
-                        onClick={() => {
-                          navigate('/admin/emergency-access');
-                          setShowAdminMenu(false);
-                        }}
-                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        <AlertTriangle className="h-4 w-4 mr-2" />
-                        Emergency Access
-                      </button>
+                <>
+                  <li className="mt-4">
+                    <div className="text-xs font-semibold opacity-60 uppercase tracking-wide mb-2">
+                      {t('menu.administration')}
                     </div>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => handleNavigation('/admin/analytics')}
+                      className="flex items-center p-3 hover:bg-base-100 rounded-lg w-full"
+                    >
+                      <BarChart3 className="h-5 w-5 mr-3" />
+                      {t('menu.analytics')}
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => handleNavigation('/admin/users')}
+                      className="flex items-center p-3 hover:bg-base-100 rounded-lg w-full"
+                    >
+                      <Users className="h-5 w-5 mr-3" />
+                      {t('menu.userManagement')}
+                    </button>
+                  </li>
+                  {isSuperAdmin && (
+                    <li>
+                      <button
+                        onClick={() => handleNavigation('/admin/organizations')}
+                        className="flex items-center p-3 hover:bg-base-100 rounded-lg w-full"
+                      >
+                        <Building className="h-5 w-5 mr-3" />
+                        {t('menu.organizations')}
+                      </button>
+                    </li>
                   )}
-                </div>
+                  <li>
+                    <button
+                      onClick={() => handleNavigation('/admin/assignments')}
+                      className="flex items-center p-3 hover:bg-base-100 rounded-lg w-full"
+                    >
+                      <UserPlus className="h-5 w-5 mr-3" />
+                      {t('menu.assignments')}
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => handleNavigation('/admin/emergency-access')}
+                      className="flex items-center p-3 hover:bg-base-100 rounded-lg w-full"
+                    >
+                      <AlertTriangle className="h-5 w-5 mr-3" />
+                      {t('menu.emergencyAccess')}
+                    </button>
+                  </li>
+                </>
               )}
-            </nav>
 
-            {/* User Menu */}
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center text-sm text-gray-700">
-                <User className="h-4 w-4 mr-1" />
-                <span className="font-medium">{user?.name}</span>
-                <span className="ml-2 text-gray-500 capitalize">({user?.role})</span>
-              </div>
-              
-              <button
-                onClick={handleLogout}
-                className="flex items-center text-gray-700 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                <LogOut className="h-4 w-4 mr-1" />
-                Logout
-              </button>
-            </div>
-          </div>
+              {/* Language Selector for Mobile */}
+              <li className="mt-4">
+                <div className="p-3">
+                  <LanguageSelector className="w-full" />
+                </div>
+              </li>
+
+              {/* Logout */}
+              <li className="mt-6">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center p-3 hover:bg-error hover:text-error-content rounded-lg w-full text-error"
+                >
+                  <LogOut className="h-5 w-5 mr-3" />
+                  {t('menu.logout')}
+                </button>
+              </li>
+            </ul>
+          </aside>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
-      </main>
+      </div>
     </div>
   );
 };

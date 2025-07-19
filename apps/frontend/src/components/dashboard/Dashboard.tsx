@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Patient, SymptomEntry } from '@parkml/shared';
+import { Avatar } from '../shared';
 import { Calendar, Users, Activity, TrendingUp, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import AdminDashboard from '../admin/AdminDashboard';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const Dashboard: React.FC = () => {
   const { user, token, isAdmin } = useAuth();
+  const { t } = useTranslation(['dashboard', 'common']);
   const navigate = useNavigate();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [recentEntries, setRecentEntries] = useState<SymptomEntry[]>([]);
@@ -60,7 +63,7 @@ const Dashboard: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
-      toast.error('Failed to load dashboard data');
+      toast.error(t('errors.loadDashboard'));
     } finally {
       setLoading(false);
     }
@@ -68,13 +71,13 @@ const Dashboard: React.FC = () => {
 
   const handleCreatePatient = async () => {
     if (user?.role !== 'patient') {
-      toast.error('Only patients can create their own records');
+      toast.error(t('errors.onlyPatients'));
       return;
     }
     
-    const name = prompt('Enter patient name:');
-    const dateOfBirth = prompt('Enter date of birth (YYYY-MM-DD):');
-    const diagnosisDate = prompt('Enter diagnosis date (YYYY-MM-DD):');
+    const name = prompt(t('prompts.enterName'));
+    const dateOfBirth = prompt(t('prompts.enterBirthDate'));
+    const diagnosisDate = prompt(t('prompts.enterDiagnosisDate'));
     
     if (!name || !dateOfBirth || !diagnosisDate) {
       return;
@@ -97,20 +100,20 @@ const Dashboard: React.FC = () => {
       const data = await response.json();
       
       if (data.success) {
-        toast.success('Patient record created successfully');
+        toast.success(t('success.patientCreated'));
         fetchDashboardData();
       } else {
-        toast.error(data.error || 'Failed to create patient record');
+        toast.error(data.error || t('errors.createPatient'));
       }
     } catch (error) {
-      toast.error('Failed to create patient record');
+      toast.error(t('errors.createPatient'));
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <span className="loading loading-spinner loading-lg"></span>
       </div>
     );
   }
@@ -118,176 +121,141 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {user?.role === 'patient' ? 'Patient Dashboard' : 
-               user?.role === 'family_caregiver' ? 'Family Caregiver Dashboard' : 
-               'Professional Caregiver Dashboard'}
-            </h1>
-            <p className="text-gray-600">
-              Welcome back, {user?.name} ({user?.role?.replace('_', ' ')})
-            </p>
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="card-title text-2xl">
+                {user?.role === 'patient' ? t('types.patientDashboard') : 
+                 user?.role === 'family_caregiver' ? t('types.familyCaregiverDashboard') : 
+                 t('types.professionalCaregiverDashboard')}
+              </h1>
+              <p className="text-base-content/70">
+                {t('greeting.welcomeBack', { name: user?.name || '', role: user?.role?.replace('_', ' ') || '' })}
+              </p>
+            </div>
+            
+            {user?.role === 'patient' && patients.length === 0 && (
+              <button
+                onClick={handleCreatePatient}
+                className="btn btn-primary"
+              >
+                <Plus className="h-4 w-4" />
+                {t('greeting.createPatientRecord')}
+              </button>
+            )}
           </div>
-          
-          {user?.role === 'patient' && patients.length === 0 && (
-            <button
-              onClick={handleCreatePatient}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Patient Record
-            </button>
-          )}
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className={`grid grid-cols-1 gap-6 ${user?.role === 'patient' ? 'md:grid-cols-3' : 'md:grid-cols-4'}`}>
         {user?.role !== 'patient' && (
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Users className="h-6 w-6 text-gray-400" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Assigned Patients
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {patients.length}
-                    </dd>
-                  </dl>
-                </div>
+          <div className="stats shadow">
+            <div className="stat">
+              <div className="stat-figure text-primary">
+                <Users className="h-8 w-8" />
               </div>
+              <div className="stat-title">{t('stats.assignedPatients')}</div>
+              <div className="stat-value text-primary">{patients.length}</div>
             </div>
           </div>
         )}
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Activity className="h-6 w-6 text-gray-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Recent Entries
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {recentEntries.length}
-                  </dd>
-                </dl>
-              </div>
+        <div className="stats shadow">
+          <div className="stat">
+            <div className="stat-figure text-secondary">
+              <Activity className="h-8 w-8" />
+            </div>
+            <div className="stat-title">{t('stats.recentEntries')}</div>
+            <div className="stat-value text-secondary">{recentEntries.length}</div>
+          </div>
+        </div>
+
+        <div className="stats shadow">
+          <div className="stat">
+            <div className="stat-figure text-accent">
+              <Calendar className="h-8 w-8" />
+            </div>
+            <div className="stat-title">{t('stats.thisMonth')}</div>
+            <div className="stat-value text-accent">
+              {recentEntries.filter(entry => 
+                new Date(entry.entryDate).getMonth() === new Date().getMonth()
+              ).length}
             </div>
           </div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Calendar className="h-6 w-6 text-gray-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    This Month
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {recentEntries.filter(entry => 
-                      new Date(entry.entryDate).getMonth() === new Date().getMonth()
-                    ).length}
-                  </dd>
-                </dl>
-              </div>
+        <div className="stats shadow">
+          <div className="stat">
+            <div className="stat-figure text-success">
+              <TrendingUp className="h-8 w-8" />
             </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <TrendingUp className="h-6 w-6 text-gray-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Compliance
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    85%
-                  </dd>
-                </dl>
-              </div>
-            </div>
+            <div className="stat-title">{t('stats.compliance')}</div>
+            <div className="stat-value text-success">85%</div>
           </div>
         </div>
       </div>
 
       {/* Patients List */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">
-            {user?.role === 'patient' ? 'My Profile' : 'Assigned Patients'}
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-header">
+          <h2 className="card-title text-lg px-6 py-4">
+            {user?.role === 'patient' ? t('greeting.myProfile') : t('greeting.assignedPatients')}
           </h2>
         </div>
         
-        {patients.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">
-            <Users className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No patients</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {user?.role === 'patient' 
-                ? 'Create your patient record to start tracking symptoms.'
-                : 'No patients assigned to you yet.'
-              }
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-hidden">
-            <ul className="divide-y divide-gray-200">
+        <div className="card-body">
+          {patients.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="mx-auto h-12 w-12 opacity-50" />
+              <h3 className="mt-2 text-sm font-medium">{t('noPatients.title')}</h3>
+              <p className="mt-1 text-sm opacity-70">
+                {user?.role === 'patient' 
+                  ? t('noPatients.createRecord')
+                  : t('noPatients.noneAssigned')
+                }
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
               {patients.map((patient) => (
-                <li key={patient.id} className="px-6 py-4 hover:bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
-                          <span className="text-sm font-medium text-white">
-                            {patient.name.charAt(0)}
-                          </span>
+                <div key={patient.id} className="card bg-base-200 shadow">
+                  <div className="card-body">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Avatar
+                          variant="initial"
+                          color="primary"
+                          size="lg"
+                          aria-label={`${patient.name} avatar`}
+                        >
+                          {patient.name.charAt(0)}
+                        </Avatar>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium">
+                            {patient.name}
+                          </div>
+                          <div className="text-sm opacity-70">
+                            {t('greeting.diagnosed')}: {new Date(patient.diagnosisDate).toLocaleDateString()}
+                          </div>
                         </div>
                       </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {patient.name}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Diagnosed: {new Date(patient.diagnosisDate).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                    {(user?.role === 'patient' || user?.role === 'family_caregiver') && (
-                      <div className="flex space-x-2">
+                      {(user?.role === 'patient' || user?.role === 'family_caregiver') && (
                         <button
                           onClick={() => navigate(`/symptoms/${patient.id}`)}
-                          className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-600 bg-blue-100 hover:bg-blue-200"
+                          className="btn btn-primary btn-sm"
                         >
-                          Add Symptoms
+                          {t('greeting.addSymptoms')}
                         </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </li>
+                </div>
               ))}
-            </ul>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from '../../hooks/useTranslation';
 import { 
   Users, 
   Building, 
@@ -25,6 +26,7 @@ const AdminDashboard: React.FC = () => {
   const { user, token, isAdmin } = useAuth();
   const isSuperAdmin = user?.role === 'super_admin';
   const navigate = useNavigate();
+  const { t } = useTranslation(['admin', 'common']);
   const [stats, setStats] = useState<AdminStats>({
     totalUsers: 0,
     totalPatients: 0,
@@ -95,7 +97,7 @@ const AdminDashboard: React.FC = () => {
 
     } catch (error) {
       console.error('Error fetching admin stats:', error);
-      toast.error('Failed to load admin dashboard data');
+      toast.error(t('dashboard.loadError'));
     } finally {
       setLoading(false);
     }
@@ -105,9 +107,9 @@ const AdminDashboard: React.FC = () => {
     return (
       <div className="text-center py-12">
         <Shield className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">Access Denied</h3>
+        <h3 className="mt-2 text-sm font-medium text-gray-900">{t('messages.accessDenied', { ns: 'common' })}</h3>
         <p className="mt-1 text-sm text-gray-500">
-          You don't have permission to access the admin dashboard.
+          {t('dashboard.accessDeniedMessage')}
         </p>
       </div>
     );
@@ -116,7 +118,7 @@ const AdminDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <span className="loading loading-spinner loading-lg"></span>
       </div>
     );
   }
@@ -124,170 +126,109 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {isSuperAdmin ? 'System Administration' : 'Clinic Administration'}
-            </h1>
-            <p className="text-gray-600">
-              {isSuperAdmin 
-                ? 'System-wide overview and management tools' 
-                : `Organization management for ${user?.organization?.name || 'your clinic'}`
-              }
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Shield className="h-6 w-6 text-blue-500" />
-            <span className="text-lg font-medium text-gray-900 capitalize">
-              {user?.role?.replace('_', ' ')}
-            </span>
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="card-title text-2xl">
+                {isSuperAdmin ? t('dashboard.systemAdministrationTitle') : t('dashboard.clinicAdministrationTitle')}
+              </h1>
+              <p className="text-base-content/70">
+                {isSuperAdmin 
+                  ? t('dashboard.systemOverviewSubtitle') 
+                  : `${t('dashboard.organizationManagementSubtitle')} ${user?.organization?.name || t('misc.yourClinic')}`
+                }
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Shield className="h-6 w-6 text-primary" />
+              <span className="text-lg font-medium capitalize">
+                {user?.role?.replace('_', ' ')}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 ${isSuperAdmin ? 'lg:grid-cols-6' : 'lg:grid-cols-5'}`}>
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Users className="h-6 w-6 text-blue-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    {isSuperAdmin ? 'Total Users' : 'Organization Users'}
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.totalUsers}
-                  </dd>
-                </dl>
-              </div>
-            </div>
+      <div className="stats stats-vertical lg:stats-horizontal shadow w-full">
+        <div className="stat">
+          <div className="stat-figure text-primary">
+            <Users className="h-8 w-8" />
           </div>
+          <div className="stat-title">
+            {isSuperAdmin ? t('stats.totalUsers') : t('stats.organizationUsers')}
+          </div>
+          <div className="stat-value text-primary">{stats.totalUsers}</div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Users className="h-6 w-6 text-green-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    {isSuperAdmin ? 'Total Patients' : 'Organization Patients'}
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.totalPatients}
-                  </dd>
-                </dl>
-              </div>
-            </div>
+        <div className="stat">
+          <div className="stat-figure text-secondary">
+            <Users className="h-8 w-8" />
           </div>
+          <div className="stat-title">
+            {isSuperAdmin ? t('stats.totalPatients') : t('stats.organizationPatients')}
+          </div>
+          <div className="stat-value text-secondary">{stats.totalPatients}</div>
         </div>
 
         {isSuperAdmin && (
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Building className="h-6 w-6 text-purple-400" />
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Organizations
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {stats.totalOrganizations}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
+          <div className="stat">
+            <div className="stat-figure text-secondary">
+              <Building className="h-8 w-8" />
             </div>
+            <div className="stat-title">
+              {t('stats.organizations')}
+            </div>
+            <div className="stat-value text-secondary">{stats.totalOrganizations}</div>
           </div>
         )}
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <UserPlus className="h-6 w-6 text-yellow-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Pending Assignments
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.pendingAssignments}
-                  </dd>
-                </dl>
-              </div>
-            </div>
+        <div className="stat">
+          <div className="stat-figure text-warning">
+            <UserPlus className="h-8 w-8" />
           </div>
+          <div className="stat-title">
+            {t('stats.pendingAssignments')}
+          </div>
+          <div className="stat-value text-warning">{stats.pendingAssignments}</div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <AlertTriangle className="h-6 w-6 text-red-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Emergency Access
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.activeEmergencyAccess}
-                  </dd>
-                </dl>
-              </div>
-            </div>
+        <div className="stat">
+          <div className="stat-figure text-error">
+            <AlertTriangle className="h-8 w-8" />
           </div>
+          <div className="stat-title">
+            {t('stats.emergencyAccess')}
+          </div>
+          <div className="stat-value text-error">{stats.activeEmergencyAccess}</div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Activity className="h-6 w-6 text-indigo-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Recent Activity
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.recentActivity}
-                  </dd>
-                </dl>
-              </div>
-            </div>
+        <div className="stat">
+          <div className="stat-figure text-info">
+            <Activity className="h-8 w-8" />
           </div>
+          <div className="stat-title">
+            {t('stats.recentActivity')}
+          </div>
+          <div className="stat-value text-info">{stats.recentActivity}</div>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Quick Actions</h2>
-        </div>
-        
-        <div className="p-6">
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="card-title">{t('dashboard.quickActionsTitle')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <button
               onClick={() => navigate('/admin/users')}
-              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="btn btn-ghost justify-start h-auto p-4 border border-base-300"
             >
-              <Users className="h-8 w-8 text-blue-500 mr-3" />
+              <Users className="h-8 w-8 text-primary mr-3" />
               <div className="text-left">
-                <div className="font-medium text-gray-900">User Management</div>
-                <div className="text-sm text-gray-500">
-                  {isSuperAdmin ? 'Manage users and roles' : 'Manage organization users'}
+                <div className="font-medium text-base-content">{t('actions.userManagement')}</div>
+                <div className="text-sm text-base-content/60">
+                  {isSuperAdmin ? t('actions.userManagementDescriptionSuper') : t('actions.userManagementDescriptionClinic')}
                 </div>
               </div>
             </button>
@@ -295,49 +236,49 @@ const AdminDashboard: React.FC = () => {
             {isSuperAdmin && (
               <button
                 onClick={() => navigate('/admin/organizations')}
-                className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                className="btn btn-ghost justify-start h-auto p-4 border border-base-300"
               >
-                <Building className="h-8 w-8 text-purple-500 mr-3" />
+                <Building className="h-8 w-8 text-secondary mr-3" />
                 <div className="text-left">
-                  <div className="font-medium text-gray-900">Organizations</div>
-                  <div className="text-sm text-gray-500">Manage clinics & organizations</div>
+                  <div className="font-medium text-base-content">{t('actions.organizations')}</div>
+                  <div className="text-sm text-base-content/60">{t('actions.organizationsDescription')}</div>
                 </div>
               </button>
             )}
 
             <button
               onClick={() => navigate('/admin/assignments')}
-              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="btn btn-ghost justify-start h-auto p-4 border border-base-300"
             >
-              <UserPlus className="h-8 w-8 text-green-500 mr-3" />
+              <UserPlus className="h-8 w-8 text-success mr-3" />
               <div className="text-left">
-                <div className="font-medium text-gray-900">Assignments</div>
-                <div className="text-sm text-gray-500">
-                  {isSuperAdmin ? 'Manage caregiver assignments' : 'Manage organization assignments'}
+                <div className="font-medium text-base-content">{t('actions.assignments')}</div>
+                <div className="text-sm text-base-content/60">
+                  {isSuperAdmin ? t('actions.assignmentsDescriptionSuper') : t('actions.assignmentsDescriptionClinic')}
                 </div>
               </div>
             </button>
 
             <button
               onClick={() => navigate('/admin/emergency-access')}
-              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="btn btn-ghost justify-start h-auto p-4 border border-base-300"
             >
-              <AlertTriangle className="h-8 w-8 text-red-500 mr-3" />
+              <AlertTriangle className="h-8 w-8 text-error mr-3" />
               <div className="text-left">
-                <div className="font-medium text-gray-900">Emergency Access</div>
-                <div className="text-sm text-gray-500">Monitor emergency access</div>
+                <div className="font-medium text-base-content">{t('actions.emergencyAccess')}</div>
+                <div className="text-sm text-base-content/60">{t('actions.emergencyAccessDescription')}</div>
               </div>
             </button>
 
             <button
               onClick={() => navigate('/admin/analytics')}
-              className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="btn btn-ghost justify-start h-auto p-4 border border-base-300"
             >
-              <BarChart3 className="h-8 w-8 text-indigo-500 mr-3" />
+              <BarChart3 className="h-8 w-8 text-info mr-3" />
               <div className="text-left">
-                <div className="font-medium text-gray-900">Analytics</div>
-                <div className="text-sm text-gray-500">
-                  {isSuperAdmin ? 'View system analytics' : 'View organization analytics'}
+                <div className="font-medium text-base-content">{t('actions.analytics')}</div>
+                <div className="text-sm text-base-content/60">
+                  {isSuperAdmin ? t('actions.analyticsDescriptionSuper') : t('actions.analyticsDescriptionClinic')}
                 </div>
               </div>
             </button>
@@ -345,14 +286,14 @@ const AdminDashboard: React.FC = () => {
             {stats.pendingAssignments > 0 && (
               <button
                 onClick={() => navigate('/admin/assignments')}
-                className="flex items-center p-4 border border-yellow-200 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors"
+                className="btn btn-warning justify-start h-auto p-4"
               >
-                <UserPlus className="h-8 w-8 text-yellow-600 mr-3" />
+                <UserPlus className="h-8 w-8 mr-3" />
                 <div className="text-left">
-                  <div className="font-medium text-yellow-800">
-                    {stats.pendingAssignments} Pending Assignment{stats.pendingAssignments > 1 ? 's' : ''}
+                  <div className="font-medium">
+                    {stats.pendingAssignments} {t('stats.pendingAssignments')}{stats.pendingAssignments > 1 ? 's' : ''}
                   </div>
-                  <div className="text-sm text-yellow-600">Requires attention</div>
+                  <div className="text-sm opacity-80">{t('alerts.requiresAttention')}</div>
                 </div>
               </button>
             )}
@@ -360,14 +301,14 @@ const AdminDashboard: React.FC = () => {
             {stats.activeEmergencyAccess > 0 && (
               <button
                 onClick={() => navigate('/admin/emergency-access')}
-                className="flex items-center p-4 border border-red-200 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                className="btn btn-error justify-start h-auto p-4"
               >
-                <AlertTriangle className="h-8 w-8 text-red-600 mr-3" />
+                <AlertTriangle className="h-8 w-8 mr-3" />
                 <div className="text-left">
-                  <div className="font-medium text-red-800">
-                    {stats.activeEmergencyAccess} Active Emergency Access
+                  <div className="font-medium">
+                    {stats.activeEmergencyAccess} {t('stats.emergencyAccess')}
                   </div>
-                  <div className="text-sm text-red-600">Monitor closely</div>
+                  <div className="text-sm opacity-80">{t('alerts.monitorClosely')}</div>
                 </div>
               </button>
             )}
@@ -376,35 +317,32 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       {/* System Status */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">System Status</h2>
-        </div>
-        
-        <div className="p-6">
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="card-title">{t('dashboard.systemStatusTitle')}</h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-success/10 rounded-lg">
               <div className="flex items-center">
-                <div className="w-3 h-3 bg-green-400 rounded-full mr-3"></div>
-                <span className="text-sm font-medium text-green-800">Database Connection</span>
+                <div className="w-3 h-3 bg-success rounded-full mr-3"></div>
+                <span className="text-sm font-medium text-success">{t('system.databaseConnection')}</span>
               </div>
-              <span className="text-sm text-green-600">Healthy</span>
+              <span className="text-sm text-success/80">{t('system.healthy')}</span>
             </div>
             
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-success/10 rounded-lg">
               <div className="flex items-center">
-                <div className="w-3 h-3 bg-green-400 rounded-full mr-3"></div>
-                <span className="text-sm font-medium text-green-800">API Services</span>
+                <div className="w-3 h-3 bg-success rounded-full mr-3"></div>
+                <span className="text-sm font-medium text-success">{t('system.apiServices')}</span>
               </div>
-              <span className="text-sm text-green-600">Operational</span>
+              <span className="text-sm text-success/80">{t('system.operational')}</span>
             </div>
             
-            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-info/10 rounded-lg">
               <div className="flex items-center">
-                <div className="w-3 h-3 bg-blue-400 rounded-full mr-3"></div>
-                <span className="text-sm font-medium text-blue-800">Emergency Access Cleanup</span>
+                <div className="w-3 h-3 bg-info rounded-full mr-3"></div>
+                <span className="text-sm font-medium text-info">{t('system.emergencyAccessCleanup')}</span>
               </div>
-              <span className="text-sm text-blue-600">Running</span>
+              <span className="text-sm text-info/80">{t('system.running')}</span>
             </div>
           </div>
         </div>

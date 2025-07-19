@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { SymptomEntry } from '@parkml/shared';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../hooks/useTranslation';
 import toast from 'react-hot-toast';
 import { Save, Calendar, User, Clock } from 'lucide-react';
 
@@ -20,6 +21,7 @@ interface SymptomFormProps {
 
 const SymptomForm: React.FC<SymptomFormProps> = ({ patientId, onSubmit }) => {
   const { user, token } = useAuth();
+  const { t } = useTranslation(['symptoms', 'common']);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeSection, setActiveSection] = useState('motor');
 
@@ -37,17 +39,17 @@ const SymptomForm: React.FC<SymptomFormProps> = ({ patientId, onSubmit }) => {
   });
 
   const sections = [
-    { id: 'motor', title: 'Motor Symptoms', icon: '🏃' },
-    { id: 'non-motor', title: 'Non-Motor Symptoms', icon: '🧠' },
-    { id: 'autonomic', title: 'Autonomic Symptoms', icon: '❤️' },
-    { id: 'daily', title: 'Daily Activities', icon: '🏠' },
-    { id: 'environmental', title: 'Environmental Factors', icon: '🌤️' },
-    { id: 'safety', title: 'Safety Incidents', icon: '⚠️' },
+    { id: 'motor', title: t('categories.motorSymptoms'), icon: '🏃' },
+    { id: 'non-motor', title: t('categories.nonMotorSymptoms'), icon: '🧠' },
+    { id: 'autonomic', title: t('categories.autonomicSymptoms'), icon: '❤️' },
+    { id: 'daily', title: t('categories.dailyActivities'), icon: '🏠' },
+    { id: 'environmental', title: t('categories.environmentalFactors'), icon: '🌤️' },
+    { id: 'safety', title: t('categories.safetyIncidents'), icon: '⚠️' },
   ];
 
   const submitForm = async (data: Partial<SymptomEntry>) => {
     if (!user || !token) {
-      toast.error('Please log in to submit symptoms');
+      toast.error(t('messages.loginRequired'));
       return;
     }
 
@@ -65,13 +67,13 @@ const SymptomForm: React.FC<SymptomFormProps> = ({ patientId, onSubmit }) => {
       const result = await response.json();
 
       if (!result.success) {
-        throw new Error(result.error || 'Failed to submit symptoms');
+        throw new Error(result.error || t('messages.submitError'));
       }
 
-      toast.success('Symptoms recorded successfully!');
+      toast.success(t('messages.submitSuccess'));
       onSubmit?.(result.data);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to submit symptoms');
+      toast.error(error instanceof Error ? error.message : t('messages.submitError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -97,80 +99,83 @@ const SymptomForm: React.FC<SymptomFormProps> = ({ patientId, onSubmit }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow-md">
+    <div className="max-w-4xl mx-auto p-3 sm:p-6">
+      <div className="card bg-base-100 shadow-xl">
         {/* Header */}
-        <div className="bg-blue-600 text-white p-6 rounded-t-lg">
-          <h1 className="text-2xl font-bold flex items-center">
-            <Calendar className="h-6 w-6 mr-3" />
-            Daily Symptom Tracking
+        <div className="bg-primary text-primary-content p-4 sm:p-6 rounded-t-lg">
+          <h1 className="text-xl sm:text-2xl font-bold flex items-center flex-wrap">
+            <Calendar className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3 flex-shrink-0" />
+            <span className="truncate">{t('title')}</span>
           </h1>
-          <div className="mt-4 flex items-center space-x-4 text-blue-100">
+          <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 opacity-90">
             <div className="flex items-center">
-              <User className="h-4 w-4 mr-1" />
-              <span>Patient ID: {patientId}</span>
+              <User className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+              <span className="text-sm sm:text-base truncate">{t('patientId')}: {patientId}</span>
             </div>
             <div className="flex items-center">
-              <Clock className="h-4 w-4 mr-1" />
-              <span>Date: {new Date().toLocaleDateString()}</span>
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+              <span className="text-sm sm:text-base">{t('form.date', { ns: 'common' })}: {new Date().toLocaleDateString()}</span>
             </div>
           </div>
         </div>
 
-        {/* Navigation */}
-        <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6">
+        {/* Navigation - Mobile Responsive Tabs */}
+        <div className="border-b border-base-300">
+          <div className="tabs tabs-bordered px-3 sm:px-6 overflow-x-auto">
             {sections.map((section) => (
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
-                className={`py-4 px-2 border-b-2 font-medium text-sm ${
+                className={`tab tab-sm sm:tab-lg whitespace-nowrap ${
                   activeSection === section.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'tab-active'
+                    : ''
                 }`}
               >
-                <span className="mr-2">{section.icon}</span>
-                {section.title}
+                <span className="mr-1 sm:mr-2 text-sm sm:text-base">{section.icon}</span>
+                <span className="hidden sm:inline">{section.title}</span>
+                <span className="sm:hidden text-xs">{section.title.split(' ')[0]}</span>
               </button>
             ))}
-          </nav>
+          </div>
         </div>
 
         {/* Form Content */}
-        <form onSubmit={handleSubmit(submitForm)} className="p-6">
+        <form onSubmit={handleSubmit(submitForm)} className="p-3 sm:p-6">
           {renderSection()}
 
           {/* General Notes */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
-              Additional Notes
-            </label>
-            <textarea
-              {...register('notes')}
-              id="notes"
-              rows={4}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Any additional observations or concerns..."
-            />
+          <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-base-300">
+            <div className="form-control">
+              <label className="label" htmlFor="notes">
+                <span className="label-text font-medium">{t('additionalNotes')}</span>
+              </label>
+              <textarea
+                {...register('notes')}
+                id="notes"
+                rows={4}
+                className="textarea textarea-bordered w-full"
+                placeholder={t('form.additionalObservations', { ns: 'common' })}
+              />
+            </div>
           </div>
 
           {/* Submit Button */}
-          <div className="mt-6 flex justify-end">
+          <div className="mt-6 flex justify-center sm:justify-end">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn btn-primary btn-md sm:btn-lg w-full sm:w-auto"
             >
               {isSubmitting ? (
                 <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Saving...
+                  <span className="loading loading-spinner loading-sm"></span>
+                  <span className="ml-2">{t('messages.saving')}</span>
                 </>
               ) : (
                 <>
-                  <Save className="h-5 w-5 mr-2" />
-                  Save Symptom Entry
+                  <Save className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="ml-2">{t('messages.saveSymptomEntry')}</span>
                 </>
               )}
             </button>

@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../hooks/useTranslation';
 import { Organization, ApiResponse } from '@parkml/shared';
+import { Avatar } from '../shared';
 import { Building, Plus, Edit } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const OrganizationManagement: React.FC = () => {
   const { user, token, isSuperAdmin } = useAuth();
+  const { t } = useTranslation('admin');
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -31,11 +34,11 @@ const OrganizationManagement: React.FC = () => {
       if (data.success) {
         setOrganizations(data.data);
       } else {
-        toast.error(data.error || 'Failed to fetch organizations');
+        toast.error(data.error || t('organizations.errors.fetchError'));
       }
     } catch (error) {
       console.error('Error fetching organizations:', error);
-      toast.error('Failed to fetch organizations');
+      toast.error(t('organizations.errors.fetchError'));
     } finally {
       setLoading(false);
     }
@@ -55,15 +58,15 @@ const OrganizationManagement: React.FC = () => {
       const data: ApiResponse = await response.json();
 
       if (data.success) {
-        toast.success('Organization created successfully');
+        toast.success(t('organizations.success.createSuccess'));
         setShowCreateForm(false);
         fetchOrganizations();
       } else {
-        toast.error(data.error || 'Failed to create organization');
+        toast.error(data.error || t('organizations.errors.createError'));
       }
     } catch (error) {
       console.error('Error creating organization:', error);
-      toast.error('Failed to create organization');
+      toast.error(t('organizations.errors.createError'));
     }
   };
 
@@ -81,15 +84,15 @@ const OrganizationManagement: React.FC = () => {
       const data: ApiResponse = await response.json();
 
       if (data.success) {
-        toast.success('Organization updated successfully');
+        toast.success(t('organizations.success.updateSuccess'));
         setEditingOrg(null);
         fetchOrganizations();
       } else {
-        toast.error(data.error || 'Failed to update organization');
+        toast.error(data.error || t('organizations.errors.updateError'));
       }
     } catch (error) {
       console.error('Error updating organization:', error);
-      toast.error('Failed to update organization');
+      toast.error(t('organizations.errors.updateError'));
     }
   };
 
@@ -107,25 +110,25 @@ const OrganizationManagement: React.FC = () => {
       const data: ApiResponse = await response.json();
 
       if (data.success) {
-        toast.success(`Organization ${!isActive ? 'activated' : 'deactivated'} successfully`);
+        toast.success(`${t('organizations.sectionTitle')} ${!isActive ? t('organizations.success.activated') : t('organizations.success.deactivated')} successfully`);
         fetchOrganizations();
       } else {
-        toast.error(data.error || 'Failed to update organization status');
+        toast.error(data.error || t('organizations.errors.statusUpdateError'));
       }
     } catch (error) {
       console.error('Error updating organization status:', error);
-      toast.error('Failed to update organization status');
+      toast.error(t('organizations.errors.statusUpdateError'));
     }
   };
 
   if (!isSuperAdmin) {
     return (
       <div className="text-center py-8">
-        <div className="text-red-500 mb-4">
+        <div className="text-error mb-4">
           <Building className="h-12 w-12 mx-auto" />
         </div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h2>
-        <p className="text-gray-600">You don't have permission to manage organizations.</p>
+        <h2 className="text-xl font-semibold mb-2">{t('messages.accessDenied', { ns: 'common' })}</h2>
+        <p className="opacity-70">{t('organizations.errors.accessDeniedMessage')}</p>
       </div>
     );
   }
@@ -133,7 +136,7 @@ const OrganizationManagement: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <span className="loading loading-spinner loading-lg"></span>
       </div>
     );
   }
@@ -141,84 +144,89 @@ const OrganizationManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Organization Management</h1>
-            <p className="text-gray-600">Manage healthcare organizations and clinics</p>
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="card-title text-2xl">{t('organizations.title')}</h1>
+              <p className="text-base-content/70">{t('organizations.subtitle')}</p>
+            </div>
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="btn btn-primary"
+            >
+              <Plus className="h-4 w-4" />
+              {t('organizations.createButton')}
+            </button>
           </div>
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create Organization
-          </button>
         </div>
       </div>
 
       {/* Organizations List */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Organizations ({organizations.length})</h2>
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="card-title">{t('organizations.organizationCount', { count: organizations.length })}</h2>
         </div>
         
         {organizations.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">
-            <Building className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No organizations</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Create your first organization to get started.
+          <div className="p-6 text-center">
+            <Building className="mx-auto h-12 w-12 opacity-50" />
+            <h3 className="mt-2 text-sm font-medium">{t('organizations.noOrganizationsTitle')}</h3>
+            <p className="mt-1 text-sm opacity-70">
+              {t('organizations.noOrganizationsMessage')}
             </p>
           </div>
         ) : (
           <div className="overflow-hidden">
             <ul className="divide-y divide-gray-200">
               {organizations.map((org) => (
-                <li key={org.id} className="px-6 py-4 hover:bg-gray-50">
+                <li key={org.id} className="px-6 py-4 hover:bg-base-200/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        <div className={`h-10 w-10 rounded-full ${org.isActive ? 'bg-green-500' : 'bg-gray-500'} flex items-center justify-center`}>
-                          <Building className="h-5 w-5 text-white" />
-                        </div>
-                      </div>
+                      <Avatar
+                        variant="icon"
+                        status={org.isActive ? 'active' : 'inactive'}
+                        size="md"
+                        aria-label={`${org.name} organization logo`}
+                      >
+                        <Building />
+                      </Avatar>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium">
                           {org.name}
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {org.description || 'No description'}
+                        <div className="text-sm opacity-70">
+                          {org.description || t('misc.noDescription', { ns: 'common' })}
                         </div>
-                        <div className="text-xs text-gray-400">
-                          Created: {new Date(org.createdAt).toLocaleDateString()}
+                        <div className="text-xs opacity-60">
+                          {t('organizations.createdLabel')} {new Date(org.createdAt).toLocaleDateString()}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                      <div className={`badge ${
                         org.isActive 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
+                          ? 'badge-success' 
+                          : 'badge-error'
                       }`}>
-                        {org.isActive ? 'Active' : 'Inactive'}
-                      </span>
+                        {org.isActive ? t('status.active', { ns: 'common' }) : t('status.inactive', { ns: 'common' })}
+                      </div>
                       <button
                         onClick={() => setEditingOrg(org)}
-                        className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                        className="btn btn-ghost btn-sm"
                       >
-                        <Edit className="h-3 w-3 mr-1" />
-                        Edit
+                        <Edit className="h-3 w-3" />
+                        {t('buttons.edit', { ns: 'common' })}
                       </button>
                       <button
                         onClick={() => toggleOrganizationStatus(org.id, org.isActive)}
-                        className={`inline-flex items-center px-3 py-1 border text-sm font-medium rounded-md ${
+                        className={`btn btn-sm ${
                           org.isActive
-                            ? 'border-red-300 text-red-700 bg-red-50 hover:bg-red-100'
-                            : 'border-green-300 text-green-700 bg-green-50 hover:bg-green-100'
+                            ? 'btn-error btn-outline'
+                            : 'btn-success btn-outline'
                         }`}
                       >
-                        {org.isActive ? 'Deactivate' : 'Activate'}
+                        {org.isActive ? t('buttons.deactivate', { ns: 'common' }) : t('buttons.activate', { ns: 'common' })}
                       </button>
                     </div>
                   </div>
@@ -257,6 +265,7 @@ interface OrganizationFormProps {
 }
 
 const OrganizationForm: React.FC<OrganizationFormProps> = ({ organization, onSubmit, onCancel }) => {
+  const { t } = useTranslation('admin');
   const [formData, setFormData] = useState({
     name: organization?.name || '',
     description: organization?.description || '',
@@ -278,18 +287,16 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ organization, onSub
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">
-            {organization ? 'Edit Organization' : 'Create Organization'}
-          </h3>
-        </div>
+    <div className="modal modal-open">
+      <div className="modal-box max-w-md">
+        <h3 className="font-bold text-lg mb-4">
+          {organization ? t('organizations.editTitle') : t('organizations.createTitle')}
+        </h3>
         
-        <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Name *
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="form-control">
+            <label className="label" htmlFor="name">
+              <span className="label-text">{t('organizations.nameLabel')} *</span>
             </label>
             <input
               type="text"
@@ -298,13 +305,13 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ organization, onSub
               value={formData.name}
               onChange={handleChange}
               required
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="input input-bordered w-full"
             />
           </div>
 
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-              Description
+          <div className="form-control">
+            <label className="label" htmlFor="description">
+              <span className="label-text">{t('organizations.descriptionLabel')}</span>
             </label>
             <textarea
               id="description"
@@ -312,13 +319,13 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ organization, onSub
               value={formData.description}
               onChange={handleChange}
               rows={3}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="textarea textarea-bordered w-full"
             />
           </div>
 
-          <div>
-            <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-              Address
+          <div className="form-control">
+            <label className="label" htmlFor="address">
+              <span className="label-text">{t('organizations.addressLabel')}</span>
             </label>
             <input
               type="text"
@@ -326,13 +333,13 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ organization, onSub
               name="address"
               value={formData.address}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="input input-bordered w-full"
             />
           </div>
 
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-              Phone
+          <div className="form-control">
+            <label className="label" htmlFor="phone">
+              <span className="label-text">{t('organizations.phoneLabel')}</span>
             </label>
             <input
               type="tel"
@@ -340,13 +347,13 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ organization, onSub
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="input input-bordered w-full"
             />
           </div>
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
+          <div className="form-control">
+            <label className="label" htmlFor="email">
+              <span className="label-text">{t('organizations.emailLabel')}</span>
             </label>
             <input
               type="email"
@@ -354,23 +361,23 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ organization, onSub
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="input input-bordered w-full"
             />
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
+          <div className="modal-action">
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              className="btn btn-ghost"
             >
-              Cancel
+              {t('buttons.cancel', { ns: 'common' })}
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="btn btn-primary"
             >
-              {organization ? 'Update' : 'Create'}
+              {organization ? t('buttons.update', { ns: 'common' }) : t('buttons.create', { ns: 'common' })}
             </button>
           </div>
         </form>

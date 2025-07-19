@@ -1,0 +1,246 @@
+{
+  "title": "Suivi des Symptômes",
+  "formTitle": "Formulaire de Saisie des Symptômes",
+  "patientId": "ID Patient",
+  "categories": {
+    "motorSymptoms": "Symptômes Moteurs",
+    "nonMotorSymptoms": "Symptômes Non-Moteurs",
+    "autonomicSymptoms": "Symptômes Autonomes",
+    "dailyActivities": "Activités Quotidiennes",
+    "environmentalFactors": "Facteurs Environnementaux",
+    "safetyIncidents": "Incidents de Sécurité"
+  },
+  "types": {
+    "tremors": "Tremblements",
+    "balancePosture": "Équilibre et Posture",
+    "rigidity": "Rigidité",
+    "bradykinesia": "Bradykinésie",
+    "posturalInstability": "Instabilité Posturale",
+    "freezingEpisodes": "Épisodes de Blocage",
+    "dyskinesia": "Dyskinésie",
+    "dystonia": "Dystonie",
+    "gaitProblems": "Problèmes de Démarche",
+    "speechProblems": "Problèmes d'Élocution",
+    "swallowingDifficulties": "Difficultés de Déglutition"
+  },
+  "severity": {
+    "mild": "Léger",
+    "moderate": "Modéré",
+    "severe": "Sévère",
+    "none": "Aucun"
+  },
+  "form": {
+    "timeObserved": "Heure d'Observation",
+    "severity": "Sévérité",
+    "severityScale": "Sévérité (1-5)",
+    "selectSeverity": "Sélectionner la sévérité",
+    "location": "Localisation",
+    "duration": "Durée",
+    "triggers": "Déclencheurs/Situations",
+    "additionalNotes": "Notes Supplémentaires",
+    "notes": "Notes",
+    "fallsToday": "Nombre de Chutes Aujourd'hui",
+    "posture": "Posture",
+    "balanceProblems": "Problèmes d'Équilibre",
+    "walkingPattern": "Modèle de Marche",
+    "type": "Type"
+  },
+  "severityLevels": {
+    "1": "1 - À peine perceptible",
+    "2": "2 - Léger", 
+    "3": "3 - Modéré",
+    "4": "4 - Marqué",
+    "5": "5 - Sévère"
+  },
+  "locations": {
+    "rightHand": "Main droite",
+    "leftHand": "Main gauche", 
+    "rightLeg": "Jambe droite",
+    "leftLeg": "Jambe gauche",
+    "head": "Tête",
+    "jaw": "Mâchoire"
+  },
+  "tremorTypes": {
+    "atRest": "Au repos",
+    "duringMovement": "Pendant le mouvement",
+    "maintainingPosition": "Maintien de position"
+  },
+  "postureTypes": {
+    "normal": "Normale",
+    "hunched": "Voûtée",
+    "leaningSideways": "Penchée sur le côté",
+    "other": "Autre"
+  },
+  "balanceProblemsTypes": {
+    "none": "Aucun",
+    "slightSwaying": "Léger balancement",
+    "needsSupport": "Nécessite un soutien",
+    "falls": "Chutes"
+  },
+  "walkingPatterns": {
+    "normal": "Normale",
+    "shuffling": "Traînante",
+    "smallSteps": "Petits pas",
+    "freezingEpisodes": "Épisodes de blocage"
+  },
+  "placeholders": {
+    "duration": "ex. 15 minutes, continu, intermittent",
+    "triggers": "Quelles situations ou activités déclenchent le tremblement ?",
+    "tremorNotes": "Observations supplémentaires sur les tremblements...",
+    "balanceNotes": "Observations supplémentaires sur l'équilibre et la posture...",
+    "bladderBowelNotes": "Observations supplémentaires sur la fonction vésicale/intestinale...",
+    "selectStatus": "Sélectionner le statut",
+    "activePeriods": "Décrivez quand vous avez été le plus actif aujourd'hui...",
+    "sideEffects": "Effets secondaires remarqués aujourd'hui...",
+    "environmentalChanges": "Changements environnementaux pouvant affecter les symptômes...",
+    "stressfulEvents": "Événements ou situations stressantes aujourd'hui...",
+    "cognitiveNotes": "Observations supplémentaires sur la fonction cognitive...",
+    "sleepNotes": "Observations supplémentaires sur les habitudes de sommeil...",
+    "incidentLocation": "Où l'incident s'est-il produit ?",
+    "incidentCircumstances": "Décrivez ce qui s'est passé et les circonstances...",
+    "incidentNotes": "Détails supplémentaires sur l'incident..."
+  },
+  "autonomic": {
+    "title": "Symptômes Autonomes",
+    "bladderBowel": {
+      "title": "Fonction Vésicale/Intestinale",
+      "urination": "Miction",
+      "bowelMovements": "Selles",
+      "notes": "Notes"
+    },
+    "urinationTypes": {
+      "normal": "Normale",
+      "frequent": "Fréquente", 
+      "urgent": "Urgente",
+      "incontinence": "Incontinence"
+    },
+    "bowelTypes": {
+      "normal": "Normales",
+      "constipation": "Constipation",
+      "frequent": "Fréquentes",
+      "incontinence": "Incontinence"
+    }
+  },
+  "dailyActivities": {
+    "title": "Activités Quotidiennes",
+    "activityLevel": {
+      "title": "Niveau d'Activité",
+      "totalRestTime": "Temps de Repos Total (heures)",
+      "energyLevel": "Niveau d'Énergie (1-5)",
+      "activePeriods": "Périodes Actives"
+    },
+    "medicationCompliance": {
+      "title": "Observance Médicamenteuse",
+      "morning": "Médicaments du Matin",
+      "afternoon": "Médicaments de l'Après-midi", 
+      "evening": "Médicaments du Soir",
+      "sideEffects": "Effets Secondaires Observés"
+    },
+    "energyLevels": {
+      "selectLevel": "Sélectionner le niveau d'énergie",
+      "1": "1 - Très faible énergie",
+      "2": "2 - Faible énergie",
+      "3": "3 - Énergie modérée",
+      "4": "4 - Forte énergie",
+      "5": "5 - Très forte énergie"
+    },
+    "medicationStatus": {
+      "takenAsPrescribed": "Pris selon prescription",
+      "forgotten": "Oublié",
+      "delayed": "Retardé"
+    }
+  },
+  "environmental": {
+    "title": "Facteurs Environnementaux",
+    "weatherEnvironment": {
+      "title": "Météo et Environnement",
+      "temperature": "Température (°C)",
+      "humidity": "Humidité",
+      "weatherConditions": "Conditions Météorologiques",
+      "environmentalChanges": "Changements Environnementaux",
+      "stressfulEvents": "Événements Stressants"
+    },
+    "humidityLevels": {
+      "selectLevel": "Sélectionner le niveau d'humidité",
+      "high": "Élevée",
+      "normal": "Normale",
+      "low": "Faible"
+    },
+    "weatherTypes": {
+      "sunny": "Ensoleillé",
+      "cloudy": "Nuageux",
+      "rainy": "Pluvieux",
+      "hot": "Chaud",
+      "cold": "Froid"
+    }
+  },
+  "nonMotor": {
+    "title": "Symptômes Non-Moteurs",
+    "cognitive": {
+      "title": "Fonction Cognitive",
+      "timeObserved": "Heure d'Observation",
+      "alertness": "Vigilance",
+      "memoryRecentEvents": "Mémoire - Événements Récents",
+      "concentrationAttention": "Concentration/Attention",
+      "notes": "Notes"
+    },
+    "sleep": {
+      "title": "Habitudes de Sommeil",
+      "bedtime": "Heure du Coucher",
+      "wakeTime": "Heure du Réveil",
+      "totalSleepHours": "Heures de Sommeil Total",
+      "sleepQuality": "Qualité du Sommeil",
+      "notes": "Notes"
+    },
+    "alertnessLevels": {
+      "selectLevel": "Sélectionner le niveau de vigilance",
+      "alert": "Vigilant",
+      "drowsy": "Somnolent", 
+      "confused": "Confus",
+      "disoriented": "Désorienté"
+    },
+    "qualityLevels": {
+      "good": "Bonne",
+      "fair": "Correcte",
+      "poor": "Mauvaise"
+    },
+    "sleepQualityTypes": {
+      "restful": "Réparateur",
+      "restless": "Agité",
+      "frequentAwakenings": "Réveils fréquents"
+    }
+  },
+  "safety": {
+    "title": "Incidents de Sécurité",
+    "incidentReport": {
+      "title": "Rapport d'Incident",
+      "incidentType": "Type d'Incident",
+      "timeOfIncident": "Heure de l'Incident",
+      "location": "Localisation",
+      "circumstances": "Circonstances",
+      "injuryLevel": "Niveau de Blessure",
+      "additionalNotes": "Notes Supplémentaires"
+    },
+    "incidentTypes": {
+      "selectType": "Sélectionner le type d'incident",
+      "fall": "Chute",
+      "nearFall": "Quasi-chute",
+      "choking": "Étouffement",
+      "medicationError": "Erreur médicamenteuse",
+      "other": "Autre"
+    },
+    "injuryLevels": {
+      "none": "Aucune blessure",
+      "minor": "Blessure mineure",
+      "significant": "Blessure importante"
+    }
+  },
+  "messages": {
+    "loginRequired": "Veuillez vous connecter pour soumettre les symptômes",
+    "submitError": "Échec de la soumission des symptômes",
+    "submitSuccess": "Symptômes enregistrés avec succès !",
+    "saving": "Enregistrement...",
+    "saveSymptomEntry": "Enregistrer l'Entrée de Symptôme"
+  },
+  "additionalNotes": "Notes Supplémentaires"
+}

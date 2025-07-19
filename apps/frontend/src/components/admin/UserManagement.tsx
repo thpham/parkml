@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { User, ApiResponse, UserStats } from '@parkml/shared';
+import { Avatar } from '../shared';
+import { useTranslation } from '../../hooks/useTranslation';
 import { 
   Users, 
   Edit, 
@@ -28,6 +30,7 @@ interface PaginatedUsers {
 
 const UserManagement: React.FC = () => {
   const { user, token, isAdmin } = useAuth();
+  const { t } = useTranslation('admin');
   const [users, setUsers] = useState<UserWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState<UserWithStats | null>(null);
@@ -74,11 +77,11 @@ const UserManagement: React.FC = () => {
         setUsers(data.data.users);
         setPagination(data.data.pagination);
       } else {
-        toast.error(data.error || 'Failed to fetch users');
+        toast.error(data.error || t('users.errors.fetchUsers'));
       }
     } catch (error) {
       console.error('Error fetching users:', error);
-      toast.error('Failed to fetch users');
+      toast.error(t('users.errors.fetchUsers'));
     } finally {
       setLoading(false);
     }
@@ -98,20 +101,20 @@ const UserManagement: React.FC = () => {
       const data: ApiResponse = await response.json();
 
       if (data.success) {
-        toast.success('User updated successfully');
+        toast.success(t('users.success.userUpdated'));
         setEditingUser(null);
         fetchUsers();
       } else {
-        toast.error(data.error || 'Failed to update user');
+        toast.error(data.error || t('users.errors.updateUser'));
       }
     } catch (error) {
       console.error('Error updating user:', error);
-      toast.error('Failed to update user');
+      toast.error(t('users.errors.updateUser'));
     }
   };
 
   const handleDeactivateUser = async (id: string) => {
-    if (!confirm('Are you sure you want to deactivate this user?')) {
+    if (!confirm(t('users.confirmDeactivate'))) {
       return;
     }
 
@@ -126,14 +129,14 @@ const UserManagement: React.FC = () => {
       const data: ApiResponse = await response.json();
 
       if (data.success) {
-        toast.success('User deactivated successfully');
+        toast.success(t('users.success.userDeactivated'));
         fetchUsers();
       } else {
-        toast.error(data.error || 'Failed to deactivate user');
+        toast.error(data.error || t('users.errors.deactivateUser'));
       }
     } catch (error) {
       console.error('Error deactivating user:', error);
-      toast.error('Failed to deactivate user');
+      toast.error(t('users.errors.deactivateUser'));
     }
   };
 
@@ -149,14 +152,14 @@ const UserManagement: React.FC = () => {
       const data: ApiResponse = await response.json();
 
       if (data.success) {
-        toast.success('User reactivated successfully');
+        toast.success(t('users.success.userReactivated'));
         fetchUsers();
       } else {
-        toast.error(data.error || 'Failed to reactivate user');
+        toast.error(data.error || t('users.errors.reactivateUser'));
       }
     } catch (error) {
       console.error('Error reactivating user:', error);
-      toast.error('Failed to reactivate user');
+      toast.error(t('users.errors.reactivateUser'));
     }
   };
 
@@ -187,7 +190,14 @@ const UserManagement: React.FC = () => {
   };
 
   const formatRole = (role: string) => {
-    return role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const roleMap: Record<string, string> = {
+      'super_admin': t('users.roles.superAdmin'),
+      'clinic_admin': t('users.roles.clinicAdmin'),
+      'professional_caregiver': t('users.roles.professionalCaregiver'),
+      'family_caregiver': t('users.roles.familyCaregiver'),
+      'patient': t('users.roles.patient'),
+    };
+    return roleMap[role] || role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
   if (!isAdmin) {
@@ -196,8 +206,8 @@ const UserManagement: React.FC = () => {
         <div className="text-red-500 mb-4">
           <Users className="h-12 w-12 mx-auto" />
         </div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h2>
-        <p className="text-gray-600">You don't have permission to manage users.</p>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">{t('common.accessDenied')}</h2>
+        <p className="text-gray-600">{t('users.noPermission')}</p>
       </div>
     );
   }
@@ -205,128 +215,121 @@ const UserManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-            <p className="text-gray-600">Manage system users and their permissions</p>
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="card-title text-2xl">{t('users.title')}</h1>
+              <p className="text-base-content/70">{t('users.description')}</p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="flex items-center space-x-4">
-          <div className="flex-1">
-            <label htmlFor="search" className="sr-only">Search users</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                id="search"
-                placeholder="Search by name or email..."
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 w-full"
-              />
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="flex items-center space-x-4">
+            <div className="flex-1 form-control">
+              <label htmlFor="search" className="sr-only">{t('users.searchLabel')}</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 opacity-50" />
+                <input
+                  type="text"
+                  id="search"
+                  placeholder={t('users.searchPlaceholder')}
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  className="input input-bordered w-full pl-10"
+                />
+              </div>
             </div>
-          </div>
-          
-          <div>
-            <label htmlFor="role" className="sr-only">Filter by role</label>
-            <select
-              id="role"
-              value={filters.role}
-              onChange={(e) => handleFilterChange('role', e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">All Roles</option>
-              <option value="super_admin">Super Admin</option>
-              <option value="clinic_admin">Clinic Admin</option>
-              <option value="professional_caregiver">Professional Caregiver</option>
-              <option value="family_caregiver">Family Caregiver</option>
-              <option value="patient">Patient</option>
-            </select>
-          </div>
-          
-          <div>
-            <label htmlFor="isActive" className="sr-only">Filter by status</label>
-            <select
-              id="isActive"
-              value={filters.isActive}
-              onChange={(e) => handleFilterChange('isActive', e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">All Status</option>
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
-            </select>
+            
+            <div className="form-control">
+              <label htmlFor="role" className="sr-only">{t('users.filterByRole')}</label>
+              <select
+                id="role"
+                value={filters.role}
+                onChange={(e) => handleFilterChange('role', e.target.value)}
+                className="select select-bordered"
+              >
+                <option value="">{t('users.allRoles')}</option>
+                <option value="super_admin">{t('users.roles.superAdmin')}</option>
+                <option value="clinic_admin">{t('users.roles.clinicAdmin')}</option>
+                <option value="professional_caregiver">{t('users.roles.professionalCaregiver')}</option>
+                <option value="family_caregiver">{t('users.roles.familyCaregiver')}</option>
+                <option value="patient">{t('users.roles.patient')}</option>
+              </select>
+            </div>
+            
+            <div className="form-control">
+              <label htmlFor="isActive" className="sr-only">{t('users.filterByStatus')}</label>
+              <select
+                id="isActive"
+                value={filters.isActive}
+                onChange={(e) => handleFilterChange('isActive', e.target.value)}
+                className="select select-bordered"
+              >
+                <option value="">{t('users.allStatus')}</option>
+                <option value="true">{t('users.active')}</option>
+                <option value="false">{t('users.inactive')}</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Users Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium text-gray-900">
-              Users ({pagination.total})
+            <h2 className="card-title">
+              {t('users.usersCount', { count: pagination.total })}
             </h2>
-            <div className="text-sm text-gray-500">
-              Showing {users.length} of {pagination.total} users
+            <div className="text-sm text-base-content/60">
+              {t('users.showingUsers', { showing: users.length, total: pagination.total })}
             </div>
           </div>
         </div>
         
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="loading loading-spinner loading-lg"></span>
           </div>
         ) : users.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">
-            <Users className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No users found</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              No users match your current filters.
+          <div className="p-6 text-center">
+            <Users className="mx-auto h-12 w-12 opacity-50" />
+            <h3 className="mt-2 text-sm font-medium">{t('users.noUsersFound')}</h3>
+            <p className="mt-1 text-sm opacity-70">
+              {t('users.noUsersMatchFilters')}
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="table table-zebra w-full">
+              <thead>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Organization
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Last Login
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th>{t('users.tableHeaders.user')}</th>
+                  <th>{t('users.tableHeaders.role')}</th>
+                  <th>{t('users.tableHeaders.organization')}</th>
+                  <th>{t('users.tableHeaders.status')}</th>
+                  <th>{t('users.tableHeaders.lastLogin')}</th>
+                  <th>{t('users.tableHeaders.actions')}</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody>
                 {users.map((userItem) => (
-                  <tr key={userItem.id} className="hover:bg-gray-50">
+                  <tr key={userItem.id} className="hover">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10">
-                          <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
-                            <span className="text-sm font-medium text-white">
-                              {userItem.name.charAt(0)}
-                            </span>
-                          </div>
-                        </div>
+                        <Avatar
+                          variant="initial"
+                          color="primary"
+                          size="md"
+                          aria-label={`${userItem.name} avatar`}
+                        >
+                          {userItem.name.charAt(0)}
+                        </Avatar>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
                             {userItem.name}
@@ -343,7 +346,7 @@ const UserManagement: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {userItem.organization?.name || 'No organization'}
+                      {userItem.organization?.name || t('users.noOrganization')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
@@ -351,13 +354,13 @@ const UserManagement: React.FC = () => {
                           ? 'bg-green-100 text-green-800' 
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {userItem.isActive ? 'Active' : 'Inactive'}
+                        {userItem.isActive ? t('users.active') : t('users.inactive')}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {userItem.lastLoginAt 
                         ? new Date(userItem.lastLoginAt).toLocaleDateString()
-                        : 'Never'
+                        : t('users.never')
                       }
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
@@ -395,7 +398,7 @@ const UserManagement: React.FC = () => {
           <div className="bg-white px-6 py-4 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-700">
-                Showing page {pagination.page} of {pagination.totalPages}
+                {t('users.pagination.showingPage', { page: pagination.page, totalPages: pagination.totalPages })}
               </div>
               <div className="flex items-center space-x-2">
                 <button
@@ -447,6 +450,7 @@ interface UserEditFormProps {
 
 const UserEditForm: React.FC<UserEditFormProps> = ({ user, onSubmit, onCancel }) => {
   const { isSuperAdmin } = useAuth();
+  const { t } = useTranslation('admin');
   const [formData, setFormData] = useState({
     name: user.name || '',
     email: user.email || '',
@@ -471,13 +475,13 @@ const UserEditForm: React.FC<UserEditFormProps> = ({ user, onSubmit, onCancel })
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Edit User</h3>
+          <h3 className="text-lg font-medium text-gray-900">{t('users.editUser')}</h3>
         </div>
         
         <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Name *
+              {t('users.nameRequired')}
             </label>
             <input
               type="text"
@@ -492,7 +496,7 @@ const UserEditForm: React.FC<UserEditFormProps> = ({ user, onSubmit, onCancel })
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email *
+              {t('users.emailRequired')}
             </label>
             <input
               type="email"
@@ -508,7 +512,7 @@ const UserEditForm: React.FC<UserEditFormProps> = ({ user, onSubmit, onCancel })
           {isSuperAdmin && (
             <div>
               <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-                Role *
+                {t('users.roleRequired')}
               </label>
               <select
                 id="role"
@@ -518,11 +522,11 @@ const UserEditForm: React.FC<UserEditFormProps> = ({ user, onSubmit, onCancel })
                 required
                 className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="super_admin">Super Admin</option>
-                <option value="clinic_admin">Clinic Admin</option>
-                <option value="professional_caregiver">Professional Caregiver</option>
-                <option value="family_caregiver">Family Caregiver</option>
-                <option value="patient">Patient</option>
+                <option value="super_admin">{t('users.roles.superAdmin')}</option>
+                <option value="clinic_admin">{t('users.roles.clinicAdmin')}</option>
+                <option value="professional_caregiver">{t('users.roles.professionalCaregiver')}</option>
+                <option value="family_caregiver">{t('users.roles.familyCaregiver')}</option>
+                <option value="patient">{t('users.roles.patient')}</option>
               </select>
             </div>
           )}
@@ -537,7 +541,7 @@ const UserEditForm: React.FC<UserEditFormProps> = ({ user, onSubmit, onCancel })
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
             <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
-              Active
+              {t('users.activeLabel')}
             </label>
           </div>
 
@@ -547,13 +551,13 @@ const UserEditForm: React.FC<UserEditFormProps> = ({ user, onSubmit, onCancel })
               onClick={onCancel}
               className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
             >
-              Cancel
+              {t('users.cancel')}
             </button>
             <button
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
-              Update User
+              {t('users.updateUser')}
             </button>
           </div>
         </form>

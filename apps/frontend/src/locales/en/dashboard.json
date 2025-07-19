@@ -1,0 +1,44 @@
+{
+  "title": "Dashboard",
+  "welcome": "Welcome to ParkML",
+  "overview": "Overview",
+  "recentActivity": "Recent Activity",
+  "statistics": "Statistics",
+  "types": {
+    "patientDashboard": "Patient Dashboard",
+    "familyCaregiverDashboard": "Family Caregiver Dashboard",
+    "professionalCaregiverDashboard": "Professional Caregiver Dashboard"
+  },
+  "greeting": {
+    "welcomeBack": "Welcome back, {{name}} ({{role}})",
+    "createPatientRecord": "Create Patient Record",
+    "assignedPatients": "Assigned Patients",
+    "myProfile": "My Profile",
+    "addSymptoms": "Add Symptoms",
+    "diagnosed": "Diagnosed"
+  },
+  "stats": {
+    "assignedPatients": "Assigned Patients",
+    "recentEntries": "Recent Entries",
+    "thisMonth": "This Month",
+    "compliance": "Compliance"
+  },
+  "noPatients": {
+    "title": "No patients",
+    "createRecord": "Create your patient record to start tracking symptoms.",
+    "noneAssigned": "No patients assigned to you yet."
+  },
+  "prompts": {
+    "enterName": "Enter patient name:",
+    "enterBirthDate": "Enter date of birth (YYYY-MM-DD):",
+    "enterDiagnosisDate": "Enter diagnosis date (YYYY-MM-DD):"
+  },
+  "errors": {
+    "loadDashboard": "Failed to load dashboard data",
+    "onlyPatients": "Only patients can create their own records",
+    "createPatient": "Failed to create patient record"
+  },
+  "success": {
+    "patientCreated": "Patient record created successfully"
+  }
+}

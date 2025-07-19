@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from '../../hooks/useTranslation';
 import { useAuth } from '../../contexts/AuthContext';
 import { CaregiverAssignment, ApiResponse, User, Patient } from '@parkml/shared';
+import { Avatar } from '../shared';
 import { 
   UserPlus, 
   Users, 
@@ -20,6 +22,7 @@ interface AssignmentWithDetails extends CaregiverAssignment {
 }
 
 const CaregiverAssignments: React.FC = () => {
+  const { t } = useTranslation('admin');
   const { user, token, isAdmin } = useAuth();
   const [assignments, setAssignments] = useState<AssignmentWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,11 +59,11 @@ const CaregiverAssignments: React.FC = () => {
       if (data.success) {
         setAssignments(data.data || []);
       } else {
-        toast.error(data.error || 'Failed to fetch assignments');
+        toast.error(data.error || t('assignments.errors.fetchError'));
       }
     } catch (error) {
       console.error('Error fetching assignments:', error);
-      toast.error('Failed to fetch assignments');
+      toast.error(t('assignments.errors.fetchError'));
     } finally {
       setLoading(false);
     }
@@ -80,15 +83,15 @@ const CaregiverAssignments: React.FC = () => {
       const data: ApiResponse = await response.json();
 
       if (data.success) {
-        toast.success('Assignment created successfully');
+        toast.success(t('assignments.success.createSuccess'));
         setShowCreateForm(false);
         fetchAssignments();
       } else {
-        toast.error(data.error || 'Failed to create assignment');
+        toast.error(data.error || t('assignments.errors.createError'));
       }
     } catch (error) {
       console.error('Error creating assignment:', error);
-      toast.error('Failed to create assignment');
+      toast.error(t('assignments.errors.createError'));
     }
   };
 
@@ -106,31 +109,31 @@ const CaregiverAssignments: React.FC = () => {
       const data: ApiResponse = await response.json();
 
       if (data.success) {
-        toast.success(`Assignment ${status} successfully`);
+        toast.success(t('assignments.success.updateSuccess', { status }));
         fetchAssignments();
       } else {
-        toast.error(data.error || 'Failed to update assignment');
+        toast.error(data.error || t('assignments.errors.updateError'));
       }
     } catch (error) {
       console.error('Error updating assignment:', error);
-      toast.error('Failed to update assignment');
+      toast.error(t('assignments.errors.updateError'));
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'badge-warning';
       case 'active':
-        return 'bg-green-100 text-green-800';
+        return 'badge-success';
       case 'inactive':
-        return 'bg-gray-100 text-gray-800';
+        return 'badge-ghost';
       case 'declined':
-        return 'bg-red-100 text-red-800';
+        return 'badge-error';
       case 'revoked':
-        return 'bg-red-100 text-red-800';
+        return 'badge-error';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'badge-ghost';
     }
   };
 
@@ -149,11 +152,22 @@ const CaregiverAssignments: React.FC = () => {
   };
 
   const formatStatus = (status: string) => {
-    return status.charAt(0).toUpperCase() + status.slice(1);
+    const statusMap: Record<string, string> = {
+      'pending': t('assignments.status.pending'),
+      'active': t('assignments.status.active'),
+      'inactive': t('assignments.status.inactive'),
+      'declined': t('assignments.status.declined'),
+      'revoked': t('assignments.status.revoked'),
+    };
+    return statusMap[status] || status.charAt(0).toUpperCase() + status.slice(1);
   };
 
   const formatCaregiverType = (type: string) => {
-    return type === 'professional' ? 'Professional' : 'Family';
+    const typeMap: Record<string, string> = {
+      'professional': t('assignments.caregiverTypes.professional'),
+      'family': t('assignments.caregiverTypes.family'),
+    };
+    return typeMap[type] || type;
   };
 
   const handleFilterChange = (key: string, value: string) => {
@@ -163,120 +177,127 @@ const CaregiverAssignments: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Caregiver Assignments</h1>
-            <p className="text-gray-600">Manage caregiver assignments and patient consent</p>
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="card-title text-2xl">{t('assignments.title')}</h1>
+              <p className="text-base-content/70">{t('assignments.subtitle')}</p>
+            </div>
+            {isAdmin && (
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="btn btn-primary"
+              >
+                <UserPlus className="h-4 w-4" />
+                {t('assignments.createButton')}
+              </button>
+            )}
           </div>
-          {isAdmin && (
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              Create Assignment
-            </button>
-          )}
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="flex items-center space-x-4">
-          <div className="flex-1">
-            <label htmlFor="search" className="sr-only">Search assignments</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                id="search"
-                placeholder="Search by patient or caregiver name..."
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 w-full"
-              />
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="flex items-center space-x-4">
+            <div className="flex-1 form-control">
+              <label htmlFor="search" className="sr-only">{t('assignments.searchLabel')}</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 opacity-50" />
+                <input
+                  type="text"
+                  id="search"
+                  placeholder={t('assignments.searchPlaceholder')}
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  className="input input-bordered w-full pl-10"
+                />
+              </div>
             </div>
-          </div>
-          
-          <div>
-            <label htmlFor="status" className="sr-only">Filter by status</label>
-            <select
-              id="status"
-              value={filters.status}
-              onChange={(e) => handleFilterChange('status', e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="declined">Declined</option>
-              <option value="revoked">Revoked</option>
-            </select>
-          </div>
-          
-          <div>
-            <label htmlFor="caregiverType" className="sr-only">Filter by caregiver type</label>
-            <select
-              id="caregiverType"
-              value={filters.caregiverType}
-              onChange={(e) => handleFilterChange('caregiverType', e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">All Types</option>
-              <option value="professional">Professional</option>
-              <option value="family">Family</option>
-            </select>
+            
+            <div className="form-control">
+              <label htmlFor="status" className="sr-only">{t('assignments.filterByStatus')}</label>
+              <select
+                id="status"
+                value={filters.status}
+                onChange={(e) => handleFilterChange('status', e.target.value)}
+                className="select select-bordered"
+              >
+                <option value="">{t('assignments.allStatus')}</option>
+                <option value="pending">{t('assignments.status.pending')}</option>
+                <option value="active">{t('assignments.status.active')}</option>
+                <option value="inactive">{t('assignments.status.inactive')}</option>
+                <option value="declined">{t('assignments.status.declined')}</option>
+                <option value="revoked">{t('assignments.status.revoked')}</option>
+              </select>
+            </div>
+            
+            <div className="form-control">
+              <label htmlFor="caregiverType" className="sr-only">{t('assignments.filterByType')}</label>
+              <select
+                id="caregiverType"
+                value={filters.caregiverType}
+                onChange={(e) => handleFilterChange('caregiverType', e.target.value)}
+                className="select select-bordered"
+              >
+                <option value="">{t('assignments.allTypes')}</option>
+                <option value="professional">{t('assignments.caregiverTypes.professional')}</option>
+                <option value="family">{t('assignments.caregiverTypes.family')}</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Assignments List */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">
-            Assignments ({assignments.length})
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="card-title">
+            {t('assignments.assignmentsCount', { count: assignments.length })}
           </h2>
         </div>
         
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="loading loading-spinner loading-lg"></span>
           </div>
         ) : assignments.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">
-            <Users className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No assignments found</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              No assignments match your current filters.
+          <div className="p-6 text-center">
+            <Users className="mx-auto h-12 w-12 opacity-50" />
+            <h3 className="mt-2 text-sm font-medium">{t('assignments.noAssignmentsTitle')}</h3>
+            <p className="mt-1 text-sm opacity-70">
+              {t('assignments.noAssignmentsMessage')}
             </p>
           </div>
         ) : (
           <div className="overflow-hidden">
             <ul className="divide-y divide-gray-200">
               {assignments.map((assignment) => (
-                <li key={assignment.id} className="px-6 py-4 hover:bg-gray-50">
+                <li key={assignment.id} className="px-6 py-4 hover:bg-base-200/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
-                          <Users className="h-5 w-5 text-white" />
-                        </div>
-                      </div>
+                      <Avatar
+                        variant="icon"
+                        color="primary"
+                        size="md"
+                        aria-label={`${assignment.caregiver.name} ${t('assignments.assignedTo')} ${assignment.patient.name}`}
+                      >
+                        <Users />
+                      </Avatar>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium">
                           {assignment.caregiver.name} → {assignment.patient.name}
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {formatCaregiverType(assignment.caregiverType)} caregiver
+                        <div className="text-sm opacity-70">
+                          {formatCaregiverType(assignment.caregiverType)} {t('assignments.caregiverSuffix')}
                         </div>
-                        <div className="flex items-center text-xs text-gray-400 mt-1">
+                        <div className="flex items-center text-xs opacity-60 mt-1">
                           <Calendar className="h-3 w-3 mr-1" />
-                          Created: {new Date(assignment.createdAt).toLocaleDateString()}
+                          {t('assignments.createdLabel')} {new Date(assignment.createdAt).toLocaleDateString()}
                           {assignment.startDate && (
                             <span className="ml-3">
-                              Started: {new Date(assignment.startDate).toLocaleDateString()}
+                              {t('assignments.startedLabel')} {new Date(assignment.startDate).toLocaleDateString()}
                             </span>
                           )}
                         </div>
@@ -284,31 +305,31 @@ const CaregiverAssignments: React.FC = () => {
                     </div>
                     <div className="flex items-center space-x-4">
                       <div className="text-center">
-                        <div className="text-xs text-gray-500">Consent</div>
+                        <div className="text-xs opacity-70">{t('assignments.consentLabel')}</div>
                         <div className={`text-xs font-medium ${
-                          assignment.consentGiven ? 'text-green-600' : 'text-red-600'
+                          assignment.consentGiven ? 'text-success' : 'text-error'
                         }`}>
-                          {assignment.consentGiven ? 'Given' : 'Pending'}
+                          {assignment.consentGiven ? t('assignments.consentGiven') : t('assignments.consentPending')}
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(assignment.status)}`}>
+                        <div className={`badge ${getStatusBadgeColor(assignment.status)} gap-1`}>
                           {getStatusIcon(assignment.status)}
-                          <span className="ml-1">{formatStatus(assignment.status)}</span>
-                        </span>
+                          {formatStatus(assignment.status)}
+                        </div>
                         {assignment.status === 'pending' && (
                           <div className="flex space-x-1">
                             <button
                               onClick={() => handleUpdateAssignmentStatus(assignment.id, 'active')}
-                              className="text-green-600 hover:text-green-900"
-                              title="Approve"
+                              className="btn btn-ghost btn-xs text-success"
+                              title={t('assignments.approve')}
                             >
                               <Check className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => handleUpdateAssignmentStatus(assignment.id, 'declined')}
-                              className="text-red-600 hover:text-red-900"
-                              title="Decline"
+                              className="btn btn-ghost btn-xs text-error"
+                              title={t('assignments.decline')}
                             >
                               <X className="h-4 w-4" />
                             </button>
@@ -317,10 +338,10 @@ const CaregiverAssignments: React.FC = () => {
                         {assignment.status === 'active' && (
                           <button
                             onClick={() => handleUpdateAssignmentStatus(assignment.id, 'revoked')}
-                            className="text-red-600 hover:text-red-900 text-xs"
-                            title="Revoke"
+                            className="btn btn-ghost btn-xs text-error"
+                            title={t('assignments.revoke')}
                           >
-                            Revoke
+                            {t('assignments.revoke')}
                           </button>
                         )}
                       </div>
@@ -328,8 +349,8 @@ const CaregiverAssignments: React.FC = () => {
                   </div>
                   
                   {assignment.notes && (
-                    <div className="mt-2 ml-14 text-sm text-gray-600">
-                      <strong>Notes:</strong> {assignment.notes}
+                    <div className="mt-2 ml-14 text-sm opacity-80">
+                      <strong>{t('assignments.notes')}</strong> {assignment.notes}
                     </div>
                   )}
                 </li>
@@ -357,6 +378,7 @@ interface AssignmentFormProps {
 }
 
 const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) => {
+  const { t } = useTranslation('admin');
   const { token } = useAuth();
   const [formData, setFormData] = useState({
     patientId: '',
@@ -428,16 +450,14 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Create Assignment</h3>
-        </div>
+    <div className="modal modal-open">
+      <div className="modal-box max-w-md">
+        <h3 className="font-bold text-lg mb-4">{t('assignments.createTitle')}</h3>
         
-        <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
-          <div>
-            <label htmlFor="patientId" className="block text-sm font-medium text-gray-700">
-              Patient *
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="form-control">
+            <label className="label" htmlFor="patientId">
+              <span className="label-text">{t('assignments.patientLabel')} {t('assignments.requiredField')}</span>
             </label>
             <select
               id="patientId"
@@ -445,9 +465,9 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
               value={formData.patientId}
               onChange={handleChange}
               required
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="select select-bordered w-full"
             >
-              <option value="">Select patient</option>
+              <option value="">{t('assignments.selectPatient')}</option>
               {patients.map((patient) => (
                 <option key={patient.id} value={patient.id}>
                   {patient.name}
@@ -456,9 +476,9 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
             </select>
           </div>
 
-          <div>
-            <label htmlFor="caregiverId" className="block text-sm font-medium text-gray-700">
-              Caregiver *
+          <div className="form-control">
+            <label className="label" htmlFor="caregiverId">
+              <span className="label-text">{t('assignments.caregiverLabel')} {t('assignments.requiredField')}</span>
             </label>
             <select
               id="caregiverId"
@@ -466,9 +486,9 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
               value={formData.caregiverId}
               onChange={handleChange}
               required
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="select select-bordered w-full"
             >
-              <option value="">Select caregiver</option>
+              <option value="">{t('assignments.selectCaregiver')}</option>
               {caregivers.map((caregiver) => (
                 <option key={caregiver.id} value={caregiver.id}>
                   {caregiver.name} ({caregiver.email})
@@ -477,9 +497,9 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
             </select>
           </div>
 
-          <div>
-            <label htmlFor="caregiverType" className="block text-sm font-medium text-gray-700">
-              Caregiver Type *
+          <div className="form-control">
+            <label className="label" htmlFor="caregiverType">
+              <span className="label-text">{t('assignments.caregiverTypeLabel')} {t('assignments.requiredField')}</span>
             </label>
             <select
               id="caregiverType"
@@ -487,16 +507,16 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
               value={formData.caregiverType}
               onChange={handleChange}
               required
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="select select-bordered w-full"
             >
-              <option value="professional">Professional</option>
-              <option value="family">Family</option>
+              <option value="professional">{t('assignments.caregiverTypes.professional')}</option>
+              <option value="family">{t('assignments.caregiverTypes.family')}</option>
             </select>
           </div>
 
-          <div>
-            <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
-              Notes
+          <div className="form-control">
+            <label className="label" htmlFor="notes">
+              <span className="label-text">{t('assignments.notesLabel')}</span>
             </label>
             <textarea
               id="notes"
@@ -504,24 +524,25 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
               value={formData.notes}
               onChange={handleChange}
               rows={3}
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="textarea textarea-bordered w-full"
             />
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
+          <div className="modal-action">
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              className="btn btn-ghost"
             >
-              Cancel
+              {t('assignments.cancel')}
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="btn btn-primary"
             >
-              {loading ? 'Creating...' : 'Create Assignment'}
+              {loading ? <span className="loading loading-spinner loading-sm"></span> : null}
+              {loading ? t('assignments.creating') : t('assignments.createAssignmentButton')}
             </button>
           </div>
         </form>

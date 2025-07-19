@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from '../../hooks/useTranslation';
 import { useAuth } from '../../contexts/AuthContext';
 import { EmergencyAccess as EmergencyAccessType, ApiResponse, Patient } from '@parkml/shared';
+import { Avatar } from '../shared';
 import { 
   AlertTriangle, 
   Clock, 
@@ -19,6 +21,7 @@ interface EmergencyAccessWithDetails extends EmergencyAccessType {
 }
 
 const EmergencyAccess: React.FC = () => {
+  const { t } = useTranslation('admin');
   const { user, token, isAdmin } = useAuth();
   const [emergencyAccess, setEmergencyAccess] = useState<EmergencyAccessWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,11 +58,11 @@ const EmergencyAccess: React.FC = () => {
       if (data.success) {
         setEmergencyAccess(data.data?.emergencyAccesses || []);
       } else {
-        toast.error(data.error || 'Failed to fetch emergency access records');
+        toast.error(data.error || t('emergency.errors.fetchError'));
       }
     } catch (error) {
       console.error('Error fetching emergency access:', error);
-      toast.error('Failed to fetch emergency access records');
+      toast.error(t('emergency.errors.fetchError'));
     } finally {
       setLoading(false);
     }
@@ -79,20 +82,20 @@ const EmergencyAccess: React.FC = () => {
       const data: ApiResponse = await response.json();
 
       if (data.success) {
-        toast.success('Emergency access requested successfully');
+        toast.success(t('emergency.success.requestSuccess'));
         setShowRequestForm(false);
         fetchEmergencyAccess();
       } else {
-        toast.error(data.error || 'Failed to request emergency access');
+        toast.error(data.error || t('emergency.errors.requestError'));
       }
     } catch (error) {
       console.error('Error requesting emergency access:', error);
-      toast.error('Failed to request emergency access');
+      toast.error(t('emergency.errors.requestError'));
     }
   };
 
   const handleRevokeAccess = async (id: string) => {
-    if (!confirm('Are you sure you want to revoke this emergency access?')) {
+    if (!confirm(t('emergency.revokeConfirmation'))) {
       return;
     }
 
@@ -107,29 +110,29 @@ const EmergencyAccess: React.FC = () => {
       const data: ApiResponse = await response.json();
 
       if (data.success) {
-        toast.success('Emergency access revoked successfully');
+        toast.success(t('emergency.success.revokeSuccess'));
         fetchEmergencyAccess();
       } else {
-        toast.error(data.error || 'Failed to revoke emergency access');
+        toast.error(data.error || t('emergency.errors.revokeError'));
       }
     } catch (error) {
       console.error('Error revoking emergency access:', error);
-      toast.error('Failed to revoke emergency access');
+      toast.error(t('emergency.errors.revokeError'));
     }
   };
 
-  const getAccessTypeColor = (type: string) => {
+  const getAccessTypeBadgeColor = (type: string) => {
     switch (type) {
       case 'medical_emergency':
-        return 'bg-red-100 text-red-800';
+        return 'badge-error';
       case 'technical_support':
-        return 'bg-blue-100 text-blue-800';
+        return 'badge-primary';
       case 'data_recovery':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'badge-warning';
       case 'audit_investigation':
-        return 'bg-purple-100 text-purple-800';
+        return 'badge-secondary';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'badge-ghost';
     }
   };
 
@@ -149,7 +152,13 @@ const EmergencyAccess: React.FC = () => {
   };
 
   const formatAccessType = (type: string) => {
-    return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const typeMap: Record<string, string> = {
+      'medical_emergency': t('emergency.accessTypes.medicalEmergency'),
+      'technical_support': t('emergency.accessTypes.technicalSupport'),
+      'data_recovery': t('emergency.accessTypes.dataRecovery'),
+      'audit_investigation': t('emergency.accessTypes.auditInvestigation'),
+    };
+    return typeMap[type] || type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
   const isExpired = (endTime: string | Date) => {
@@ -158,20 +167,20 @@ const EmergencyAccess: React.FC = () => {
   };
 
   const getTimeRemaining = (endTime: string | Date) => {
-    if (!endTime) return 'Expired';
+    if (!endTime) return t('emergency.timeRemaining.expired');
     const now = new Date();
     const end = new Date(endTime);
     const diff = end.getTime() - now.getTime();
 
-    if (diff <= 0) return 'Expired';
+    if (diff <= 0) return t('emergency.timeRemaining.expired');
 
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
     if (hours > 0) {
-      return `${hours}h ${minutes}m remaining`;
+      return t('emergency.timeRemaining.hoursMinutes', { hours, minutes });
     } else {
-      return `${minutes}m remaining`;
+      return t('emergency.timeRemaining.minutesOnly', { minutes });
     }
   };
 
@@ -182,123 +191,126 @@ const EmergencyAccess: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Emergency Access</h1>
-            <p className="text-gray-600">Manage emergency access requests and monitoring</p>
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="card-title text-2xl">{t('emergency.title')}</h1>
+              <p className="text-base-content/70">{t('emergency.subtitle')}</p>
+            </div>
+            <button
+              onClick={() => setShowRequestForm(true)}
+              className="btn btn-error"
+            >
+              <Plus className="h-4 w-4" />
+              {t('emergency.requestButton')}
+            </button>
           </div>
-          <button
-            onClick={() => setShowRequestForm(true)}
-            className="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Request Emergency Access
-          </button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="flex items-center space-x-4">
-          <div className="flex-1">
-            <label htmlFor="search" className="sr-only">Search emergency access</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                id="search"
-                placeholder="Search by patient or reason..."
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 w-full"
-              />
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="flex items-center space-x-4">
+            <div className="flex-1 form-control">
+              <label htmlFor="search" className="sr-only">{t('emergency.ariaLabels.searchEmergencyAccess')}</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 opacity-50" />
+                <input
+                  type="text"
+                  id="search"
+                  placeholder={t('emergency.searchPlaceholder')}
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  className="input input-bordered w-full pl-10"
+                />
+              </div>
             </div>
-          </div>
-          
-          <div>
-            <label htmlFor="accessType" className="sr-only">Filter by access type</label>
-            <select
-              id="accessType"
-              value={filters.accessType}
-              onChange={(e) => handleFilterChange('accessType', e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">All Types</option>
-              <option value="medical_emergency">Medical Emergency</option>
-              <option value="technical_support">Technical Support</option>
-              <option value="data_recovery">Data Recovery</option>
-              <option value="audit_investigation">Audit Investigation</option>
-            </select>
-          </div>
-          
-          <div>
-            <label htmlFor="isActive" className="sr-only">Filter by status</label>
-            <select
-              id="isActive"
-              value={filters.isActive}
-              onChange={(e) => handleFilterChange('isActive', e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">All Status</option>
-              <option value="true">Active</option>
-              <option value="false">Expired</option>
-            </select>
+            
+            <div className="form-control">
+              <label htmlFor="accessType" className="sr-only">{t('emergency.ariaLabels.filterByAccessType')}</label>
+              <select
+                id="accessType"
+                value={filters.accessType}
+                onChange={(e) => handleFilterChange('accessType', e.target.value)}
+                className="select select-bordered"
+              >
+                <option value="">{t('emergency.allTypes')}</option>
+                <option value="medical_emergency">{t('emergency.accessTypes.medicalEmergency')}</option>
+                <option value="technical_support">{t('emergency.accessTypes.technicalSupport')}</option>
+                <option value="data_recovery">{t('emergency.accessTypes.dataRecovery')}</option>
+                <option value="audit_investigation">{t('emergency.accessTypes.auditInvestigation')}</option>
+              </select>
+            </div>
+            
+            <div className="form-control">
+              <label htmlFor="isActive" className="sr-only">{t('emergency.ariaLabels.filterByStatus')}</label>
+              <select
+                id="isActive"
+                value={filters.isActive}
+                onChange={(e) => handleFilterChange('isActive', e.target.value)}
+                className="select select-bordered"
+              >
+                <option value="">{t('emergency.allStatus')}</option>
+                <option value="true">{t('emergency.active')}</option>
+                <option value="false">{t('emergency.expired')}</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Emergency Access List */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">
-            Emergency Access Records ({emergencyAccess.length})
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="card-title">
+            {t('emergency.recordsCount', { count: emergencyAccess.length })}
           </h2>
         </div>
         
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+            <span className="loading loading-spinner loading-lg text-error"></span>
           </div>
         ) : emergencyAccess.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">
-            <AlertTriangle className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No emergency access records</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              No emergency access requests found.
+          <div className="p-6 text-center">
+            <AlertTriangle className="mx-auto h-12 w-12 opacity-50" />
+            <h3 className="mt-2 text-sm font-medium">{t('emergency.noRecordsTitle')}</h3>
+            <p className="mt-1 text-sm opacity-70">
+              {t('emergency.noRecordsMessage')}
             </p>
           </div>
         ) : (
           <div className="overflow-hidden">
             <ul className="divide-y divide-gray-200">
               {emergencyAccess.map((access) => (
-                <li key={access.id} className="px-6 py-4 hover:bg-gray-50">
+                <li key={access.id} className="px-6 py-4 hover:bg-base-200/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                          access.isActive && !isExpired(access.endTime || '') 
-                            ? 'bg-red-500' 
-                            : 'bg-gray-500'
-                        }`}>
-                          {getAccessTypeIcon(access.accessType)}
-                        </div>
-                      </div>
+                      <Avatar
+                        variant="icon"
+                        status={access.isActive && !isExpired(access.endTime || '') ? 'error' : 'inactive'}
+                        size="md"
+                        aria-label={t('emergency.ariaLabels.emergencyAccessRecord', { accessType: formatAccessType(access.accessType) })}
+                      >
+                        {getAccessTypeIcon(access.accessType)}
+                      </Avatar>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {access.patient?.name || 'Patient not found'}
+                        <div className="text-sm font-medium">
+                          {access.patient?.name || t('emergency.patientNotFound')}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm opacity-70">
                           {access.reason}
                         </div>
-                        <div className="flex items-center text-xs text-gray-400 mt-1">
+                        <div className="flex items-center text-xs opacity-60 mt-1">
                           <Calendar className="h-3 w-3 mr-1" />
-                          Requested: {new Date(access.startTime).toLocaleString()}
+                          {t('emergency.requestedLabel')} {new Date(access.startTime).toLocaleString()}
                           {access.endTime && (
                             <span className="ml-3">
                               {access.isActive && !isExpired(access.endTime) 
                                 ? getTimeRemaining(access.endTime)
-                                : `Ended: ${new Date(access.endTime).toLocaleString()}`
+                                : `${t('emergency.endedLabel')} ${new Date(access.endTime).toLocaleString()}`
                               }
                             </span>
                           )}
@@ -307,20 +319,20 @@ const EmergencyAccess: React.FC = () => {
                     </div>
                     <div className="flex items-center space-x-4">
                       <div className="text-right">
-                        <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${getAccessTypeColor(access.accessType)}`}>
+                        <div className={`badge ${getAccessTypeBadgeColor(access.accessType)} gap-1`}>
                           {getAccessTypeIcon(access.accessType)}
-                          <span className="ml-1">{formatAccessType(access.accessType)}</span>
-                        </span>
+                          {formatAccessType(access.accessType)}
+                        </div>
                         <div className="mt-1">
                           {access.isActive && !isExpired(access.endTime || '') ? (
-                            <div className="flex items-center text-green-600">
+                            <div className="flex items-center text-success">
                               <CheckCircle className="h-4 w-4 mr-1" />
-                              <span className="text-xs">Active</span>
+                              <span className="text-xs">{t('emergency.active')}</span>
                             </div>
                           ) : (
-                            <div className="flex items-center text-gray-500">
+                            <div className="flex items-center opacity-50">
                               <XCircle className="h-4 w-4 mr-1" />
-                              <span className="text-xs">Expired</span>
+                              <span className="text-xs">{t('emergency.expired')}</span>
                             </div>
                           )}
                         </div>
@@ -328,9 +340,9 @@ const EmergencyAccess: React.FC = () => {
                       {access.isActive && !isExpired(access.endTime || '') && isAdmin && (
                         <button
                           onClick={() => handleRevokeAccess(access.id)}
-                          className="text-red-600 hover:text-red-900 text-xs"
+                          className="btn btn-ghost btn-xs text-error"
                         >
-                          Revoke
+                          {t('emergency.revokeButton')}
                         </button>
                       )}
                     </div>
@@ -360,6 +372,7 @@ interface EmergencyAccessFormProps {
 }
 
 const EmergencyAccessForm: React.FC<EmergencyAccessFormProps> = ({ onSubmit, onCancel }) => {
+  const { t } = useTranslation('admin');
   const { token } = useAuth();
   const [formData, setFormData] = useState({
     patientId: '',
@@ -412,19 +425,17 @@ const EmergencyAccessForm: React.FC<EmergencyAccessFormProps> = ({ onSubmit, onC
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900 flex items-center">
-            <AlertTriangle className="h-5 w-5 text-red-600 mr-2" />
-            Request Emergency Access
-          </h3>
-        </div>
+    <div className="modal modal-open">
+      <div className="modal-box max-w-md">
+        <h3 className="font-bold text-lg mb-4 flex items-center">
+          <AlertTriangle className="h-5 w-5 text-error mr-2" />
+          {t('emergency.requestTitle')}
+        </h3>
         
-        <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
-          <div>
-            <label htmlFor="patientId" className="block text-sm font-medium text-gray-700">
-              Patient *
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="form-control">
+            <label className="label" htmlFor="patientId">
+              <span className="label-text">{t('emergency.patientLabel')} {t('emergency.requiredField')}</span>
             </label>
             <select
               id="patientId"
@@ -432,9 +443,9 @@ const EmergencyAccessForm: React.FC<EmergencyAccessFormProps> = ({ onSubmit, onC
               value={formData.patientId}
               onChange={handleChange}
               required
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-red-500 focus:border-red-500"
+              className="select select-bordered select-error w-full"
             >
-              <option value="">Select patient</option>
+              <option value="">{t('emergency.selectPatient')}</option>
               {patients.map((patient) => (
                 <option key={patient.id} value={patient.id}>
                   {patient.name}
@@ -443,9 +454,9 @@ const EmergencyAccessForm: React.FC<EmergencyAccessFormProps> = ({ onSubmit, onC
             </select>
           </div>
 
-          <div>
-            <label htmlFor="accessType" className="block text-sm font-medium text-gray-700">
-              Access Type *
+          <div className="form-control">
+            <label className="label" htmlFor="accessType">
+              <span className="label-text">{t('emergency.accessTypeLabel')} {t('emergency.requiredField')}</span>
             </label>
             <select
               id="accessType"
@@ -453,18 +464,18 @@ const EmergencyAccessForm: React.FC<EmergencyAccessFormProps> = ({ onSubmit, onC
               value={formData.accessType}
               onChange={handleChange}
               required
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-red-500 focus:border-red-500"
+              className="select select-bordered select-error w-full"
             >
-              <option value="medical_emergency">Medical Emergency</option>
-              <option value="technical_support">Technical Support</option>
-              <option value="data_recovery">Data Recovery</option>
-              <option value="audit_investigation">Audit Investigation</option>
+              <option value="medical_emergency">{t('emergency.accessTypes.medicalEmergency')}</option>
+              <option value="technical_support">{t('emergency.accessTypes.technicalSupport')}</option>
+              <option value="data_recovery">{t('emergency.accessTypes.dataRecovery')}</option>
+              <option value="audit_investigation">{t('emergency.accessTypes.auditInvestigation')}</option>
             </select>
           </div>
 
-          <div>
-            <label htmlFor="durationHours" className="block text-sm font-medium text-gray-700">
-              Duration (hours) *
+          <div className="form-control">
+            <label className="label" htmlFor="durationHours">
+              <span className="label-text">{t('emergency.durationLabel')} {t('emergency.requiredField')}</span>
             </label>
             <input
               type="number"
@@ -475,13 +486,13 @@ const EmergencyAccessForm: React.FC<EmergencyAccessFormProps> = ({ onSubmit, onC
               min="1"
               max="24"
               required
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-red-500 focus:border-red-500"
+              className="input input-bordered input-error w-full"
             />
           </div>
 
-          <div>
-            <label htmlFor="reason" className="block text-sm font-medium text-gray-700">
-              Reason *
+          <div className="form-control">
+            <label className="label" htmlFor="reason">
+              <span className="label-text">{t('emergency.reasonLabel')} {t('emergency.requiredField')}</span>
             </label>
             <textarea
               id="reason"
@@ -490,35 +501,33 @@ const EmergencyAccessForm: React.FC<EmergencyAccessFormProps> = ({ onSubmit, onC
               onChange={handleChange}
               rows={3}
               required
-              placeholder="Provide detailed justification for emergency access..."
-              className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-red-500 focus:border-red-500"
+              placeholder={t('emergency.reasonPlaceholder')}
+              className="textarea textarea-bordered textarea-error w-full"
             />
           </div>
 
-          <div className="bg-red-50 border border-red-200 rounded-md p-3">
-            <div className="flex">
-              <AlertTriangle className="h-5 w-5 text-red-400 mr-2" />
-              <div className="text-sm text-red-700">
-                <strong>Warning:</strong> Emergency access is logged and audited. 
-                Only use in genuine emergencies and provide complete justification.
-              </div>
+          <div className="alert alert-error">
+            <AlertTriangle className="h-5 w-5" />
+            <div>
+              <strong>{t('emergency.warning')}</strong> {t('emergency.warningMessage')}
             </div>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
+          <div className="modal-action">
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              className="btn btn-ghost"
             >
-              Cancel
+              {t('emergency.cancel')}
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+              className="btn btn-error"
             >
-              {loading ? 'Requesting...' : 'Request Access'}
+              {loading ? <span className="loading loading-spinner loading-sm"></span> : null}
+              {loading ? t('emergency.requesting') : t('emergency.requestAccessButton')}
             </button>
           </div>
         </form>

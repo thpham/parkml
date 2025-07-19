@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../hooks/useTranslation';
 import { CaregiverAssignment, ApiResponse, User } from '@parkml/shared';
 import { 
   UserCheck, 
@@ -31,6 +32,7 @@ interface ConsentStats {
 
 const PatientConsentDashboard: React.FC = () => {
   const { user, token } = useAuth();
+  const { t } = useTranslation(['patient', 'caregiver', 'common']);
   const [assignments, setAssignments] = useState<AssignmentWithDetails[]>([]);
   const [pendingAssignments, setPendingAssignments] = useState<AssignmentWithDetails[]>([]);
   const [stats, setStats] = useState<ConsentStats>({
@@ -63,11 +65,11 @@ const PatientConsentDashboard: React.FC = () => {
         setAssignments(data.data);
         calculateStats(data.data);
       } else {
-        toast.error(data.error || 'Failed to fetch assignments');
+        toast.error(data.error || t('patient.consent.fetchAssignmentsError'));
       }
     } catch (error) {
       console.error('Error fetching assignments:', error);
-      toast.error('Failed to fetch assignments');
+      toast.error(t('patient.consent.fetchAssignmentsError'));
     }
   };
 
@@ -85,11 +87,11 @@ const PatientConsentDashboard: React.FC = () => {
       if (data.success && data.data) {
         setPendingAssignments(data.data);
       } else {
-        toast.error(data.error || 'Failed to fetch pending consent requests');
+        toast.error(data.error || t('patient.consent.fetchConsentError'));
       }
     } catch (error) {
       console.error('Error fetching pending consent:', error);
-      toast.error('Failed to fetch pending consent requests');
+      toast.error(t('patient.consent.fetchConsentError'));
     } finally {
       setLoading(false);
     }
@@ -122,32 +124,34 @@ const PatientConsentDashboard: React.FC = () => {
       const data: ApiResponse = await response.json();
 
       if (data.success) {
-        toast.success(`Assignment ${action === 'approve' ? 'approved' : 'declined'} successfully`);
+        toast.success(t('consent.success.assignmentActionSuccess', { 
+          status: action === 'approve' ? t('consent.status.approvedStatus') : t('consent.status.declinedStatus') 
+        }));
         fetchAssignments();
         fetchPendingConsent();
         setShowDetails(null);
       } else {
-        toast.error(data.error || `Failed to ${action} assignment`);
+        toast.error(data.error || t('consent.errors.actionAssignmentError', { action }));
       }
     } catch (error) {
       console.error(`Error ${action}ing assignment:`, error);
-      toast.error(`Failed to ${action} assignment`);
+      toast.error(t('consent.errors.actionAssignmentError', { action }));
     }
   };
 
   const formatCaregiverType = (type: string) => {
-    return type === 'professional' ? 'Professional' : 'Family';
+    return type === 'professional' ? t('types.professional', { ns: 'caregiver' }) : t('types.family', { ns: 'caregiver' });
   };
 
   const getStatusColor = (status: string, consentGiven: boolean) => {
     if (status === 'active' && consentGiven) {
-      return 'bg-green-100 text-green-800';
+      return 'badge-success';
     } else if (status === 'pending') {
-      return 'bg-yellow-100 text-yellow-800';
+      return 'badge-warning';
     } else if (status === 'declined') {
-      return 'bg-red-100 text-red-800';
+      return 'badge-error';
     }
-    return 'bg-gray-100 text-gray-800';
+    return 'badge-ghost';
   };
 
   const getStatusIcon = (status: string, consentGiven: boolean) => {
@@ -163,13 +167,13 @@ const PatientConsentDashboard: React.FC = () => {
 
   const getStatusText = (status: string, consentGiven: boolean) => {
     if (status === 'active' && consentGiven) {
-      return 'Active';
+      return t('status.active', { ns: 'common' });
     } else if (status === 'pending') {
-      return 'Pending Your Consent';
+      return t('consent.stats.pendingConsent');
     } else if (status === 'declined') {
-      return 'Declined';
+      return t('consent.stats.declined');
     }
-    return 'Unknown';
+    return t('misc.unknown', { ns: 'common' });
   };
 
   const activeAssignments = assignments.filter(a => a.status === 'active' && a.consentGiven);
@@ -180,14 +184,14 @@ const PatientConsentDashboard: React.FC = () => {
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Caregiver Consent Management</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t('consent.title')}</h1>
             <p className="text-gray-600">
-              Review and approve caregiver assignments for your care
+              {t('consent.subtitle')}
             </p>
           </div>
           <div className="flex items-center space-x-2">
             <Shield className="h-6 w-6 text-blue-500" />
-            <span className="text-lg font-medium text-gray-900">Patient Consent</span>
+            <span className="text-lg font-medium text-gray-900">{t('consent.headerText')}</span>
           </div>
         </div>
       </div>
@@ -203,7 +207,7 @@ const PatientConsentDashboard: React.FC = () => {
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">
-                    Total Assignments
+                    {t('consent.stats.totalAssignments')}
                   </dt>
                   <dd className="text-lg font-medium text-gray-900">
                     {stats.totalAssignments}
@@ -223,7 +227,7 @@ const PatientConsentDashboard: React.FC = () => {
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">
-                    Pending Consent
+                    {t('consent.stats.pendingConsent')}
                   </dt>
                   <dd className="text-lg font-medium text-gray-900">
                     {stats.pendingConsent}
@@ -243,7 +247,7 @@ const PatientConsentDashboard: React.FC = () => {
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">
-                    Approved Caregivers
+                    {t('consent.stats.approvedCaregivers')}
                   </dt>
                   <dd className="text-lg font-medium text-gray-900">
                     {stats.activeAssignments}
@@ -263,7 +267,7 @@ const PatientConsentDashboard: React.FC = () => {
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">
-                    Declined
+                    {t('consent.stats.declined')}
                   </dt>
                   <dd className="text-lg font-medium text-gray-900">
                     {stats.declinedAssignments}
@@ -282,11 +286,11 @@ const PatientConsentDashboard: React.FC = () => {
             <div className="flex items-center">
               <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2" />
               <h2 className="text-lg font-medium text-gray-900">
-                Pending Consent Requests ({pendingAssignments.length})
+                {t('consent.requests.pendingCount', { count: pendingAssignments.length })}
               </h2>
             </div>
             <p className="text-sm text-gray-600 mt-1">
-              These caregiver assignments require your consent
+              {t('consent.requests.pendingSubtitle')}
             </p>
           </div>
           
@@ -306,23 +310,23 @@ const PatientConsentDashboard: React.FC = () => {
                           {assignment.caregiver.name}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {formatCaregiverType(assignment.caregiverType)} Caregiver
+                          {formatCaregiverType(assignment.caregiverType)} {t('types.caregiver')}
                         </div>
                         <div className="text-sm text-gray-500">
-                          Email: {assignment.caregiver.email}
+                          {t('consent.labels.email')} {assignment.caregiver.email}
                         </div>
                         <div className="flex items-center text-xs text-gray-400 mt-1">
                           <Calendar className="h-3 w-3 mr-1" />
-                          Requested: {new Date(assignment.createdAt).toLocaleDateString()}
+                          {t('consent.labels.requestedLabel')} {new Date(assignment.createdAt).toLocaleDateString()}
                           {assignment.assignedByUser && (
                             <span className="ml-3">
-                              By: {assignment.assignedByUser.name}
+                              {t('consent.labels.byLabel')} {assignment.assignedByUser.name}
                             </span>
                           )}
                         </div>
                         {assignment.notes && (
                           <div className="text-sm text-gray-600 mt-1">
-                            <strong>Notes:</strong> {assignment.notes}
+                            <strong>{t('consent.labels.notes')}</strong> {assignment.notes}
                           </div>
                         )}
                       </div>
@@ -333,21 +337,21 @@ const PatientConsentDashboard: React.FC = () => {
                         className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                       >
                         <Eye className="h-4 w-4 mr-1" />
-                        Review
+                        {t('consent.actions.reviewButton')}
                       </button>
                       <button
                         onClick={() => handleConsentResponse(assignment.id, 'approve')}
                         className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
                       >
                         <UserCheck className="h-4 w-4 mr-1" />
-                        Approve
+                        {t('consent.actions.approveButton')}
                       </button>
                       <button
                         onClick={() => handleConsentResponse(assignment.id, 'decline')}
                         className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100"
                       >
                         <UserX className="h-4 w-4 mr-1" />
-                        Decline
+                        {t('consent.actions.declineButton')}
                       </button>
                     </div>
                   </div>
@@ -362,7 +366,7 @@ const PatientConsentDashboard: React.FC = () => {
       <div className="bg-white shadow rounded-lg">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-medium text-gray-900">
-            Approved Caregivers ({activeAssignments.length})
+            {t('consent.approved.count', { count: activeAssignments.length })}
           </h2>
         </div>
         
@@ -373,9 +377,9 @@ const PatientConsentDashboard: React.FC = () => {
         ) : activeAssignments.length === 0 ? (
           <div className="p-6 text-center text-gray-500">
             <Heart className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No approved caregivers</h3>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">{t('consent.approved.noApprovedTitle')}</h3>
             <p className="mt-1 text-sm text-gray-500">
-              You haven't approved any caregiver assignments yet.
+              {t('consent.approved.noApprovedMessage')}
             </p>
           </div>
         ) : (
@@ -395,17 +399,17 @@ const PatientConsentDashboard: React.FC = () => {
                           {assignment.caregiver.name}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {formatCaregiverType(assignment.caregiverType)} caregiver
+                          {formatCaregiverType(assignment.caregiverType)} {t('types.caregiver')}
                         </div>
                         <div className="text-sm text-gray-500">
-                          Email: {assignment.caregiver.email}
+                          {t('consent.labels.email')} {assignment.caregiver.email}
                         </div>
                         <div className="flex items-center text-xs text-gray-400 mt-1">
                           <Calendar className="h-3 w-3 mr-1" />
-                          Approved: {assignment.consentDate ? new Date(assignment.consentDate).toLocaleDateString() : 'N/A'}
+                          {t('consent.labels.approvedLabel')} {assignment.consentDate ? new Date(assignment.consentDate).toLocaleDateString() : t('common.notAvailable')}
                           {assignment.startDate && (
                             <span className="ml-3">
-                              Started: {new Date(assignment.startDate).toLocaleDateString()}
+                              {t('consent.labels.startedLabel')} {new Date(assignment.startDate).toLocaleDateString()}
                             </span>
                           )}
                         </div>
@@ -420,14 +424,14 @@ const PatientConsentDashboard: React.FC = () => {
                         onClick={() => {/* TODO: Implement revoke functionality */}}
                         className="text-red-600 hover:text-red-900 text-xs"
                       >
-                        Revoke Consent
+                        {t('consent.actions.revokeConsentButton')}
                       </button>
                     </div>
                   </div>
                   
                   {assignment.notes && (
                     <div className="mt-2 ml-14 text-sm text-gray-600">
-                      <strong>Notes:</strong> {assignment.notes}
+                      <strong>{t('consent.labels.notes')}</strong> {assignment.notes}
                     </div>
                   )}
                 </li>
@@ -445,7 +449,7 @@ const PatientConsentDashboard: React.FC = () => {
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium text-gray-900 flex items-center">
                   <Info className="h-5 w-5 text-blue-600 mr-2" />
-                  Assignment Details
+                  {t('consent.modal.assignmentDetailsTitle')}
                 </h3>
                 <button
                   onClick={() => setShowDetails(null)}
@@ -465,26 +469,26 @@ const PatientConsentDashboard: React.FC = () => {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Caregiver Name</label>
+                        <label className="block text-sm font-medium text-gray-700">{t('consent.labels.caregiverNameLabel')}</label>
                         <p className="text-sm text-gray-900">{assignment.caregiver.name}</p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Caregiver Type</label>
+                        <label className="block text-sm font-medium text-gray-700">{t('consent.labels.caregiverTypeLabel')}</label>
                         <p className="text-sm text-gray-900">{formatCaregiverType(assignment.caregiverType)}</p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Email</label>
+                        <label className="block text-sm font-medium text-gray-700">{t('form.email', { ns: 'common' })}</label>
                         <p className="text-sm text-gray-900">{assignment.caregiver.email}</p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Assigned By</label>
-                        <p className="text-sm text-gray-900">{assignment.assignedByUser?.name || 'System'}</p>
+                        <label className="block text-sm font-medium text-gray-700">{t('consent.labels.assignedByLabel')}</label>
+                        <p className="text-sm text-gray-900">{assignment.assignedByUser?.name || t('common.system')}</p>
                       </div>
                     </div>
                     
                     {assignment.notes && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Notes</label>
+                        <label className="block text-sm font-medium text-gray-700">{t('form.notes', { ns: 'common' })}</label>
                         <p className="text-sm text-gray-900">{assignment.notes}</p>
                       </div>
                     )}
@@ -493,10 +497,10 @@ const PatientConsentDashboard: React.FC = () => {
                       <div className="flex">
                         <Info className="h-5 w-5 text-blue-400 mr-2" />
                         <div className="text-sm text-blue-700">
-                          <p><strong>What this means:</strong></p>
+                          <p><strong>{t('consent.modal.whatThisMeans')}</strong></p>
                           <p className="mt-1">
-                            By approving this assignment, you give consent for {assignment.caregiver.name} 
-                            to access your health information and assist with your care as a {formatCaregiverType(assignment.caregiverType).toLowerCase()} caregiver.
+                            {t('consent.modal.consentMessage1')} {assignment.caregiver.name} 
+                            {t('consent.modal.consentMessage2')} {formatCaregiverType(assignment.caregiverType).toLowerCase()} {t('consent.modal.consentMessage3')}
                           </p>
                         </div>
                       </div>
@@ -507,19 +511,19 @@ const PatientConsentDashboard: React.FC = () => {
                         onClick={() => setShowDetails(null)}
                         className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
                       >
-                        Cancel
+                        {t('buttons.cancel', { ns: 'common' })}
                       </button>
                       <button
                         onClick={() => handleConsentResponse(assignment.id, 'decline')}
                         className="px-4 py-2 border border-red-300 rounded-md text-red-700 bg-red-50 hover:bg-red-100"
                       >
-                        Decline Assignment
+                        {t('consent.actions.declineAssignmentButton')}
                       </button>
                       <button
                         onClick={() => handleConsentResponse(assignment.id, 'approve')}
                         className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                       >
-                        Approve Assignment
+                        {t('consent.actions.approveAssignmentButton')}
                       </button>
                     </div>
                   </div>

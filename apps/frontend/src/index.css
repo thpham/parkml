@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ParkML Base Styles */
+/* ParkML Base Styles - Optimized for daisyUI */
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   font-synthesis: none;
@@ -12,15 +12,12 @@
   -webkit-text-size-adjust: 100%;
 }
 
-* {
-  box-sizing: border-box;
-}
-
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: #f9fafb;
-  color: #111827;
+  /* Use daisyUI theme colors for consistency and theme switching support */
+  background-color: hsl(var(--b2));  /* daisyUI base-200 (light background) */
+  color: hsl(var(--bc));             /* daisyUI base-content (text color) */
 }
 
 #root {

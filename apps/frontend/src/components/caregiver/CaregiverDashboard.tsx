@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from '../../hooks/useTranslation';
 import { CaregiverAssignment, ApiResponse, Patient, User } from '@parkml/shared';
+import { Avatar } from '../shared';
 import { 
   Users, 
   Clock, 
@@ -27,6 +29,7 @@ interface CaregiverStats {
 
 const CaregiverDashboard: React.FC = () => {
   const { user, token } = useAuth();
+  const { t } = useTranslation('caregiver');
   const [assignments, setAssignments] = useState<AssignmentWithDetails[]>([]);
   const [stats, setStats] = useState<CaregiverStats>({
     totalAssignments: 0,
@@ -57,11 +60,11 @@ const CaregiverDashboard: React.FC = () => {
         setAssignments(data.data);
         calculateStats(data.data);
       } else {
-        toast.error(data.error || 'Failed to fetch assignments');
+        toast.error(data.error || t('messages.fetchError'));
       }
     } catch (error) {
       console.error('Error fetching assignments:', error);
-      toast.error('Failed to fetch assignments');
+      toast.error(t('messages.fetchError'));
     } finally {
       setLoading(false);
     }
@@ -94,31 +97,31 @@ const CaregiverDashboard: React.FC = () => {
       const data: ApiResponse = await response.json();
 
       if (data.success) {
-        toast.success(`Assignment ${status === 'active' ? 'accepted' : 'declined'} successfully`);
+        toast.success(status === 'active' ? t('messages.assignmentAccepted') : t('messages.assignmentDeclined'));
         fetchAssignments(); // Refresh the list
       } else {
-        toast.error(data.error || 'Failed to update assignment');
+        toast.error(data.error || t('messages.updateError'));
       }
     } catch (error) {
       console.error('Error updating assignment:', error);
-      toast.error('Failed to update assignment');
+      toast.error(t('messages.updateError'));
     }
   };
 
   const formatCaregiverType = (type: string) => {
-    return type === 'professional' ? 'Professional' : 'Family';
+    return type === 'professional' ? t('types.professional') : t('types.family');
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'badge-warning';
       case 'active':
-        return 'bg-green-100 text-green-800';
+        return 'badge-success';
       case 'declined':
-        return 'bg-red-100 text-red-800';
+        return 'badge-error';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'badge-ghost';
     }
   };
 
@@ -141,151 +144,108 @@ const CaregiverDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">My Assignments</h1>
-            <p className="text-gray-600">
-              Manage your patient care assignments and responsibilities
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Heart className="h-6 w-6 text-red-500" />
-            <span className="text-lg font-medium text-gray-900">
-              {formatCaregiverType(user?.role?.replace('_caregiver', '') || '')} Caregiver
-            </span>
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="card-title text-2xl">{t('dashboard.title')}</h1>
+              <p className="text-base-content/70">
+                {t('dashboard.subtitle')}
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Heart className="h-6 w-6 text-error" />
+              <span className="text-lg font-medium">
+                {formatCaregiverType(user?.role?.replace('_caregiver', '') || '')} {t('dashboard.caregiverSuffix')}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Users className="h-6 w-6 text-blue-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Total Assignments
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.totalAssignments}
-                  </dd>
-                </dl>
-              </div>
-            </div>
+      <div className="stats stats-vertical lg:stats-horizontal shadow w-full">
+        <div className="stat">
+          <div className="stat-figure text-primary">
+            <Users className="h-8 w-8" />
           </div>
+          <div className="stat-title">{t('dashboard.stats.totalAssignments')}</div>
+          <div className="stat-value text-primary">{stats.totalAssignments}</div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Clock className="h-6 w-6 text-yellow-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Pending Requests
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.pendingAssignments}
-                  </dd>
-                </dl>
-              </div>
-            </div>
+        <div className="stat">
+          <div className="stat-figure text-warning">
+            <Clock className="h-8 w-8" />
           </div>
+          <div className="stat-title">{t('dashboard.stats.pendingRequests')}</div>
+          <div className="stat-value text-warning">{stats.pendingAssignments}</div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Activity className="h-6 w-6 text-green-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Active Assignments
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.activeAssignments}
-                  </dd>
-                </dl>
-              </div>
-            </div>
+        <div className="stat">
+          <div className="stat-figure text-success">
+            <Activity className="h-8 w-8" />
           </div>
+          <div className="stat-title">{t('dashboard.stats.activeAssignments')}</div>
+          <div className="stat-value text-success">{stats.activeAssignments}</div>
         </div>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <UserIcon className="h-6 w-6 text-purple-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Patients
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.patientsCount}
-                  </dd>
-                </dl>
-              </div>
-            </div>
+        <div className="stat">
+          <div className="stat-figure text-secondary">
+            <UserIcon className="h-8 w-8" />
           </div>
+          <div className="stat-title">{t('dashboard.stats.patients')}</div>
+          <div className="stat-value text-secondary">{stats.patientsCount}</div>
         </div>
       </div>
 
       {/* Pending Assignment Requests */}
       {pendingAssignments.length > 0 && (
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
             <div className="flex items-center">
-              <AlertCircle className="h-5 w-5 text-yellow-500 mr-2" />
-              <h2 className="text-lg font-medium text-gray-900">
-                Pending Assignment Requests ({pendingAssignments.length})
+              <AlertCircle className="h-5 w-5 text-warning mr-2" />
+              <h2 className="card-title">
+                {t('dashboard.pendingRequests.title', { count: pendingAssignments.length })}
               </h2>
             </div>
-            <p className="text-sm text-gray-600 mt-1">
-              These assignments require your response
+            <p className="text-sm opacity-70 mt-1">
+              {t('dashboard.pendingRequests.subtitle')}
             </p>
           </div>
           
           <div className="overflow-hidden">
             <ul className="divide-y divide-gray-200">
               {pendingAssignments.map((assignment) => (
-                <li key={assignment.id} className="px-6 py-4 bg-yellow-50">
+                <li key={assignment.id} className="px-6 py-4 bg-warning/10">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        <div className="h-10 w-10 rounded-full bg-yellow-500 flex items-center justify-center">
-                          <UserIcon className="h-5 w-5 text-white" />
-                        </div>
-                      </div>
+                      <Avatar
+                        variant="icon"
+                        status="warning"
+                        size="md"
+                        aria-label={t('dashboard.ariaLabels.pendingAssignment', { patient: assignment.patient.name })}
+                      >
+                        <UserIcon />
+                      </Avatar>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          Patient: {assignment.patient.name}
+                        <div className="text-sm font-medium">
+                          {t('dashboard.pendingRequests.patient')} {assignment.patient.name}
                         </div>
-                        <div className="text-sm text-gray-500">
-                          Assignment Type: {formatCaregiverType(assignment.caregiverType)}
+                        <div className="text-sm opacity-70">
+                          {t('dashboard.pendingRequests.assignmentType')} {formatCaregiverType(assignment.caregiverType)}
                         </div>
-                        <div className="flex items-center text-xs text-gray-400 mt-1">
+                        <div className="flex items-center text-xs opacity-60 mt-1">
                           <Calendar className="h-3 w-3 mr-1" />
-                          Requested: {new Date(assignment.createdAt).toLocaleDateString()}
+                          {t('dashboard.pendingRequests.requested')} {new Date(assignment.createdAt).toLocaleDateString()}
                           {assignment.assignedByUser && (
                             <span className="ml-3">
-                              By: {assignment.assignedByUser.name}
+                              {t('dashboard.pendingRequests.by')} {assignment.assignedByUser.name}
                             </span>
                           )}
                         </div>
                         {assignment.notes && (
-                          <div className="text-sm text-gray-600 mt-1">
-                            <strong>Notes:</strong> {assignment.notes}
+                          <div className="text-sm opacity-80 mt-1">
+                            <strong>{t('dashboard.pendingRequests.notes')}</strong> {assignment.notes}
                           </div>
                         )}
                       </div>
@@ -293,17 +253,17 @@ const CaregiverDashboard: React.FC = () => {
                     <div className="flex space-x-2">
                       <button
                         onClick={() => handleAssignmentResponse(assignment.id, 'active')}
-                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+                        className="btn btn-success btn-sm"
                       >
-                        <CheckCircle className="h-4 w-4 mr-1" />
-                        Accept
+                        <CheckCircle className="h-4 w-4" />
+                        {t('dashboard.pendingRequests.accept')}
                       </button>
                       <button
                         onClick={() => handleAssignmentResponse(assignment.id, 'declined')}
-                        className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                        className="btn btn-ghost btn-sm"
                       >
-                        <AlertCircle className="h-4 w-4 mr-1" />
-                        Decline
+                        <AlertCircle className="h-4 w-4" />
+                        {t('dashboard.pendingRequests.decline')}
                       </button>
                     </div>
                   </div>
@@ -315,74 +275,77 @@ const CaregiverDashboard: React.FC = () => {
       )}
 
       {/* Active Assignments */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">
-            Active Assignments ({activeAssignments.length})
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="card-title">
+            {t('dashboard.activeAssignments.title', { count: activeAssignments.length })}
           </h2>
         </div>
         
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="loading loading-spinner loading-lg"></span>
           </div>
         ) : activeAssignments.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">
-            <Users className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No active assignments</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              You currently have no active patient assignments.
+          <div className="p-6 text-center">
+            <Users className="mx-auto h-12 w-12 opacity-50" />
+            <h3 className="mt-2 text-sm font-medium">{t('dashboard.activeAssignments.noActiveTitle')}</h3>
+            <p className="mt-1 text-sm opacity-70">
+              {t('dashboard.activeAssignments.noActiveMessage')}
             </p>
           </div>
         ) : (
           <div className="overflow-hidden">
             <ul className="divide-y divide-gray-200">
               {activeAssignments.map((assignment) => (
-                <li key={assignment.id} className="px-6 py-4 hover:bg-gray-50">
+                <li key={assignment.id} className="px-6 py-4 hover:bg-base-200/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        <div className="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center">
-                          <UserIcon className="h-5 w-5 text-white" />
-                        </div>
-                      </div>
+                      <Avatar
+                        variant="icon"
+                        status="active"
+                        size="md"
+                        aria-label={t('dashboard.ariaLabels.activeAssignment', { patient: assignment.patient.name })}
+                      >
+                        <UserIcon />
+                      </Avatar>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium">
                           {assignment.patient.name}
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {formatCaregiverType(assignment.caregiverType)} caregiver
+                        <div className="text-sm opacity-70">
+                          {formatCaregiverType(assignment.caregiverType)} {t('dashboard.activeAssignments.caregiverSuffix')}
                         </div>
-                        <div className="flex items-center text-xs text-gray-400 mt-1">
+                        <div className="flex items-center text-xs opacity-60 mt-1">
                           <Calendar className="h-3 w-3 mr-1" />
-                          Started: {assignment.startDate ? new Date(assignment.startDate).toLocaleDateString() : 'N/A'}
+                          {t('dashboard.activeAssignments.started')} {assignment.startDate ? new Date(assignment.startDate).toLocaleDateString() : 'N/A'}
                           {assignment.consentGiven && assignment.consentDate && (
                             <span className="ml-3">
-                              Consent: {new Date(assignment.consentDate).toLocaleDateString()}
+                              {t('dashboard.activeAssignments.consent')} {new Date(assignment.consentDate).toLocaleDateString()}
                             </span>
                           )}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-4">
-                      <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(assignment.status)}`}>
+                      <div className={`badge ${getStatusBadgeColor(assignment.status)} gap-1`}>
                         {getStatusIcon(assignment.status)}
-                        <span className="ml-1">Active</span>
-                      </span>
+                        {t('dashboard.activeAssignments.active')}
+                      </div>
                       <div className="text-center">
-                        <div className="text-xs text-gray-500">Consent</div>
+                        <div className="text-xs opacity-70">{t('dashboard.activeAssignments.consentStatus')}</div>
                         <div className={`text-xs font-medium ${
-                          assignment.consentGiven ? 'text-green-600' : 'text-red-600'
+                          assignment.consentGiven ? 'text-success' : 'text-error'
                         }`}>
-                          {assignment.consentGiven ? 'Given' : 'Pending'}
+                          {assignment.consentGiven ? t('dashboard.activeAssignments.given') : t('dashboard.activeAssignments.pending')}
                         </div>
                       </div>
                     </div>
                   </div>
                   
                   {assignment.notes && (
-                    <div className="mt-2 ml-14 text-sm text-gray-600">
-                      <strong>Notes:</strong> {assignment.notes}
+                    <div className="mt-2 ml-14 text-sm opacity-80">
+                      <strong>{t('dashboard.pendingRequests.notes')}</strong> {assignment.notes}
                     </div>
                   )}
                 </li>

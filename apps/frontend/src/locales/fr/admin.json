@@ -1,0 +1,320 @@
+{
+  "dashboard": {
+    "systemAdministrationTitle": "Administration Système",
+    "clinicAdministrationTitle": "Administration de Clinique",
+    "systemOverviewSubtitle": "Vue d'ensemble et outils de gestion à l'échelle du système",
+    "organizationManagementSubtitle": "Gestion des organisations pour",
+    "accessDeniedMessage": "Vous n'avez pas l'autorisation d'accéder au tableau de bord administrateur.",
+    "loadError": "Échec du chargement des données du tableau de bord administrateur",
+    "quickActionsTitle": "Actions Rapides",
+    "systemStatusTitle": "État du Système"
+  },
+  "system": {
+    "databaseConnection": "Connexion Base de Données",
+    "apiServices": "Services API",
+    "emergencyAccessCleanup": "Nettoyage des Accès d'Urgence",
+    "healthy": "Sain",
+    "operational": "Opérationnel",
+    "running": "En Cours"
+  },
+  "stats": {
+    "totalUsers": "Total Utilisateurs",
+    "organizationUsers": "Utilisateurs de l'Organisation",
+    "totalPatients": "Total Patients",
+    "organizationPatients": "Patients de l'Organisation",
+    "organizations": "Organisations",
+    "pendingAssignments": "Affectations en Attente",
+    "emergencyAccess": "Accès d'Urgence",
+    "recentActivity": "Activité Récente",
+    "activeAssignments": "Affectations Actives",
+    "total": "Total"
+  },
+  "actions": {
+    "userManagement": "Gestion des Utilisateurs",
+    "userManagementDescriptionSuper": "Gérer les utilisateurs et les rôles",
+    "userManagementDescriptionClinic": "Gérer les utilisateurs de l'organisation",
+    "organizations": "Organisations",
+    "organizationsDescription": "Gérer les cliniques et organisations",
+    "assignments": "Affectations",
+    "assignmentsDescriptionSuper": "Gérer les affectations d'aidants",
+    "assignmentsDescriptionClinic": "Gérer les affectations de l'organisation",
+    "emergencyAccess": "Accès d'Urgence",
+    "emergencyAccessDescription": "Surveiller l'accès d'urgence",
+    "analytics": "Analyses",
+    "analyticsDescriptionSuper": "Voir les analyses du système",
+    "analyticsDescriptionClinic": "Voir les analyses de l'organisation"
+  },
+  "alerts": {
+    "requiresAttention": "Nécessite une attention",
+    "monitorClosely": "Surveiller de près"
+  },
+  "users": {
+    "title": "Gestion des Utilisateurs",
+    "description": "Gérer les utilisateurs du système et leurs autorisations",
+    "patients": "Patients",
+    "caregivers": "Aidants",
+    "admins": "Administrateurs",
+    "profile": "Profil",
+    "settings": "Paramètres",
+    "permissions": "Autorisations",
+    "noPermission": "Vous n'avez pas l'autorisation de gérer les utilisateurs.",
+    "noUsersFound": "Aucun utilisateur trouvé",
+    "noUsersMatchFilters": "Aucun utilisateur ne correspond à vos filtres actuels.",
+    "noOrganization": "Aucune organisation",
+    "usersCount": "Utilisateurs ({{count}})",
+    "showingUsers": "Affichage de {{showing}} sur {{total}} utilisateurs",
+    "showingPage": "Affichage de la page {{page}} sur {{totalPages}}",
+    "searchUsers": "Rechercher des utilisateurs",
+    "searchPlaceholder": "Rechercher par nom ou email...",
+    "searchLabel": "Rechercher des utilisateurs",
+    "filterByRole": "Filtrer par rôle",
+    "filterByStatus": "Filtrer par statut",
+    "allRoles": "Tous les Rôles",
+    "allStatus": "Tous les Statuts",
+    "editUser": "Modifier l'Utilisateur",
+    "updateUser": "Mettre à Jour l'Utilisateur",
+    "confirmDeactivate": "Êtes-vous sûr de vouloir désactiver cet utilisateur ?",
+    "never": "Jamais",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "cancel": "Annuler",
+    "name": "Nom",
+    "nameRequired": "Nom *",
+    "email": "Email",
+    "emailRequired": "Email *",
+    "role": "Rôle",
+    "roleRequired": "Rôle *",
+    "activeLabel": "Actif",
+    "roles": {
+      "superAdmin": "Super Administrateur",
+      "clinicAdmin": "Administrateur de Clinique",
+      "professionalCaregiver": "Aidant Professionnel",
+      "familyCaregiver": "Aidant Familial",
+      "patient": "Patient"
+    },
+    "tableHeaders": {
+      "user": "Utilisateur",
+      "role": "Rôle",
+      "organization": "Organisation",
+      "status": "Statut",
+      "lastLogin": "Dernière Connexion",
+      "actions": "Actions"
+    },
+    "pagination": {
+      "showingPage": "Affichage de la page {{page}} sur {{totalPages}}"
+    },
+    "errors": {
+      "fetchUsers": "Échec de la récupération des utilisateurs",
+      "updateUser": "Échec de la mise à jour de l'utilisateur",
+      "deactivateUser": "Échec de la désactivation de l'utilisateur",
+      "reactivateUser": "Échec de la réactivation de l'utilisateur"
+    },
+    "success": {
+      "userUpdated": "Utilisateur mis à jour avec succès",
+      "userDeactivated": "Utilisateur désactivé avec succès",
+      "userReactivated": "Utilisateur réactivé avec succès"
+    }
+  },
+  "organizations": {
+    "title": "Gestion des Organisations",
+    "subtitle": "Gérer les organisations de santé et cliniques",
+    "createButton": "Créer une Organisation",
+    "sectionTitle": "Organisations",
+    "noOrganizationsTitle": "Aucune organisation",
+    "noOrganizationsMessage": "Créez votre première organisation pour commencer.",
+    "organizationCount": "Organisations ({{count}})",
+    "createdLabel": "Créé :",
+    "editTitle": "Modifier l'Organisation",
+    "createTitle": "Créer une Organisation",
+    "nameLabel": "Nom",
+    "descriptionLabel": "Description",
+    "addressLabel": "Adresse",
+    "phoneLabel": "Téléphone",
+    "emailLabel": "Email",
+    "errors": {
+      "fetchError": "Échec de la récupération des organisations",
+      "createError": "Échec de la création de l'organisation",
+      "updateError": "Échec de la mise à jour de l'organisation",
+      "statusUpdateError": "Échec de la mise à jour du statut de l'organisation",
+      "accessDeniedMessage": "Vous n'avez pas l'autorisation de gérer les organisations."
+    },
+    "success": {
+      "createSuccess": "Organisation créée avec succès",
+      "updateSuccess": "Organisation mise à jour avec succès",
+      "activated": "activée",
+      "deactivated": "désactivée"
+    }
+  },
+  "emergency": {
+    "title": "Accès d'Urgence",
+    "subtitle": "Gérer les demandes d'accès d'urgence et la surveillance",
+    "requestButton": "Demander un Accès d'Urgence",
+    "searchPlaceholder": "Rechercher par patient ou motif...",
+    "allTypes": "Tous les Types",
+    "allStatus": "Tous les Statuts",
+    "accessTypes": {
+      "medicalEmergency": "Urgence Médicale",
+      "technicalSupport": "Support Technique",
+      "dataRecovery": "Récupération de Données",
+      "auditInvestigation": "Enquête d'Audit"
+    },
+    "recordsTitle": "Enregistrements d'Accès d'Urgence",
+    "recordsCount": "Enregistrements d'Accès d'Urgence ({{count}})",
+    "noRecordsTitle": "Aucun enregistrement d'accès d'urgence",
+    "noRecordsMessage": "Aucune demande d'accès d'urgence trouvée.",
+    "patientNotFound": "Patient non trouvé",
+    "requestedLabel": "Demandé :",
+    "endedLabel": "Terminé :",
+    "active": "Actif",
+    "expired": "Expiré",
+    "revoke": "Révoquer",
+    "revokeButton": "Révoquer",
+    "timeRemaining": {
+      "hoursMinutes": "{{hours}}h {{minutes}}m restantes",
+      "minutesOnly": "{{minutes}}m restantes",
+      "expired": "Expiré"
+    },
+    "requestTitle": "Demander un Accès d'Urgence",
+    "patientLabel": "Patient",
+    "selectPatient": "Sélectionner un patient",
+    "accessTypeLabel": "Type d'Accès",
+    "durationLabel": "Durée (heures)",
+    "reasonLabel": "Motif",
+    "reasonPlaceholder": "Fournir une justification détaillée pour l'accès d'urgence...",
+    "warningMessage": "L'accès d'urgence est enregistré et audité. N'utiliser qu'en cas d'urgence réelle et fournir une justification complète.",
+    "requesting": "Demande en cours...",
+    "requestAccessButton": "Demander l'Accès",
+    "cancel": "Annuler",
+    "warning": "Attention :",
+    "requiredField": "*",
+    "revokeConfirmation": "Êtes-vous sûr de vouloir révoquer cet accès d'urgence ?",
+    "ariaLabels": {
+      "searchEmergencyAccess": "Rechercher les enregistrements d'accès d'urgence",
+      "filterByAccessType": "Filtrer par type d'accès",
+      "filterByStatus": "Filtrer par statut",
+      "emergencyAccessRecord": "Enregistrement d'accès d'urgence {{accessType}}"
+    },
+    "errors": {
+      "fetchError": "Échec de la récupération des enregistrements d'accès d'urgence",
+      "requestError": "Échec de la demande d'accès d'urgence",
+      "revokeError": "Échec de la révocation de l'accès d'urgence"
+    },
+    "success": {
+      "requestSuccess": "Accès d'urgence demandé avec succès",
+      "revokeSuccess": "Accès d'urgence révoqué avec succès"
+    }
+  },
+  "analytics": {
+    "systemDashboardTitle": "Tableau de Bord des Analyses Système",
+    "organizationDashboardTitle": "Tableau de Bord des Analyses d'Organisation",
+    "systemOverviewSubtitle": "Statistiques de performance et d'utilisation à l'échelle du système",
+    "organizationOverviewSubtitle": "Analyses pour",
+    "timeRanges": {
+      "last7Days": "7 derniers jours",
+      "last30Days": "30 derniers jours",
+      "last90Days": "90 derniers jours"
+    },
+    "allOrganizations": "Toutes les Organisations",
+    "emergencyAccessOverview": "Aperçu des Accès d'Urgence",
+    "byType": "Par Type",
+    "emergencyAccessByOrganization": "Accès d'Urgence par Organisation",
+    "emergencyAccessRecords": "Enregistrements d'Accès d'Urgence",
+    "noEmergencyRecords": "Aucun enregistrement d'accès d'urgence trouvé",
+    "organizationStatistics": "Statistiques d'Organisation",
+    "tableHeaders": {
+      "organizationHeader": "Organisation",
+      "usersHeader": "Utilisateurs",
+      "patientsHeader": "Patients",
+      "assignmentsHeader": "Affectations",
+      "emergencyAccessHeader": "Accès d'Urgence",
+      "statusHeader": "Statut"
+    },
+    "noOrganizations": "Aucune organisation trouvée",
+    "filters": {
+      "timeRangeLabel": "Période",
+      "organizationLabel": "Filtrer par organisation",
+      "yourOrganization": "votre organisation"
+    },
+    "stats": {
+      "totalUsers": "Total Utilisateurs",
+      "totalPatients": "Total Patients",
+      "organizations": "Organisations", 
+      "activeAssignments": "Affectations Actives",
+      "total": "Total",
+      "active": "Actif",
+      "expired": "Expiré"
+    },
+    "accessTypes": {
+      "medicalEmergency": "Urgence Médicale",
+      "technicalSupport": "Support Technique", 
+      "dataRecovery": "Récupération de Données",
+      "auditInvestigation": "Enquête d'Audit"
+    },
+    "status": {
+      "active": "Actif",
+      "inactive": "Inactif"
+    },
+    "errors": {
+      "systemStatsError": "Échec de la récupération des statistiques système",
+      "emergencyStatsError": "Échec de la récupération des statistiques d'accès d'urgence",
+      "accessDeniedMessage": "Vous n'avez pas l'autorisation de voir les analyses.",
+      "accessDeniedTitle": "Accès Refusé"
+    }
+  },
+  "assignments": {
+    "title": "Affectations d'Aidants",
+    "subtitle": "Gérer les affectations d'aidants et le consentement des patients",
+    "createButton": "Créer une Affectation",
+    "searchPlaceholder": "Rechercher par nom de patient ou d'aidant...",
+    "searchLabel": "Rechercher des affectations",
+    "filterByStatus": "Filtrer par statut", 
+    "filterByType": "Filtrer par type d'aidant",
+    "allStatus": "Tous les Statuts",
+    "allTypes": "Tous les Types",
+    "assignedTo": "affecté à",
+    "caregiverSuffix": "aidant",
+    "assignmentsCount": "Affectations ({{count}})",
+    "noAssignmentsTitle": "Aucune affectation trouvée",
+    "noAssignmentsMessage": "Aucune affectation ne correspond à vos filtres actuels.",
+    "createdLabel": "Créé :",
+    "startedLabel": "Commencé :",
+    "consentLabel": "Consentement",
+    "consentGiven": "Donné",
+    "consentPending": "En Attente",
+    "notes": "Notes :",
+    "approve": "Approuver",
+    "decline": "Refuser",
+    "revoke": "Révoquer",
+    "createTitle": "Créer une Affectation",
+    "patientLabel": "Patient",
+    "selectPatient": "Sélectionner un patient",
+    "caregiverLabel": "Aidant",
+    "selectCaregiver": "Sélectionner un aidant",
+    "caregiverTypeLabel": "Type d'Aidant",
+    "notesLabel": "Notes",
+    "creating": "Création en cours...",
+    "createAssignmentButton": "Créer l'Affectation",
+    "cancel": "Annuler",
+    "requiredField": "*",
+    "status": {
+      "pending": "En Attente",
+      "active": "Actif",
+      "inactive": "Inactif",
+      "declined": "Refusé",
+      "revoked": "Révoqué"
+    },
+    "caregiverTypes": {
+      "professional": "Professionnel",
+      "family": "Familial"
+    },
+    "errors": {
+      "fetchError": "Échec de la récupération des affectations",
+      "createError": "Échec de la création de l'affectation",
+      "updateError": "Échec de la mise à jour de l'affectation"
+    },
+    "success": {
+      "createSuccess": "Affectation créée avec succès",
+      "updateSuccess": "Affectation {{status}} avec succès"
+    }
+  }
+}
