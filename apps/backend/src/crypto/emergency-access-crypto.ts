@@ -60,6 +60,103 @@ export interface EmergencyApproval {
 }
 
 /**
+ * Emergency key generation result
+ */
+export interface EmergencyKeyGenerationResult {
+  encryptedKey: string;
+  keyDerivationSalt: string;
+  activationToken: string;
+}
+
+/**
+ * Emergency access details for audit trail
+ */
+export interface EmergencyAccessDetails {
+  requestId: string;
+  urgencyLevel?: string;
+  justification?: string;
+  activatedAt?: Date;
+  expiresAt?: Date | null;
+  revokedAt?: Date;
+  revocationReason?: string;
+}
+
+/**
+ * Active emergency access with patient and user details
+ */
+export interface ActiveEmergencyAccess {
+  id: string;
+  userId: string;
+  patientId: string;
+  reason: string;
+  accessType: string;
+  startTime: Date;
+  endTime: Date | null;
+  isActive: boolean;
+  approvedBy: string | null;
+  justification: string | null;
+  urgencyLevel: string | null;
+  organizationId: string | null;
+  revokedAt: Date | null;
+  revokedBy: string | null;
+  revocationReason: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  patient: {
+    id: string;
+    name: string | null;
+  };
+  user: {
+    id: string;
+    name: string | null;
+    role: string;
+  };
+}
+
+/**
+ * Emergency access audit trail entry
+ */
+export interface EmergencyAuditTrail {
+  id: string;
+  operation: string;
+  userId: string;
+  patientId: string | null;
+  organizationId: string;
+  dataCategories: string;
+  accessLevel: string;
+  encryptionContext: string;
+  success: boolean;
+  errorMessage: string | null;
+  ipAddress: string;
+  userAgent: string;
+  cryptographicProof: string;
+  emergencyDetails: string | null;
+  timestamp: Date;
+}
+
+/**
+ * Prisma where clause for emergency access queries
+ */
+export interface EmergencyAccessWhereInput {
+  isActive?: boolean;
+  endTime?: {
+    gt: Date;
+  };
+  organizationId?: string;
+}
+
+/**
+ * Prisma where clause for crypto audit entry queries
+ */
+export interface CryptoAuditEntryWhereInput {
+  operation?: {
+    in: string[];
+  };
+  patientId?: string;
+  organizationId?: string;
+}
+
+/**
  * Emergency Access Crypto Engine
  * Manages cryptographic operations for emergency access scenarios
  */
@@ -389,11 +486,7 @@ export class EmergencyAccessCrypto {
     requesterId: string,
     requestId: string,
     expiresAt: Date
-  ): Promise<{
-    encryptedKey: string;
-    keyDerivationSalt: string;
-    activationToken: string;
-  }> {
+  ): Promise<EmergencyKeyGenerationResult> {
     // Generate random key material
     const keyMaterial = webcrypto.getRandomValues(new Uint8Array(32));
     const salt = webcrypto.getRandomValues(new Uint8Array(16));
@@ -528,7 +621,10 @@ export class EmergencyAccessCrypto {
   /**
    * Generate activation proof
    */
-  private async generateActivationProof(requestId: string, emergencyKey: any): Promise<string> {
+  private async generateActivationProof(
+    requestId: string,
+    emergencyKey: EmergencyKeyGenerationResult
+  ): Promise<string> {
     const proofData = {
       requestId,
       activationToken: emergencyKey.activationToken,
@@ -558,7 +654,7 @@ export class EmergencyAccessCrypto {
    */
   private async createEmergencyAuditEntry(
     entry: Omit<CryptoAuditEntry, 'auditId' | 'timestamp'> & {
-      emergencyDetails?: any;
+      emergencyDetails?: EmergencyAccessDetails;
     }
   ): Promise<void> {
     await prisma.cryptoAuditEntry.create({
@@ -583,8 +679,8 @@ export class EmergencyAccessCrypto {
   /**
    * Get active emergency access sessions
    */
-  public async getActiveEmergencyAccess(organizationId?: string): Promise<any[]> {
-    const where: any = {
+  public async getActiveEmergencyAccess(organizationId?: string): Promise<ActiveEmergencyAccess[]> {
+    const where: EmergencyAccessWhereInput = {
       isActive: true,
       endTime: { gt: new Date() },
     };
@@ -614,8 +710,8 @@ export class EmergencyAccessCrypto {
     patientId?: string,
     organizationId?: string,
     limit: number = 50
-  ): Promise<any[]> {
-    const where: any = {
+  ): Promise<EmergencyAuditTrail[]> {
+    const where: CryptoAuditEntryWhereInput = {
       operation: {
         in: [
           'emergency_access_request',
