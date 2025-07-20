@@ -18,7 +18,7 @@ import { performance } from 'perf_hooks';
 import { prisma } from '../database/prisma-client';
 import { WASMCryptoLoader } from './wasm-loader';
 // import { ABECrypto } from './abe-crypto';
-import { homomorphicAnalytics } from './homomorphic-analytics';
+import { homomorphicAnalytics, ComputationType, PrivacyLevel } from './homomorphic-analytics';
 // import { cryptoService } from './crypto-service';
 import { DataCategory } from '@parkml/shared';
 
@@ -76,35 +76,40 @@ export interface PerformanceRecommendation {
 }
 
 /**
+ * Performance metrics for different system components
+ */
+export interface PerformanceMetrics {
+  encryption: {
+    avgLatencyMs: number;
+    throughputOpsPerSec: number;
+    memoryUsageMB: number;
+    errorRate: number;
+  };
+  homomorphic: {
+    avgComputationTimeMs: number;
+    memoryUsageMB: number;
+    successRate: number;
+  };
+  database: {
+    avgQueryTimeMs: number;
+    connectionPoolUtilization: number;
+    queryOptimizationScore: number;
+  };
+  wasm: {
+    initializationTimeMs: number;
+    operationLatencyMs: number;
+    memoryLeakDetected: boolean;
+  };
+}
+
+/**
  * System-wide performance audit results
  */
 export interface SystemPerformanceAudit {
   auditId: string;
   timestamp: Date;
   overallScore: number; // 0-100
-  metrics: {
-    encryption: {
-      avgLatencyMs: number;
-      throughputOpsPerSec: number;
-      memoryUsageMB: number;
-      errorRate: number;
-    };
-    homomorphic: {
-      avgComputationTimeMs: number;
-      memoryUsageMB: number;
-      successRate: number;
-    };
-    database: {
-      avgQueryTimeMs: number;
-      connectionPoolUtilization: number;
-      queryOptimizationScore: number;
-    };
-    wasm: {
-      initializationTimeMs: number;
-      operationLatencyMs: number;
-      memoryLeakDetected: boolean;
-    };
-  };
+  metrics: PerformanceMetrics;
   recommendations: PerformanceRecommendation[];
   securityFindings: SecurityAuditFinding[];
 }
@@ -328,13 +333,13 @@ export class PerformanceAuditEngine {
 
       // Simulate a computation
       await homomorphicAnalytics.submitComputation({
-        computationType: 'sum' as any,
+        computationType: ComputationType.SUM,
         dataCategories: [DataCategory.MOTOR_SYMPTOMS],
         cohortCriteria: {},
         requesterId: 'test_user',
         organizationId: 'test_org',
         purpose: 'Performance testing',
-        privacyLevel: 'basic' as any,
+        privacyLevel: PrivacyLevel.BASIC,
       });
 
       const endTime = performance.now();
@@ -683,7 +688,9 @@ export class PerformanceAuditEngine {
   /**
    * Generate performance recommendations
    */
-  private generatePerformanceRecommendations(metrics: any): PerformanceRecommendation[] {
+  private generatePerformanceRecommendations(
+    metrics: PerformanceMetrics
+  ): PerformanceRecommendation[] {
     const recommendations: PerformanceRecommendation[] = [];
 
     // Encryption performance recommendations
@@ -752,7 +759,7 @@ export class PerformanceAuditEngine {
   /**
    * Calculate overall performance score
    */
-  private calculatePerformanceScore(metrics: any): number {
+  private calculatePerformanceScore(metrics: PerformanceMetrics): number {
     let score = 100;
 
     // Deduct points for poor performance
