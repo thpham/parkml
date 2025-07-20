@@ -98,12 +98,15 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
     }
   };
 
-  const handlePreferenceChange = (category: string, key: string, value: any) => {
+  const handlePreferenceChange = (category: string, key: string, value: boolean | string) => {
     setPreferences(prev => ({
       ...prev,
       [category]:
         typeof prev[category as keyof UserPreferences] === 'object'
-          ? { ...(prev[category as keyof UserPreferences] as any), [key]: value }
+          ? {
+              ...(prev[category as keyof UserPreferences] as Record<string, unknown>),
+              [key]: value,
+            }
           : value,
     }));
     setHasChanges(true);

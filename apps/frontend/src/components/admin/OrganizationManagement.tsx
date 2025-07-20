@@ -31,10 +31,10 @@ const OrganizationManagement: React.FC = () => {
         },
       });
 
-      const data: ApiResponse = await response.json();
+      const data: ApiResponse<Organization[]> = await response.json();
 
       if (data.success) {
-        setOrganizations(data.data);
+        setOrganizations(data.data || []);
       } else {
         toast.error(data.error || t('organizations.errors.fetchError'));
       }
@@ -64,7 +64,7 @@ const OrganizationManagement: React.FC = () => {
         body: JSON.stringify(formData),
       });
 
-      const data: ApiResponse = await response.json();
+      const data: ApiResponse<Organization> = await response.json();
 
       if (data.success) {
         toast.success(t('organizations.success.createSuccess'));
@@ -90,7 +90,7 @@ const OrganizationManagement: React.FC = () => {
         body: JSON.stringify(formData),
       });
 
-      const data: ApiResponse = await response.json();
+      const data: ApiResponse<Organization> = await response.json();
 
       if (data.success) {
         toast.success(t('organizations.success.updateSuccess'));
@@ -116,7 +116,7 @@ const OrganizationManagement: React.FC = () => {
         body: JSON.stringify({ isActive: !isActive }),
       });
 
-      const data: ApiResponse = await response.json();
+      const data: ApiResponse<Organization> = await response.json();
 
       if (data.success) {
         toast.success(

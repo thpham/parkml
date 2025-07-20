@@ -130,7 +130,7 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
         return {
           ...prev,
           [nested]: {
-            ...(prev as any)[nested],
+            ...((prev as unknown as Record<string, unknown>)[nested] as Record<string, string>),
             [field]: value,
           },
         };

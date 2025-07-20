@@ -116,7 +116,7 @@ const PatientConsentDashboard: React.FC = () => {
   const handleConsentResponse = async (
     assignmentId: string,
     action: 'approve' | 'decline',
-    permissions?: any
+    permissions?: Record<string, boolean>
   ) => {
     try {
       const endpoint = action === 'approve' ? 'approve' : 'decline';

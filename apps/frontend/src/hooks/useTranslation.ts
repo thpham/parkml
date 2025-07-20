@@ -26,9 +26,9 @@ export function useTranslation(ns?: string | string[]) {
   const translate = (
     key: string,
     params?: Record<string, string | number | Date>,
-    options?: any
+    options?: Record<string, unknown>
   ): string => {
-    const result = t(key, { ...params, returnObjects: false, ...options });
+    const result = t(key, { ...(params || {}), returnObjects: false, ...(options || {}) });
     return typeof result === 'string' ? result : String(result);
   };
 

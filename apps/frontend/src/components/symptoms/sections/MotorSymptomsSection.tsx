@@ -68,7 +68,7 @@ const MotorSymptomsSection: React.FC<MotorSymptomsSectionProps> = ({ register })
                   className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors"
                 >
                   <input
-                    {...register(`motorSymptoms.tremors.0.location` as any)}
+                    {...register(`motorSymptoms.tremors.0.location` as keyof Partial<SymptomEntry>)}
                     type="checkbox"
                     value={location.value}
                     className="checkbox checkbox-primary flex-shrink-0"
