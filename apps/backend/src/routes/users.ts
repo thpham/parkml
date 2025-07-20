@@ -8,6 +8,62 @@ import {
   logUserActivity,
   AuthenticatedRequest,
 } from '../middleware/auth';
+import type { Prisma, Role } from '@prisma/client';
+
+// TypeScript interfaces for type safety
+type UserWhereClause = Prisma.UserWhereInput;
+
+type UserWithDetails = Prisma.UserGetPayload<{
+  select: {
+    id: true;
+    email: true;
+    name: true;
+    role: true;
+    organizationId: true;
+    isActive: true;
+    lastLoginAt: true;
+    createdAt: true;
+    updatedAt: true;
+    organization: {
+      select: {
+        id: true;
+        name: true;
+        isActive: true;
+      };
+    };
+    patient: {
+      select: {
+        id: true;
+        name: true;
+        dateOfBirth: true;
+        diagnosisDate: true;
+      };
+    };
+    _count: {
+      select: {
+        caregiverAssignments: true;
+        createdAssignments: true;
+        sentInvitations: true;
+        symptomEntries: true;
+        auditLogs: true;
+      };
+    };
+  };
+}>;
+
+type UserUpdateData = Prisma.UserUpdateInput;
+
+type UserWithCounts = Prisma.UserGetPayload<{
+  include: {
+    _count: {
+      select: {
+        caregiverAssignments: true;
+        createdAssignments: true;
+        symptomEntries: true;
+      };
+    };
+  };
+}>;
 
 const router = Router();
 
@@ -29,7 +85,7 @@ router.get(
       const { page = 1, limit = 50, role, isActive, search } = req.query;
 
       // Build where clause
-      const whereClause: any = {};
+      const whereClause: UserWhereClause = {};
 
       // Organization filtering
       if (req.user.role === 'clinic_admin') {
@@ -41,7 +97,11 @@ router.get(
 
       // Role filtering
       if (role) {
-        whereClause.role = Array.isArray(role) ? { in: role } : role;
+        if (Array.isArray(role)) {
+          whereClause.role = { in: role as Role[] };
+        } else {
+          whereClause.role = role as Role;
+        }
       }
 
       // Active status filtering
@@ -108,7 +168,7 @@ router.get(
       const response: ApiResponse = {
         success: true,
         data: {
-          users: users.map((user: any) => ({
+          users: users.map((user: UserWithDetails) => ({
             id: user.id,
             email: user.email,
             name: user.name,
@@ -388,12 +448,16 @@ router.put(
       }
 
       // Prepare update data
-      const updateData: any = {};
+      const updateData: UserUpdateData = {};
       if (name !== undefined) updateData.name = name;
       if (email !== undefined) updateData.email = email;
-      if (role !== undefined) updateData.role = role;
+      if (role !== undefined) updateData.role = role as Role;
       if (isActive !== undefined) updateData.isActive = isActive;
-      if (organizationId !== undefined) updateData.organizationId = organizationId;
+      if (organizationId !== undefined) {
+        updateData.organization = organizationId
+          ? { connect: { id: organizationId } }
+          : { disconnect: true };
+      }
 
       // Update user
       const updatedUser = await prisma.user.update({
@@ -691,10 +755,11 @@ router.delete(
       }
 
       // Check if user has data that prevents deletion
+      const userWithCounts = currentUser as UserWithCounts;
       if (
-        (currentUser as any)._count.caregiverAssignments > 0 ||
-        (currentUser as any)._count.createdAssignments > 0 ||
-        (currentUser as any)._count.symptomEntries > 0
+        userWithCounts._count.caregiverAssignments > 0 ||
+        userWithCounts._count.createdAssignments > 0 ||
+        userWithCounts._count.symptomEntries > 0
       ) {
         const response: ApiResponse = {
           success: false,
