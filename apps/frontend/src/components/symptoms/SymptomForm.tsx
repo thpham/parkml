@@ -39,12 +39,12 @@ const SymptomForm: React.FC<SymptomFormProps> = ({ patientId, onSubmit }) => {
   });
 
   const sections = [
-    { id: 'motor', title: t('categories.motorSymptoms'), icon: '🏃' },
-    { id: 'non-motor', title: t('categories.nonMotorSymptoms'), icon: '🧠' },
-    { id: 'autonomic', title: t('categories.autonomicSymptoms'), icon: '❤️' },
-    { id: 'daily', title: t('categories.dailyActivities'), icon: '🏠' },
-    { id: 'environmental', title: t('categories.environmentalFactors'), icon: '🌤️' },
-    { id: 'safety', title: t('categories.safetyIncidents'), icon: '⚠️' },
+    { id: 'motor', title: t('categories.motorSymptoms'), shortTitle: t('categories.motorSymptomsShort', t('categories.motorSymptoms')), icon: '🏃' },
+    { id: 'non-motor', title: t('categories.nonMotorSymptoms'), shortTitle: t('categories.nonMotorSymptomsShort', t('categories.nonMotorSymptoms')), icon: '🧠' },
+    { id: 'autonomic', title: t('categories.autonomicSymptoms'), shortTitle: t('categories.autonomicSymptomsShort', t('categories.autonomicSymptoms')), icon: '❤️' },
+    { id: 'daily', title: t('categories.dailyActivities'), shortTitle: t('categories.dailyActivitiesShort', t('categories.dailyActivities')), icon: '🏠' },
+    { id: 'environmental', title: t('categories.environmentalFactors'), shortTitle: t('categories.environmentalFactorsShort', t('categories.environmentalFactors')), icon: '🌤️' },
+    { id: 'safety', title: t('categories.safetyIncidents'), shortTitle: t('categories.safetyIncidentsShort', t('categories.safetyIncidents')), icon: '⚠️' },
   ];
 
   const submitForm = async (data: Partial<SymptomEntry>) => {
@@ -119,24 +119,50 @@ const SymptomForm: React.FC<SymptomFormProps> = ({ patientId, onSubmit }) => {
           </div>
         </div>
 
-        {/* Navigation - Mobile Responsive Tabs */}
-        <div className="border-b border-base-300">
-          <div className="tabs tabs-bordered px-3 sm:px-6 overflow-x-auto">
-            {sections.map((section) => (
-              <button
-                key={section.id}
-                onClick={() => setActiveSection(section.id)}
-                className={`tab tab-sm sm:tab-lg whitespace-nowrap ${
-                  activeSection === section.id
-                    ? 'tab-active'
-                    : ''
-                }`}
-              >
-                <span className="mr-1 sm:mr-2 text-sm sm:text-base">{section.icon}</span>
-                <span className="hidden sm:inline">{section.title}</span>
-                <span className="sm:hidden text-xs">{section.title.split(' ')[0]}</span>
-              </button>
-            ))}
+        {/* Navigation - Enhanced Mobile Responsive Tabs */}
+        <div className="border-b border-base-300 bg-base-50">
+          <div className="px-2 sm:px-6 py-2 sm:py-0">
+            {/* Mobile: Horizontal Scrollable Pills */}
+            <div className="sm:hidden">
+              <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgb(203 213 225) transparent' }}>
+                {sections.map((section) => (
+                  <button
+                    key={section.id}
+                    onClick={() => setActiveSection(section.id)}
+                    className={`flex flex-col items-center justify-center min-w-[80px] h-16 px-3 py-2 rounded-xl transition-all duration-200 flex-shrink-0 ${
+                      activeSection === section.id
+                        ? 'bg-primary text-primary-content shadow-lg scale-105'
+                        : 'bg-white hover:bg-base-100 border border-base-300 hover:border-primary/30'
+                    }`}
+                  >
+                    <span className="text-lg mb-1">{section.icon}</span>
+                    <span className="text-[10px] font-medium leading-tight text-center">
+                      {section.shortTitle}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Desktop: Traditional Tabs */}
+            <div className="hidden sm:block">
+              <div className="tabs tabs-bordered overflow-x-auto">
+                {sections.map((section) => (
+                  <button
+                    key={section.id}
+                    onClick={() => setActiveSection(section.id)}
+                    className={`tab tab-lg whitespace-nowrap transition-all duration-200 ${
+                      activeSection === section.id
+                        ? 'tab-active font-semibold'
+                        : 'hover:text-primary'
+                    }`}
+                  >
+                    <span className="mr-2 text-base">{section.icon}</span>
+                    <span>{section.title}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 

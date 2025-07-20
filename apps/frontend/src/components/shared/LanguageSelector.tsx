@@ -5,11 +5,13 @@ import { useTranslation, supportedLanguages, getLanguageDisplayName, type Suppor
 interface LanguageSelectorProps {
   className?: string;
   compact?: boolean;
+  mobile?: boolean;
 }
 
 export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ 
   className = '', 
-  compact = false 
+  compact = false,
+  mobile = false 
 }) => {
   const { language, setLanguage, t } = useTranslation();
 
@@ -58,6 +60,48 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
             </li>
           ))}
         </ul>
+      </div>
+    );
+  }
+
+  // Mobile version: Simple button list without dropdown
+  if (mobile) {
+    return (
+      <div className={`w-full ${className}`}>
+        <div className="mb-3">
+          <h3 className="text-sm font-medium text-base-content/70 px-2">
+            {t('language.selectLanguage')}
+          </h3>
+        </div>
+        <div className="space-y-1">
+          {supportedLanguages.map((lang) => (
+            <button
+              key={lang.code}
+              onClick={() => handleLanguageChange(lang.code)}
+              className={`w-full flex items-center justify-between p-3 rounded-lg transition-all duration-200 ${
+                language === lang.code 
+                  ? 'bg-primary text-primary-content shadow-md' 
+                  : 'hover:bg-base-200 active:bg-base-300'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">{lang.flag}</span>
+                <div className="flex flex-col items-start">
+                  <span className="font-medium text-sm">{lang.nativeName}</span>
+                  <span className="text-xs opacity-70">{lang.name}</span>
+                </div>
+              </div>
+              {language === lang.code && (
+                <div className="w-2 h-2 bg-current rounded-full"></div>
+              )}
+            </button>
+          ))}
+        </div>
+        <div className="mt-3 pt-3 border-t border-base-300">
+          <div className="text-xs text-base-content/60 px-2">
+            {t('language.currentLanguage')}: {getLanguageDisplayName(language)}
+          </div>
+        </div>
       </div>
     );
   }

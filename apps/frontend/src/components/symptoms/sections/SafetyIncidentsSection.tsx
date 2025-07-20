@@ -79,20 +79,20 @@ const SafetyIncidentsSection: React.FC<SafetyIncidentsSectionProps> = ({
             <label className="label">
               <span className="label-text">{t('safety.incidentReport.injuryLevel')}</span>
             </label>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {[
                 { value: 'none', label: t('safety.injuryLevels.none') },
                 { value: 'minor', label: t('safety.injuryLevels.minor') },
                 { value: 'significant', label: t('safety.injuryLevels.significant') },
               ].map((injury) => (
-                <label key={injury.value} className="label cursor-pointer justify-start">
+                <label key={injury.value} className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors">
                   <input
                     {...register('safetyIncidents.0.injury')}
                     type="radio"
                     value={injury.value}
-                    className="radio radio-primary"
+                    className="radio radio-primary flex-shrink-0"
                   />
-                  <span className="label-text ml-2">{injury.label}</span>
+                  <span className="label-text">{injury.label}</span>
                 </label>
               ))}
             </div>

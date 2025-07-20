@@ -4,11 +4,17 @@
   "patientId": "Patient ID",
   "categories": {
     "motorSymptoms": "Motor Symptoms",
+    "motorSymptomsShort": "Motor",
     "nonMotorSymptoms": "Non-Motor Symptoms",
+    "nonMotorSymptomsShort": "Non-Motor",
     "autonomicSymptoms": "Autonomic Symptoms",
+    "autonomicSymptomsShort": "Autonomic",
     "dailyActivities": "Daily Activities",
+    "dailyActivitiesShort": "Daily",
     "environmentalFactors": "Environmental Factors",
-    "safetyIncidents": "Safety Incidents"
+    "environmentalFactorsShort": "Environment",
+    "safetyIncidents": "Safety Incidents",
+    "safetyIncidentsShort": "Safety"
   },
   "types": {
     "tremors": "Tremors",

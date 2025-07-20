@@ -45,13 +45,26 @@ export const supportedLanguages = [
 
 export type SupportedLanguage = typeof supportedLanguages[number]['code'];
 
+// Get initial language from localStorage or fallback to default
+const getInitialLanguage = (): SupportedLanguage => {
+  try {
+    const stored = localStorage.getItem('parkml-language');
+    if (stored && supportedLanguages.some(lang => lang.code === stored)) {
+      return stored as SupportedLanguage;
+    }
+  } catch (error) {
+    console.warn('Failed to read initial language from localStorage:', error);
+  }
+  return 'en'; // Default fallback
+};
+
 i18n
   .use(customBackend)
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     // Language settings
-    lng: 'en', // Default language
+    lng: getInitialLanguage(), // Load from localStorage or default
     fallbackLng: 'en',
     supportedLngs: supportedLanguages.map(lang => lang.code),
     
@@ -111,14 +124,32 @@ i18n
 export const changeLanguage = async (language: SupportedLanguage) => {
   try {
     await i18n.changeLanguage(language);
-    console.log(`Language changed to: ${language}`);
+    
+    // Ensure persistence to localStorage (redundant but safe)
+    localStorage.setItem('parkml-language', language);
+    
+    console.log(`Language changed to: ${language} and saved to localStorage`);
   } catch (error) {
     console.error('Failed to change language:', error);
+    throw error;
   }
 };
 
 export const getCurrentLanguage = (): SupportedLanguage => {
   return i18n.language as SupportedLanguage;
+};
+
+export const getStoredLanguage = (): SupportedLanguage | null => {
+  try {
+    const stored = localStorage.getItem('parkml-language');
+    if (stored && isLanguageSupported(stored)) {
+      return stored as SupportedLanguage;
+    }
+    return null;
+  } catch (error) {
+    console.warn('Failed to read language from localStorage:', error);
+    return null;
+  }
 };
 
 export const getLanguageDisplayName = (code: string): string => {

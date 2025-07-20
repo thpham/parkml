@@ -80,4 +80,4 @@ export function useTranslation(ns?: string | string[]) {
 
 // Re-export types for convenience
 export type { SupportedLanguage } from '../i18n';
-export { supportedLanguages, getLanguageDisplayName } from '../i18n';
+export { supportedLanguages, getLanguageDisplayName, getStoredLanguage } from '../i18n';

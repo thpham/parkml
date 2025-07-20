@@ -55,20 +55,20 @@ const NonMotorSymptomsSection: React.FC<NonMotorSymptomsSectionProps> = ({
             <label className="label">
               <span className="label-text">{t('nonMotor.cognitive.memoryRecentEvents')}</span>
             </label>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {[
                 { value: 'good', label: t('nonMotor.qualityLevels.good') },
                 { value: 'fair', label: t('nonMotor.qualityLevels.fair') },
                 { value: 'poor', label: t('nonMotor.qualityLevels.poor') },
               ].map((level) => (
-                <label key={level.value} className="label cursor-pointer justify-start">
+                <label key={level.value} className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors">
                   <input
                     {...register('nonMotorSymptoms.cognitive.memory.recentEvents')}
                     type="radio"
                     value={level.value}
-                    className="radio radio-primary"
+                    className="radio radio-primary flex-shrink-0"
                   />
-                  <span className="label-text ml-2">{level.label}</span>
+                  <span className="label-text">{level.label}</span>
                 </label>
               ))}
             </div>
@@ -78,20 +78,20 @@ const NonMotorSymptomsSection: React.FC<NonMotorSymptomsSectionProps> = ({
             <label className="label">
               <span className="label-text">{t('nonMotor.cognitive.concentrationAttention')}</span>
             </label>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {[
                 { value: 'good', label: t('nonMotor.qualityLevels.good') },
                 { value: 'fair', label: t('nonMotor.qualityLevels.fair') },
                 { value: 'poor', label: t('nonMotor.qualityLevels.poor') },
               ].map((level) => (
-                <label key={level.value} className="label cursor-pointer justify-start">
+                <label key={level.value} className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors">
                   <input
                     {...register('nonMotorSymptoms.cognitive.concentration')}
                     type="radio"
                     value={level.value}
-                    className="radio radio-primary"
+                    className="radio radio-primary flex-shrink-0"
                   />
-                  <span className="label-text ml-2">{level.label}</span>
+                  <span className="label-text">{level.label}</span>
                 </label>
               ))}
             </div>
@@ -158,20 +158,20 @@ const NonMotorSymptomsSection: React.FC<NonMotorSymptomsSectionProps> = ({
             <label className="label">
               <span className="label-text">{t('nonMotor.sleep.sleepQuality')}</span>
             </label>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {[
                 { value: 'restful', label: t('nonMotor.sleepQualityTypes.restful') },
                 { value: 'restless', label: t('nonMotor.sleepQualityTypes.restless') },
                 { value: 'frequent_awakenings', label: t('nonMotor.sleepQualityTypes.frequentAwakenings') },
               ].map((quality) => (
-                <label key={quality.value} className="label cursor-pointer justify-start">
+                <label key={quality.value} className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors">
                   <input
                     {...register('nonMotorSymptoms.sleep.sleepQuality')}
                     type="radio"
                     value={quality.value}
-                    className="radio radio-primary"
+                    className="radio radio-primary flex-shrink-0"
                   />
-                  <span className="label-text ml-2">{quality.label}</span>
+                  <span className="label-text">{quality.label}</span>
                 </label>
               ))}
             </div>

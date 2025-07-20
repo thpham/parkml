@@ -54,16 +54,16 @@ const EnvironmentalFactorsSection: React.FC<EnvironmentalFactorsSectionProps> = 
             <label className="label">
               <span className="label-text">{t('environmental.weatherEnvironment.weatherConditions')}</span>
             </label>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
               {['sunny', 'cloudy', 'rainy', 'hot', 'cold'].map((weather) => (
-                <label key={weather} className="label cursor-pointer justify-start">
+                <label key={weather} className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors">
                   <input
                     {...register(`environmentalFactors.weather` as any)}
                     type="checkbox"
                     value={weather}
-                    className="checkbox checkbox-primary"
+                    className="checkbox checkbox-primary flex-shrink-0"
                   />
-                  <span className="label-text ml-2">{t(`environmental.weatherTypes.${weather}`)}</span>
+                  <span className="label-text">{t(`environmental.weatherTypes.${weather}`)}</span>
                 </label>
               ))}
             </div>

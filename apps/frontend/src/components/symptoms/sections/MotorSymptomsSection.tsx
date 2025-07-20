@@ -56,7 +56,7 @@ const MotorSymptomsSection: React.FC<MotorSymptomsSectionProps> = ({
             <label className="label">
               <span className="label-text">{t('form.location')}</span>
             </label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {[
                 { value: 'right_hand', key: 'rightHand' },
                 { value: 'left_hand', key: 'leftHand' },
@@ -65,14 +65,14 @@ const MotorSymptomsSection: React.FC<MotorSymptomsSectionProps> = ({
                 { value: 'head', key: 'head' },
                 { value: 'jaw', key: 'jaw' }
               ].map((location) => (
-                <label key={location.value} className="label cursor-pointer justify-start">
+                <label key={location.value} className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors">
                   <input
                     {...register(`motorSymptoms.tremors.0.location` as any)}
                     type="checkbox"
                     value={location.value}
-                    className="checkbox checkbox-primary"
+                    className="checkbox checkbox-primary flex-shrink-0"
                   />
-                  <span className="label-text ml-2">
+                  <span className="label-text">
                     {t(`locations.${location.key}`)}
                   </span>
                 </label>
@@ -84,20 +84,20 @@ const MotorSymptomsSection: React.FC<MotorSymptomsSectionProps> = ({
             <label className="label">
               <span className="label-text">{t('form.type')}</span>
             </label>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {[
                 { value: 'at_rest', key: 'atRest' },
                 { value: 'during_movement', key: 'duringMovement' },
                 { value: 'maintaining_position', key: 'maintainingPosition' },
               ].map((type) => (
-                <label key={type.value} className="label cursor-pointer justify-start">
+                <label key={type.value} className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors">
                   <input
                     {...register('motorSymptoms.tremors.0.type')}
                     type="radio"
                     value={type.value}
-                    className="radio radio-primary"
+                    className="radio radio-primary flex-shrink-0"
                   />
-                  <span className="label-text ml-2">{t(`tremorTypes.${type.key}`)}</span>
+                  <span className="label-text">{t(`tremorTypes.${type.key}`)}</span>
                 </label>
               ))}
             </div>
@@ -175,21 +175,21 @@ const MotorSymptomsSection: React.FC<MotorSymptomsSectionProps> = ({
           <label className="label">
             <span className="label-text">{t('form.posture')}</span>
           </label>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {[
               { value: 'normal', key: 'normal' },
               { value: 'hunched', key: 'hunched' },
               { value: 'leaning_sideways', key: 'leaningSideways' },
               { value: 'other', key: 'other' },
             ].map((posture) => (
-              <label key={posture.value} className="label cursor-pointer justify-start">
+              <label key={posture.value} className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors">
                 <input
                   {...register('motorSymptoms.balance.posture')}
                   type="radio"
                   value={posture.value}
-                  className="radio radio-primary"
+                  className="radio radio-primary flex-shrink-0"
                 />
-                <span className="label-text ml-2">{t(`postureTypes.${posture.key}`)}</span>
+                <span className="label-text">{t(`postureTypes.${posture.key}`)}</span>
               </label>
             ))}
           </div>
@@ -199,21 +199,21 @@ const MotorSymptomsSection: React.FC<MotorSymptomsSectionProps> = ({
           <label className="label">
             <span className="label-text">{t('form.balanceProblems')}</span>
           </label>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {[
               { value: 'none', key: 'none' },
               { value: 'slight_swaying', key: 'slightSwaying' },
               { value: 'needs_support', key: 'needsSupport' },
               { value: 'falls', key: 'falls' },
             ].map((problem) => (
-              <label key={problem.value} className="label cursor-pointer justify-start">
+              <label key={problem.value} className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors">
                 <input
                   {...register('motorSymptoms.balance.balanceProblems')}
                   type="radio"
                   value={problem.value}
-                  className="radio radio-primary"
+                  className="radio radio-primary flex-shrink-0"
                 />
-                <span className="label-text ml-2">{t(`balanceProblemsTypes.${problem.key}`)}</span>
+                <span className="label-text">{t(`balanceProblemsTypes.${problem.key}`)}</span>
               </label>
             ))}
           </div>
@@ -223,21 +223,21 @@ const MotorSymptomsSection: React.FC<MotorSymptomsSectionProps> = ({
           <label className="label">
             <span className="label-text">{t('form.walkingPattern')}</span>
           </label>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {[
               { value: 'normal', key: 'normal' },
               { value: 'shuffling', key: 'shuffling' },
               { value: 'small_steps', key: 'smallSteps' },
               { value: 'freezing_episodes', key: 'freezingEpisodes' },
             ].map((pattern) => (
-              <label key={pattern.value} className="label cursor-pointer justify-start">
+              <label key={pattern.value} className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors">
                 <input
                   {...register('motorSymptoms.balance.walkingPattern')}
                   type="radio"
                   value={pattern.value}
-                  className="radio radio-primary"
+                  className="radio radio-primary flex-shrink-0"
                 />
-                <span className="label-text ml-2">{t(`walkingPatterns.${pattern.key}`)}</span>
+                <span className="label-text">{t(`walkingPatterns.${pattern.key}`)}</span>
               </label>
             ))}
           </div>

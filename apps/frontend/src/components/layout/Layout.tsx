@@ -433,8 +433,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
               {/* Language Selector for Mobile */}
               <li className="mt-4">
-                <div className="p-3">
-                  <LanguageSelector className="w-full" />
+                <div className="px-3 py-2">
+                  <LanguageSelector mobile className="w-full" />
                 </div>
               </li>
 
