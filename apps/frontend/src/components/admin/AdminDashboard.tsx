@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -37,13 +37,7 @@ const AdminDashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user && token && isAdmin) {
-      fetchAdminStats();
-    }
-  }, [user, token, isAdmin]);
-
-  const fetchAdminStats = async () => {
+  const fetchAdminStats = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -104,7 +98,13 @@ const AdminDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, t]);
+
+  useEffect(() => {
+    if (user && token && isAdmin) {
+      fetchAdminStats();
+    }
+  }, [user, token, isAdmin, fetchAdminStats]);
 
   if (!isAdmin) {
     return (

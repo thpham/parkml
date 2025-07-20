@@ -38,7 +38,7 @@ export const authenticateToken = (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
-): void => {
+): void | Response => {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -83,7 +83,7 @@ export const authenticateToken = (
 };
 
 export const authorizeRole = (allowedRoles: string[]) => {
-  return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction): void | Response => {
     if (!req.user) {
       const response: ApiResponse = {
         success: false,
@@ -107,7 +107,7 @@ export const authorizeRole = (allowedRoles: string[]) => {
 };
 
 export const authorizeRoleLevel = (minimumLevel: number) => {
-  return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction): void | Response => {
     if (!req.user) {
       const response: ApiResponse = {
         success: false,
@@ -135,7 +135,7 @@ export const authorizeOrganization = (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
-): void => {
+): void | Response => {
   if (!req.user) {
     const response: ApiResponse = {
       success: false,
@@ -165,7 +165,11 @@ export const authorizeOrganization = (
 };
 
 export const authorizePatientAccess = (patientIdParam: string = 'patientId') => {
-  return async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  return async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void | Response> => {
     if (!req.user) {
       const response: ApiResponse = {
         success: false,

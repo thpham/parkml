@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { prisma } from '../database/prisma-client';
 import { ApiResponse } from '@parkml/shared';
 import {
@@ -16,7 +16,7 @@ router.post(
   '/request',
   authenticateToken,
   logUserActivity('REQUEST_EMERGENCY_ACCESS', 'emergency_access'),
-  async (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       if (!req.user) {
         const response: ApiResponse = {
@@ -308,7 +308,7 @@ router.get(
   '/:id',
   authenticateToken,
   requireClinicAdmin,
-  async (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       if (!req.user) {
         const response: ApiResponse = {
@@ -395,7 +395,7 @@ router.post(
   authenticateToken,
   requireClinicAdmin,
   logUserActivity('REVOKE_EMERGENCY_ACCESS', 'emergency_access'),
-  async (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       if (!req.user) {
         const response: ApiResponse = {
@@ -578,7 +578,7 @@ router.get(
   '/stats/summary',
   authenticateToken,
   requireClinicAdmin,
-  async (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       if (!req.user) {
         const response: ApiResponse = {

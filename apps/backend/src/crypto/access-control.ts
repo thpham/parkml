@@ -422,6 +422,15 @@ export class AccessControlEngine {
     ipAddress: string,
     userAgent: string
   ): Promise<void> {
+    // Validate required fields before creating audit entry
+    if (!context.requesterId) {
+      throw new Error('Audit failed: requesterId is required for crypto audit entry');
+    }
+
+    if (!context.organizationId) {
+      throw new Error('Audit failed: organizationId is required for crypto audit entry');
+    }
+
     await prisma.cryptoAuditEntry.create({
       data: {
         operation: 'access_control_evaluation',

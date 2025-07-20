@@ -113,7 +113,7 @@ const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({ isEnabled, onStatusChan
         initializeSetup();
       }
     }
-  }, [isEnabled]); // Simplified dependencies
+  }, [isEnabled]); // eslint-disable-line react-hooks/exhaustive-deps -- Simplified dependencies to prevent infinite loops
 
   // Cleanup countdown interval on unmount
   useEffect(() => {

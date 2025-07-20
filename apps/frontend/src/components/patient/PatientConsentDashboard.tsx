@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import { CaregiverAssignment, ApiResponse, User } from '@parkml/shared';
@@ -44,14 +44,22 @@ const PatientConsentDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showDetails, setShowDetails] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user && token) {
-      fetchAssignments();
-      fetchPendingConsent();
-    }
-  }, [user, token]);
+  const calculateStats = useCallback(
+    (assignmentData: AssignmentWithDetails[]) => {
+      const active = assignmentData.filter(a => a.status === 'active' && a.consentGiven).length;
+      const declined = assignmentData.filter(a => a.status === 'declined').length;
 
-  const fetchAssignments = async () => {
+      setStats({
+        totalAssignments: assignmentData.length,
+        pendingConsent: pendingAssignments.length,
+        activeAssignments: active,
+        declinedAssignments: declined,
+      });
+    },
+    [pendingAssignments]
+  );
+
+  const fetchAssignments = useCallback(async () => {
     try {
       const response = await fetch('/api/assignments', {
         headers: {
@@ -71,9 +79,9 @@ const PatientConsentDashboard: React.FC = () => {
       console.error('Error fetching assignments:', error);
       toast.error(t('patient.consent.fetchAssignmentsError'));
     }
-  };
+  }, [token, t, calculateStats]);
 
-  const fetchPendingConsent = async () => {
+  const fetchPendingConsent = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/consent/pending', {
@@ -95,19 +103,14 @@ const PatientConsentDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, t]);
 
-  const calculateStats = (assignmentData: AssignmentWithDetails[]) => {
-    const active = assignmentData.filter(a => a.status === 'active' && a.consentGiven).length;
-    const declined = assignmentData.filter(a => a.status === 'declined').length;
-
-    setStats({
-      totalAssignments: assignmentData.length,
-      pendingConsent: pendingAssignments.length,
-      activeAssignments: active,
-      declinedAssignments: declined,
-    });
-  };
+  useEffect(() => {
+    if (user && token) {
+      fetchAssignments();
+      fetchPendingConsent();
+    }
+  }, [user, token, fetchAssignments, fetchPendingConsent]);
 
   const handleConsentResponse = async (
     assignmentId: string,

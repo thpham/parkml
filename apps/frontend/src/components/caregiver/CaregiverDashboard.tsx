@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import { CaregiverAssignment, ApiResponse, Patient, User } from '@parkml/shared';
@@ -39,13 +39,7 @@ const CaregiverDashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user && token) {
-      fetchAssignments();
-    }
-  }, [user, token]);
-
-  const fetchAssignments = async () => {
+  const fetchAssignments = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/assignments', {
@@ -68,7 +62,13 @@ const CaregiverDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, t]);
+
+  useEffect(() => {
+    if (user && token) {
+      fetchAssignments();
+    }
+  }, [user, token, fetchAssignments]);
 
   const calculateStats = (assignmentData: AssignmentWithDetails[]) => {
     const pending = assignmentData.filter(a => a.status === 'pending').length;

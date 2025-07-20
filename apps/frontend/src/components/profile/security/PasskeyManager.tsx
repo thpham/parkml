@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Shield,
   Plus,
@@ -35,11 +35,7 @@ const PasskeyManager: React.FC<PasskeyManagerProps> = ({ onPasskeyCountChange })
   const [newDeviceName, setNewDeviceName] = useState('');
   const loadingRef = useRef(false);
 
-  useEffect(() => {
-    loadPasskeys();
-  }, []);
-
-  const loadPasskeys = async () => {
+  const loadPasskeys = useCallback(async () => {
     // Prevent multiple simultaneous calls
     if (isLoading || loadingRef.current) {
       return;
@@ -68,7 +64,11 @@ const PasskeyManager: React.FC<PasskeyManagerProps> = ({ onPasskeyCountChange })
       setIsLoading(false);
       loadingRef.current = false;
     }
-  };
+  }, [isLoading]);
+
+  useEffect(() => {
+    loadPasskeys();
+  }, [loadPasskeys]);
 
   const registerPasskey = async () => {
     if (!newDeviceName.trim()) {

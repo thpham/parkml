@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { prisma } from '../database/prisma-client';
 import { ApiResponse, DataCategory } from '@parkml/shared';
 import { authenticateToken } from '../middleware/auth';
@@ -23,7 +23,7 @@ router.get(
     DataCategory.ENVIRONMENTAL_FACTORS,
     DataCategory.SAFETY_INCIDENTS,
   ]),
-  async (req: AccessControlRequest, res) => {
+  async (req: AccessControlRequest, res: Response): Promise<Response | void> => {
     try {
       const { patientId, startDate, endDate, limit = 50 } = req.query;
 
@@ -127,7 +127,7 @@ router.post(
     DataCategory.ENVIRONMENTAL_FACTORS,
     DataCategory.SAFETY_INCIDENTS,
   ]),
-  async (req: AccessControlRequest, res) => {
+  async (req: AccessControlRequest, res: Response): Promise<Response | void> => {
     try {
       const {
         patientId,
@@ -181,7 +181,7 @@ router.post(
         data: {
           patientId,
           entryDate: new Date(entryDate),
-          completedBy: req.user?.id!,
+          completedBy: req.user?.userId!,
           motorSymptoms: JSON.stringify(motorSymptoms),
           nonMotorSymptoms: JSON.stringify(nonMotorSymptoms),
           autonomicSymptoms: JSON.stringify(autonomicSymptoms),

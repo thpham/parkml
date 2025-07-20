@@ -1,4 +1,4 @@
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
@@ -25,7 +25,7 @@ export interface Organization {
   address?: string;
   phone?: string;
   email?: string;
-  settings?: any;
+  settings?: Record<string, unknown>;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -38,8 +38,8 @@ export interface Patient {
   name: string;
   dateOfBirth: Date;
   diagnosisDate: Date;
-  emergencyContact?: any;
-  privacySettings?: any;
+  emergencyContact?: Record<string, unknown>;
+  privacySettings?: Record<string, unknown>;
   caregiverIds: string[];
   healthcareProviderIds: string[];
   createdAt: Date;
@@ -54,7 +54,7 @@ export interface CaregiverAssignment {
   caregiverType: 'professional' | 'family';
   assignedBy?: string;
   status: 'pending' | 'active' | 'inactive' | 'declined' | 'revoked';
-  permissions?: any;
+  permissions?: Record<string, unknown>;
   startDate?: Date;
   endDate?: Date;
   notes?: string;
@@ -76,6 +76,19 @@ export interface EmergencyAccess {
   approvedBy?: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// JWT Token Payload Interface (Security-Critical)
+export interface JwtPayload {
+  userId: string;
+  email: string;
+  role: User['role'];
+  organizationId?: string;
+  isActive: boolean;
+  sessionId?: string;
+  sessionToken?: string;
+  iat?: number; // JWT issued at timestamp
+  exp?: number; // JWT expiration timestamp
 }
 
 export interface UserStats {

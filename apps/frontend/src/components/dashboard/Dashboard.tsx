@@ -31,22 +31,25 @@ const Dashboard: React.FC = () => {
         const patientsData = await patientsResponse.json();
         if (patientsData.success) {
           setPatients(patientsData.data);
-        }
-      }
 
-      // Fetch recent entries if there are patients
-      if (patients.length > 0) {
-        const patientId = patients[0].id;
-        const entriesResponse = await fetch(`/api/symptom-entries?patientId=${patientId}&limit=5`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+          // Fetch recent entries if there are patients
+          if (patientsData.data.length > 0) {
+            const patientId = patientsData.data[0].id;
+            const entriesResponse = await fetch(
+              `/api/symptom-entries?patientId=${patientId}&limit=5`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
 
-        if (entriesResponse.ok) {
-          const entriesData = await entriesResponse.json();
-          if (entriesData.success) {
-            setRecentEntries(entriesData.data);
+            if (entriesResponse.ok) {
+              const entriesData = await entriesResponse.json();
+              if (entriesData.success) {
+                setRecentEntries(entriesData.data);
+              }
+            }
           }
         }
       }
@@ -56,13 +59,13 @@ const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, patients, t]);
+  }, [token, t]);
 
   useEffect(() => {
     if (user && token && !isAdmin) {
       fetchDashboardData();
     }
-  }, [user, token, isAdmin, fetchDashboardData]);
+  }, [user, token, isAdmin]);
 
   // Redirect admin users to admin dashboard
   if (isAdmin) {
