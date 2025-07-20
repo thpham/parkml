@@ -3,6 +3,125 @@ import { prisma } from '../database/prisma-client';
 import { ApiResponse } from '@parkml/shared';
 import { authenticateToken, requireClinicAdmin, AuthenticatedRequest } from '../middleware/auth';
 
+// Analytics interfaces
+interface StatCount {
+  _count: {
+    id: number;
+  };
+}
+
+interface RoleStatCount extends StatCount {
+  role: string;
+}
+
+interface StatusStatCount extends StatCount {
+  status: string;
+}
+
+interface ActiveStatCount extends StatCount {
+  isActive: boolean;
+}
+
+interface StatsByKey {
+  [key: string]: number;
+}
+
+interface SymptomEntryStatCount extends StatCount {
+  entryDate: Date;
+}
+
+interface AccessTypeStatCount extends StatCount {
+  accessType: string;
+}
+
+interface ActionStatCount extends StatCount {
+  action: string;
+}
+
+interface CreatedAtStatCount extends StatCount {
+  createdAt: Date;
+}
+
+interface OrganizationFilter {
+  organizationId?: string;
+}
+
+interface DateFilter {
+  gte?: Date;
+  lte?: Date;
+  gt?: Date;
+}
+
+interface WhereClause {
+  patient?: {
+    organizationId?: string;
+  };
+  isActive?: boolean;
+  endTime?: DateFilter;
+  createdAt?: DateFilter;
+}
+
+interface EmergencyAccessWithRelations {
+  id: string;
+  patient: {
+    organizationId: string;
+    organization: {
+      id: string;
+      name: string;
+    };
+  };
+}
+
+interface OrganizationWithCounts {
+  id: string;
+  name: string;
+  isActive: boolean;
+  createdAt: Date;
+  _count: {
+    users: number;
+    patients: number;
+    auditLogs: number;
+  };
+  emergencyAccessCount: number;
+  assignmentCount: number;
+}
+
+interface AuditLogEntry {
+  id: string;
+  action: string;
+  resource: string;
+  resourceId: string;
+  details: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  createdAt: Date;
+  organizationId: string;
+  userId: string;
+}
+
+interface EmergencyAccessEntry {
+  id: string;
+  accessType: string;
+  reason: string;
+  isActive: boolean;
+  startTime: Date;
+  endTime: Date | null;
+  createdAt: Date;
+  user: {
+    id: string;
+    name: string | null;
+    role: string;
+  };
+  patient: {
+    id: string;
+    name: string;
+    organization: {
+      id: string;
+      name: string;
+    };
+  };
+}
+
 const router = Router();
 
 // Get organization analytics (admin only)
@@ -125,25 +244,31 @@ router.get(
       });
 
       // Format user statistics
-      const userStatsByRole = userStats.reduce((acc: any, stat: any) => {
+      const userStatsByRole = userStats.reduce((acc: StatsByKey, stat: RoleStatCount) => {
         acc[stat.role] = stat._count.id;
         return acc;
-      }, {});
+      }, {} as StatsByKey);
 
       // Format assignment statistics
-      const assignmentStatsByStatus = assignmentStats.reduce((acc: any, stat: any) => {
-        acc[stat.status] = stat._count.id;
-        return acc;
-      }, {});
+      const assignmentStatsByStatus = assignmentStats.reduce(
+        (acc: StatsByKey, stat: StatusStatCount) => {
+          acc[stat.status] = stat._count.id;
+          return acc;
+        },
+        {} as StatsByKey
+      );
 
       // Format invitation statistics
-      const invitationStatsByStatus = invitationStats.reduce((acc: any, stat: any) => {
-        acc[stat.status] = stat._count.id;
-        return acc;
-      }, {});
+      const invitationStatsByStatus = invitationStats.reduce(
+        (acc: StatsByKey, stat: StatusStatCount) => {
+          acc[stat.status] = stat._count.id;
+          return acc;
+        },
+        {} as StatsByKey
+      );
 
       // Format symptom entry timeline
-      const symptomEntryTimeline = symptomEntryStats.map((stat: any) => ({
+      const symptomEntryTimeline = symptomEntryStats.map((stat: SymptomEntryStatCount) => ({
         date: stat.entryDate.toISOString().split('T')[0],
         count: stat._count.id,
       }));
@@ -153,13 +278,19 @@ router.get(
         data: {
           organization,
           summary: {
-            totalUsers: userStats.reduce((sum: any, stat: any) => sum + stat._count.id, 0),
-            totalPatients: patientCount,
-            totalAssignments: assignmentStats.reduce(
-              (sum: any, stat: any) => sum + stat._count.id,
+            totalUsers: userStats.reduce(
+              (sum: number, stat: RoleStatCount) => sum + stat._count.id,
               0
             ),
-            totalInvitations: invitationStats.reduce((sum, stat) => sum + stat._count.id, 0),
+            totalPatients: patientCount,
+            totalAssignments: assignmentStats.reduce(
+              (sum: number, stat: StatusStatCount) => sum + stat._count.id,
+              0
+            ),
+            totalInvitations: invitationStats.reduce(
+              (sum: number, stat: StatusStatCount) => sum + stat._count.id,
+              0
+            ),
             recentActivityCount: recentActivity,
           },
           userStatsByRole,
@@ -208,7 +339,7 @@ router.get(
       startDate.setDate(startDate.getDate() - days);
 
       // Build where clause for organization filtering
-      let orgFilter: any = {};
+      let orgFilter: OrganizationFilter = {};
       if (req.user.role === 'clinic_admin') {
         // Clinic admins can only see their organization
         orgFilter = { organizationId: req.user.organizationId };
@@ -355,38 +486,47 @@ router.get(
       });
 
       // Format statistics
-      const organizationStatsByStatus = organizationStatsGrouped.reduce((acc: any, stat: any) => {
-        acc[stat.isActive ? 'active' : 'inactive'] = stat._count.id;
-        return acc;
-      }, {});
+      const organizationStatsByStatus = organizationStatsGrouped.reduce(
+        (acc: StatsByKey, stat: ActiveStatCount) => {
+          acc[stat.isActive ? 'active' : 'inactive'] = stat._count.id;
+          return acc;
+        },
+        {} as StatsByKey
+      );
 
-      const userStatsByRole = userStats.reduce((acc: any, stat: any) => {
+      const userStatsByRole = userStats.reduce((acc: StatsByKey, stat: RoleStatCount) => {
         acc[stat.role] = stat._count.id;
         return acc;
-      }, {});
+      }, {} as StatsByKey);
 
-      const assignmentStatsByStatus = assignmentStats.reduce((acc: any, stat: any) => {
-        acc[stat.status] = stat._count.id;
-        return acc;
-      }, {});
+      const assignmentStatsByStatus = assignmentStats.reduce(
+        (acc: StatsByKey, stat: StatusStatCount) => {
+          acc[stat.status] = stat._count.id;
+          return acc;
+        },
+        {} as StatsByKey
+      );
 
       const response: ApiResponse = {
         success: true,
         data: {
           totalOrganizations: organizationStatsGrouped.reduce(
-            (sum: number, stat: any) => sum + stat._count.id,
+            (sum: number, stat: ActiveStatCount) => sum + stat._count.id,
             0
           ),
-          totalUsers: userStats.reduce((sum: number, stat: any) => sum + stat._count.id, 0),
+          totalUsers: userStats.reduce(
+            (sum: number, stat: RoleStatCount) => sum + stat._count.id,
+            0
+          ),
           totalPatients,
           totalAssignments: assignmentStats.reduce(
-            (sum: number, stat: any) => sum + stat._count.id,
+            (sum: number, stat: StatusStatCount) => sum + stat._count.id,
             0
           ),
           activeAssignments: assignmentStatsByStatus.active || 0,
           totalEmergencyAccess: 0, // Will be populated by emergency access API
           activeEmergencyAccess: 0, // Will be populated by emergency access API
-          organizations: organizationStats.map((org: any) => ({
+          organizations: organizationStats.map((org: OrganizationWithCounts) => ({
             id: org.id,
             name: org.name,
             isActive: org.isActive,
@@ -398,13 +538,16 @@ router.get(
           })),
           summary: {
             totalOrganizations: organizationStatsGrouped.reduce(
-              (sum: number, stat: any) => sum + stat._count.id,
+              (sum: number, stat: ActiveStatCount) => sum + stat._count.id,
               0
             ),
-            totalUsers: userStats.reduce((sum: number, stat: any) => sum + stat._count.id, 0),
+            totalUsers: userStats.reduce(
+              (sum: number, stat: RoleStatCount) => sum + stat._count.id,
+              0
+            ),
             totalPatients,
             totalAssignments: assignmentStats.reduce(
-              (sum: number, stat: any) => sum + stat._count.id,
+              (sum: number, stat: StatusStatCount) => sum + stat._count.id,
               0
             ),
             recentActivityCount: recentActivity,
@@ -412,7 +555,7 @@ router.get(
           organizationStatsByStatus,
           userStatsByRole,
           assignmentStatsByStatus,
-          growthMetrics: growthMetrics.map((metric: any) => ({
+          growthMetrics: growthMetrics.map((metric: CreatedAtStatCount) => ({
             date: metric.createdAt.toISOString().split('T')[0],
             newUsers: metric._count.id,
           })),
@@ -490,7 +633,7 @@ router.get(
       }
 
       // Build date filter
-      const dateFilter: any = {};
+      const dateFilter: DateFilter = {};
       if (startDate) {
         dateFilter.gte = new Date(startDate as string);
       }
@@ -522,10 +665,13 @@ router.get(
         },
       });
 
-      const activityByAction = activitySummary.reduce((acc: any, activity: any) => {
-        acc[activity.action] = activity._count.id;
-        return acc;
-      }, {});
+      const activityByAction = activitySummary.reduce(
+        (acc: StatsByKey, activity: ActionStatCount) => {
+          acc[activity.action] = activity._count.id;
+          return acc;
+        },
+        {} as StatsByKey
+      );
 
       const response: ApiResponse = {
         success: true,
@@ -535,12 +681,12 @@ router.get(
             totalActions: auditLogs.length,
             actionCounts: activityByAction,
           },
-          auditLogs: auditLogs.map((log: any) => ({
+          auditLogs: auditLogs.map((log: AuditLogEntry) => ({
             id: log.id,
             action: log.action,
             resource: log.resource,
             resourceId: log.resourceId,
-            details: JSON.parse(log.details || '{}'),
+            details: JSON.parse(log.details || '{}') as Record<string, unknown>,
             ipAddress: log.ipAddress,
             userAgent: log.userAgent,
             timestamp: log.createdAt,
@@ -580,7 +726,7 @@ router.get(
       }
 
       // Build where clause for organization filtering
-      const whereClause: any = {};
+      const whereClause: WhereClause = {};
       if (req.user.role === 'clinic_admin') {
         whereClause.patient = {
           organizationId: req.user.organizationId,
@@ -633,9 +779,9 @@ router.get(
                     string,
                     { organizationId: string; organizationName: string; count: number }
                   > = {};
-                  accesses.forEach(access => {
-                    const orgId = (access as any).patient.organizationId;
-                    const orgName = (access as any).patient.organization.name;
+                  accesses.forEach((access: EmergencyAccessWithRelations) => {
+                    const orgId = access.patient.organizationId;
+                    const orgName = access.patient.organization.name;
                     if (!orgCounts[orgId]) {
                       orgCounts[orgId] = {
                         organizationId: orgId,
@@ -684,10 +830,10 @@ router.get(
         ]);
 
       // Format the data to match frontend expectations
-      const byType = accessByType.reduce((acc: any, stat: any) => {
+      const byType = accessByType.reduce((acc: StatsByKey, stat: AccessTypeStatCount) => {
         acc[stat.accessType] = stat._count.id;
         return acc;
-      }, {});
+      }, {} as StatsByKey);
 
       const response: ApiResponse = {
         success: true,
@@ -697,7 +843,7 @@ router.get(
           expired: totalAccess - activeAccess,
           byType,
           byOrganization: accessByOrganization,
-          recentAccess: recentAccess.map((access: any) => ({
+          recentAccess: recentAccess.map((access: EmergencyAccessEntry) => ({
             id: access.id,
             accessType: access.accessType,
             reason: access.reason,
@@ -705,7 +851,7 @@ router.get(
             startTime: access.startTime,
             endTime: access.endTime,
             user: access.user,
-            patient: (access as any).patient,
+            patient: access.patient,
             createdAt: access.createdAt,
           })),
           summary: {

@@ -5,8 +5,25 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { accessControlEngine } from './access-control';
-import { AccessLevel, DataCategory, EncryptionContext, ApiResponse } from '@parkml/shared';
+import {
+  AccessLevel,
+  DataCategory,
+  EncryptionContext,
+  ApiResponse,
+  User,
+  EmergencyAccessContext,
+} from '@parkml/shared';
 import { AuthenticatedRequest } from '../middleware/auth';
+
+/**
+ * Type alias for user roles to ensure type safety
+ */
+type UserRole = User['role'];
+
+/**
+ * Type alias for emergency access types to ensure type safety
+ */
+type EmergencyAccessType = EmergencyAccessContext['accessType'];
 
 /**
  * Extended Request interface with access control context
@@ -55,7 +72,7 @@ export function requireDataAccess(
         requesterId: req.user!.userId,
         accessLevel: minimumAccessLevel,
         organizationId: req.user!.organizationId || '',
-        requesterRole: req.user!.role as any,
+        requesterRole: req.user!.role as UserRole,
         dataCategories: requiredCategories,
         emergencyContext: await extractEmergencyContext(req),
         timestamp: new Date(),
@@ -169,10 +186,10 @@ export function requireEmergencyAccess() {
         requesterId: req.user!.userId,
         accessLevel: AccessLevel.EMERGENCY_ACCESS,
         organizationId: req.user!.organizationId || '',
-        requesterRole: req.user!.role as any,
+        requesterRole: req.user!.role as UserRole,
         dataCategories: Object.values(DataCategory), // Emergency access to all categories
         emergencyContext: {
-          accessType: emergencyAccess.accessType as any,
+          accessType: emergencyAccess.accessType as EmergencyAccessType,
           reason: emergencyAccess.reason,
           durationHours: 24, // Default emergency duration
           emergencyAccessId: emergencyAccess.id,
@@ -351,7 +368,7 @@ export function requireSuperAdmin() {
 /**
  * Extract emergency context from request if present
  */
-async function extractEmergencyContext(req: Request): Promise<any> {
+async function extractEmergencyContext(req: Request): Promise<EmergencyAccessContext | undefined> {
   const emergencyAccessId = req.headers['x-emergency-access-id'] as string;
   if (!emergencyAccessId) {
     return undefined;
@@ -368,7 +385,7 @@ async function extractEmergencyContext(req: Request): Promise<any> {
     }
 
     return {
-      accessType: emergencyAccess.accessType,
+      accessType: emergencyAccess.accessType as EmergencyAccessType,
       reason: emergencyAccess.reason,
       durationHours: 24, // Default duration
       emergencyAccessId: emergencyAccess.id,

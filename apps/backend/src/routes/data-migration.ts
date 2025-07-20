@@ -20,6 +20,22 @@ import { requireSuperAdmin } from '../crypto/access-control-middleware';
 import { dataMigrationEngine, MigrationConfig } from '../crypto/data-migration';
 import { prisma } from '../database/prisma-client';
 
+// Type definitions
+type MigrationWhereClause = {
+  status?: string;
+};
+
+type AuditWhereClause = {
+  operation: {
+    in: string[];
+  };
+  encryptionContext?: {
+    contains: string;
+  };
+};
+
+type MigrationStatusAccumulator = Record<string, number>;
+
 const router = Router();
 
 /**
@@ -386,7 +402,7 @@ router.get(
     try {
       const { limit = 20, status } = req.query;
 
-      const where: any = {};
+      const where: MigrationWhereClause = {};
       if (status && typeof status === 'string') {
         where.status = status;
       }
@@ -414,7 +430,7 @@ router.get(
           })),
           summary: {
             total: migrations.length,
-            byStatus: migrations.reduce((acc: any, m) => {
+            byStatus: migrations.reduce((acc: MigrationStatusAccumulator, m) => {
               acc[m.status] = (acc[m.status] || 0) + 1;
               return acc;
             }, {}),
@@ -445,7 +461,7 @@ router.get(
     try {
       const { limit = 50, migrationId } = req.query;
 
-      const where: any = {
+      const where: AuditWhereClause = {
         operation: {
           in: ['data_migration_started', 'data_migration_completed', 'data_migration_failed'],
         },

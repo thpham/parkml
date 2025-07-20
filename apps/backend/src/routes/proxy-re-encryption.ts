@@ -17,6 +17,17 @@ import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
 import { ProxyReEncryption, DelegationRequest } from '../crypto/proxy-re-encryption';
 import { prisma } from '../database/prisma-client';
 
+// Type definitions
+type ProxyAuditWhereClause = {
+  operation: {
+    in: string[];
+  };
+  emergencyDetails?: {
+    contains: string;
+  };
+  organizationId?: string;
+};
+
 const router = Router();
 
 /**
@@ -392,7 +403,7 @@ router.get('/audit', authenticateToken, async (req: AuthenticatedRequest, res: R
   try {
     const { delegationId, limit = 50 } = req.query;
 
-    const where: any = {
+    const where: ProxyAuditWhereClause = {
       operation: {
         in: ['proxy_delegation_created', 'proxy_data_reencrypted', 'proxy_delegation_revoked'],
       },

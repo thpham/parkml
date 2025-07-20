@@ -9,6 +9,35 @@ import {
   getMaxAccessLevel,
 } from '../crypto/access-control-middleware';
 
+// Type definitions
+type SymptomEntryWithUser = {
+  id: string;
+  patientId: string;
+  entryDate: Date;
+  completedBy: string;
+  completedByUser: {
+    name: string | null;
+  };
+  motorSymptoms: string | null;
+  nonMotorSymptoms: string | null;
+  medicationEvents?: string | null;
+  autonomicSymptoms?: string | null;
+  dailyActivities?: string | null;
+  environmentalFactors?: string | null;
+  safetyIncidents?: string | null;
+  notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type PrismaWhereClause = {
+  patientId: string;
+  entryDate?: {
+    gte?: Date;
+    lte?: Date;
+  };
+};
+
 const router = Router();
 
 // Get symptom entries for a patient
@@ -36,7 +65,7 @@ router.get(
       }
 
       // Build query for symptom entries with date filtering
-      const whereClause: any = {
+      const whereClause: PrismaWhereClause = {
         patientId: patientId as string,
       };
 
@@ -69,7 +98,7 @@ router.get(
 
       const response: ApiResponse = {
         success: true,
-        data: symptomEntries.map((entry: any) => ({
+        data: symptomEntries.map((entry: SymptomEntryWithUser) => ({
           id: entry.id,
           patientId: entry.patientId,
           entryDate: entry.entryDate,
@@ -261,7 +290,7 @@ router.get('/:id', authenticateToken, async (req: AccessControlRequest, res) => 
 
     // Check access control
     await new Promise<void>((resolve, reject) => {
-      accessMiddleware(req, res, (error?: any) => {
+      accessMiddleware(req, res, (error?: unknown) => {
         if (error) reject(error);
         else resolve();
       });

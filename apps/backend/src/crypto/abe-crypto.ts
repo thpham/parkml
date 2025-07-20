@@ -190,9 +190,9 @@ export class UserSecretKey {
   public static deserialize(serializedKey: string): UserSecretKey {
     const keyData = JSON.parse(serializedKey);
     const attributeKeys = new Map<string, Uint8Array>(
-      Object.entries(keyData.attributeKeys).map(([attr, keyArray]: [string, any]) => [
+      Object.entries(keyData.attributeKeys).map(([attr, keyArray]: [string, unknown]) => [
         attr,
-        new Uint8Array(keyArray),
+        new Uint8Array(keyArray as number[]),
       ])
     );
     return new UserSecretKey(keyData.userId, attributeKeys, keyData.organizationId);

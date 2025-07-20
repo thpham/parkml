@@ -93,7 +93,7 @@ app.get(API_ENDPOINTS.USERS, (_req, res) => {
 });
 
 // Error handling middleware
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Error:', err);
   const response: ApiResponse = {
     success: false,

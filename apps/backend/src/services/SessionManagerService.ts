@@ -4,6 +4,15 @@ import { Request } from 'express';
 // import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
+// Type definitions
+type SessionWhereClause = {
+  userId: string;
+  isActive: boolean;
+  sessionToken?: {
+    not: string;
+  };
+};
+
 export interface SessionData {
   userId: string;
   organizationId?: string;
@@ -257,7 +266,7 @@ export class SessionManagerService {
     exceptSessionToken?: string
   ): Promise<number> {
     try {
-      const whereClause: any = {
+      const whereClause: SessionWhereClause = {
         userId,
         isActive: true,
       };
@@ -425,7 +434,7 @@ export class SessionManagerService {
     userId: string,
     action: string,
     sessionId: string | null,
-    details: Record<string, any>,
+    details: Record<string, unknown>,
     request: Request
   ): Promise<void> {
     try {
@@ -438,7 +447,7 @@ export class SessionManagerService {
           ipAddress: this.extractIpAddress(request),
           userAgent: request.get('User-Agent') || null,
           status: 'success',
-          riskLevel: details.riskLevel || 'low',
+          riskLevel: (details.riskLevel as string) || 'low',
           details: JSON.stringify(details),
           sessionId,
         },

@@ -9,6 +9,29 @@ import {
   AuthenticatedRequest,
 } from '../middleware/auth';
 
+// Type definitions for database query results
+type OrganizationWithCounts = {
+  id: string;
+  name: string;
+  description: string | null;
+  settings: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  _count: {
+    users: number;
+    patients: number;
+    auditLogs: number;
+  };
+};
+
+type OrganizationUpdateData = {
+  name?: string;
+  description?: string;
+  settings?: string;
+  isActive?: boolean;
+};
+
 const router = Router();
 
 // Get all organizations (super admin only)
@@ -33,7 +56,7 @@ router.get(
 
       const response: ApiResponse = {
         success: true,
-        data: organizations.map((org: any) => ({
+        data: organizations.map((org: OrganizationWithCounts) => ({
           id: org.id,
           name: org.name,
           description: org.description,
@@ -361,7 +384,7 @@ router.put(
       }
 
       // Prepare update data
-      const updateData: any = {};
+      const updateData: OrganizationUpdateData = {};
       if (name !== undefined) updateData.name = name;
       if (description !== undefined) updateData.description = description;
       if (settings !== undefined) updateData.settings = JSON.stringify(settings);
@@ -593,20 +616,21 @@ router.get(
 
       const response: ApiResponse = {
         success: true,
-        data: patients.map((patient: any) => ({
+        data: patients.map((patient: Record<string, unknown>) => ({
           id: patient.id,
           name: patient.name,
           dateOfBirth: patient.dateOfBirth,
           diagnosisDate: patient.diagnosisDate,
-          emergencyContact: JSON.parse(patient.emergencyContact || '{}'),
-          privacySettings: JSON.parse(patient.privacySettings || '{}'),
+          emergencyContact: JSON.parse((patient.emergencyContact as string) || '{}'),
+          privacySettings: JSON.parse((patient.privacySettings as string) || '{}'),
           user: patient.user,
           createdAt: patient.createdAt,
           updatedAt: patient.updatedAt,
           stats: {
-            caregiverCount: patient._count.caregiverAssignments,
-            symptomEntryCount: patient._count.symptomEntries,
-            weeklySummaryCount: patient._count.weeklySummaries,
+            caregiverCount: (patient._count as { caregiverAssignments: number })
+              .caregiverAssignments,
+            symptomEntryCount: (patient._count as { symptomEntries: number }).symptomEntries,
+            weeklySummaryCount: (patient._count as { weeklySummaries: number }).weeklySummaries,
           },
         })),
       };

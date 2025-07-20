@@ -4,6 +4,7 @@
  */
 
 import { Prisma } from '@prisma/client';
+import { Request, Response, NextFunction } from 'express';
 import { ABECrypto, UserSecretKey } from './abe-crypto';
 import {
   AccessLevel,
@@ -11,6 +12,63 @@ import {
   EncryptionContext,
   EncryptedDataContainer,
 } from '@parkml/shared';
+
+/**
+ * Authenticated user interface for requests
+ */
+interface AuthenticatedUser {
+  userId: string;
+  organizationId?: string;
+  role: UserRole;
+}
+
+/**
+ * Extended Express request with authentication
+ */
+interface AuthenticatedRequest extends Request {
+  user?: AuthenticatedUser;
+  encryptionContext?: RequestEncryptionContextProvider;
+}
+
+/**
+ * Prisma middleware parameters
+ */
+interface PrismaMiddlewareParams {
+  model?: string;
+  action: string;
+  args: {
+    data?: Record<string, unknown>;
+    where?: Record<string, unknown>;
+    select?: Record<string, unknown>;
+    include?: Record<string, unknown>;
+    [key: string]: unknown;
+  };
+  dataPath: string[];
+  runInTransaction: boolean;
+}
+
+/**
+ * Database record with optional encryption flag
+ */
+interface DatabaseRecord {
+  [key: string]: unknown;
+  isEncrypted?: boolean;
+}
+
+/**
+ * User role types
+ */
+type UserRole =
+  | 'super_admin'
+  | 'clinic_admin'
+  | 'professional_caregiver'
+  | 'family_caregiver'
+  | 'patient';
+
+/**
+ * Database query result - can be single record, array, or other result
+ */
+type DatabaseQueryResult = DatabaseRecord | DatabaseRecord[] | null | undefined | unknown;
 
 /**
  * Encryption field configuration
@@ -166,7 +224,7 @@ export class PrismaEncryptionMiddleware {
   /**
    * Encrypt fields before database write
    */
-  private async encryptFields(params: any): Promise<void> {
+  private async encryptFields(params: PrismaMiddlewareParams): Promise<void> {
     const config = this.getEncryptionConfig(params.model);
     if (!config || !params.args.data) {
       return;
@@ -200,7 +258,10 @@ export class PrismaEncryptionMiddleware {
   /**
    * Decrypt fields after database read
    */
-  private async decryptFields(result: any, params: any): Promise<any> {
+  private async decryptFields(
+    result: DatabaseQueryResult,
+    params: PrismaMiddlewareParams
+  ): Promise<DatabaseQueryResult> {
     if (!result) return result;
 
     const config = this.getEncryptionConfig(params.model);
@@ -222,18 +283,18 @@ export class PrismaEncryptionMiddleware {
     }
 
     // Handle single result
-    return await this.decryptRecord(result, config, context, userSecretKey);
+    return await this.decryptRecord(result as DatabaseRecord, config, context, userSecretKey);
   }
 
   /**
    * Decrypt a single record
    */
   private async decryptRecord(
-    record: any,
+    record: DatabaseRecord,
     config: EncryptionFieldConfig,
     context: EncryptionContext,
     userSecretKey: UserSecretKey
-  ): Promise<any> {
+  ): Promise<DatabaseRecord> {
     if (!record || !record.isEncrypted) {
       return record;
     }
@@ -266,7 +327,7 @@ export class PrismaEncryptionMiddleware {
    * Encrypt a single field
    */
   private async encryptField(
-    value: any,
+    value: unknown,
     fieldConfig: {
       fieldName: string;
       dataCategory: DataCategory;
@@ -310,7 +371,7 @@ export class PrismaEncryptionMiddleware {
     },
     context: EncryptionContext,
     userSecretKey: UserSecretKey
-  ): Promise<any> {
+  ): Promise<unknown> {
     try {
       // Parse encrypted container
       const container: EncryptedDataContainer = JSON.parse(encryptedValue);
@@ -333,7 +394,7 @@ export class PrismaEncryptionMiddleware {
   /**
    * Get restricted field value for access-denied scenarios
    */
-  private getRestrictedFieldValue(dataCategory: DataCategory, requesterRole: string): any {
+  private getRestrictedFieldValue(dataCategory: DataCategory, requesterRole: UserRole): string {
     switch (dataCategory) {
       case DataCategory.EMERGENCY_CONTACTS:
         return requesterRole === 'professional_caregiver'
@@ -351,7 +412,8 @@ export class PrismaEncryptionMiddleware {
   /**
    * Get encryption configuration for a model
    */
-  private getEncryptionConfig(modelName: string): EncryptionFieldConfig | null {
+  private getEncryptionConfig(modelName: string | undefined): EncryptionFieldConfig | null {
+    if (!modelName) return null;
     return ENCRYPTION_CONFIG.find(config => config.model === modelName) || null;
   }
 
@@ -385,7 +447,7 @@ export class RequestEncryptionContextProvider implements EncryptionContextProvid
   private userSecretKey: UserSecretKey | null = null;
 
   constructor(
-    private req: any, // Express request object
+    private req: AuthenticatedRequest,
     private abeCrypto: ABECrypto
   ) {}
 
@@ -493,7 +555,7 @@ export class RequestEncryptionContextProvider implements EncryptionContextProvid
  * Express middleware to set up encryption context
  */
 export function createEncryptionContextMiddleware(abeCrypto: ABECrypto) {
-  return (req: any, _res: any, next: any) => {
+  return (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
     // Create encryption context provider for this request
     req.encryptionContext = new RequestEncryptionContextProvider(req, abeCrypto);
     next();

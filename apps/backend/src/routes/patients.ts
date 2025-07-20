@@ -3,6 +3,8 @@ import { prisma } from '../database/prisma-client';
 import { ApiResponse } from '@parkml/shared';
 import { authenticateToken, authorizeRole, AuthenticatedRequest } from '../middleware/auth';
 
+// Type definitions for database query results
+
 const router = Router();
 
 // Get all patients (organization-scoped)
@@ -19,7 +21,7 @@ router.get(
         return res.status(401).json(response);
       }
 
-      let patients: any[] = [];
+      let patients: Record<string, unknown>[] = [];
 
       switch (req.user.role) {
         case 'super_admin':
@@ -145,15 +147,15 @@ router.get(
 
       const response: ApiResponse = {
         success: true,
-        data: patients.map((p: any) => ({
+        data: patients.map((p: Record<string, unknown>) => ({
           id: p.id,
           user_id: p.userId,
           organization_id: p.organizationId,
           name: p.name,
           date_of_birth: p.dateOfBirth,
           diagnosis_date: p.diagnosisDate,
-          emergency_contact: JSON.parse(p.emergencyContact || '{}'),
-          privacy_settings: JSON.parse(p.privacySettings || '{}'),
+          emergency_contact: JSON.parse((p.emergencyContact as string) || '{}'),
+          privacy_settings: JSON.parse((p.privacySettings as string) || '{}'),
           user: p.user,
           organization: p.organization,
           created_at: p.createdAt,
@@ -268,7 +270,7 @@ router.get(
       }
 
       const { id } = req.params;
-      let patient: any = null;
+      let patient: Record<string, unknown> | null = null;
 
       switch (req.user.role) {
         case 'super_admin':
@@ -461,8 +463,8 @@ router.get(
           name: patient.name,
           dateOfBirth: patient.dateOfBirth,
           diagnosisDate: patient.diagnosisDate,
-          emergencyContact: JSON.parse(patient.emergencyContact || '{}'),
-          privacySettings: JSON.parse(patient.privacySettings || '{}'),
+          emergencyContact: JSON.parse((patient.emergencyContact as string) || '{}'),
+          privacySettings: JSON.parse((patient.privacySettings as string) || '{}'),
           user: patient.user,
           organization: patient.organization,
           caregiverAssignments: patient.caregiverAssignments,

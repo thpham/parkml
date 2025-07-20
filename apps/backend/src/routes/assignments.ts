@@ -8,6 +8,75 @@ import {
   AuthenticatedRequest,
 } from '../middleware/auth';
 
+// Type definitions for assignment-related data structures
+interface PatientInfo {
+  id: string;
+  name: string | null;
+  userId: string;
+  user: {
+    email: string;
+    name: string | null;
+  };
+}
+
+interface CaregiverInfo {
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+}
+
+interface AssignedByUserInfo {
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+}
+
+interface AssignmentWithIncludes {
+  id: string;
+  patientId: string;
+  caregiverId: string;
+  caregiverType: string;
+  status: string;
+  permissions: string | null;
+  startDate: Date | null;
+  endDate: Date | null;
+  notes: string | null;
+  consentGiven: boolean;
+  consentDate: Date | null;
+  assignedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  patient: PatientInfo;
+  caregiver: CaregiverInfo;
+  assignedByUser: AssignedByUserInfo | null;
+}
+
+interface AssignmentPermissions {
+  view_all_symptoms?: boolean;
+  edit_symptoms?: boolean;
+  generate_reports?: boolean;
+  set_reminders?: boolean;
+  communicate_all?: boolean;
+  emergency_contact?: boolean;
+  view_symptoms?: boolean;
+  view_reports?: boolean;
+  receive_notifications?: boolean;
+  communicate_professional?: boolean;
+}
+
+type AssignmentStatus = 'pending' | 'active' | 'inactive' | 'declined' | 'revoked';
+
+interface AssignmentUpdateData {
+  status?: AssignmentStatus;
+  permissions?: string;
+  notes?: string;
+  consentGiven?: boolean;
+  consentDate?: Date;
+  endDate?: Date | null;
+}
+
 const router = Router();
 
 // Get all caregiver assignments (filtered by user role)
@@ -24,7 +93,7 @@ router.get(
         return res.status(401).json(response);
       }
 
-      let assignments: any[] = [];
+      let assignments: AssignmentWithIncludes[] = [];
 
       switch (req.user.role) {
         case 'super_admin':
@@ -378,7 +447,7 @@ router.post(
       }
 
       // Set default permissions based on caregiver type
-      const defaultPermissions =
+      const defaultPermissions: AssignmentPermissions =
         caregiverType === 'professional'
           ? {
               view_all_symptoms: true,
@@ -396,7 +465,7 @@ router.post(
               communicate_professional: true,
             };
 
-      const finalPermissions = permissions || defaultPermissions;
+      const finalPermissions: AssignmentPermissions = permissions || defaultPermissions;
 
       // Determine initial status based on caregiver type and who's creating
       let initialStatus = 'pending';
@@ -422,7 +491,7 @@ router.post(
           patientId,
           caregiverId,
           caregiverType,
-          status: initialStatus as any,
+          status: initialStatus as AssignmentStatus,
           permissions: JSON.stringify(finalPermissions),
           startDate: new Date(),
           notes: notes || '',
@@ -477,10 +546,10 @@ router.post(
           notes: assignment.notes,
           consentGiven: assignment.consentGiven,
           consentDate: assignment.consentDate,
-          patient: (assignment as any).patient,
-          caregiver: (assignment as any).caregiver,
+          patient: assignment.patient,
+          caregiver: assignment.caregiver,
           assignedBy: assignment.assignedBy,
-          assignedByUser: (assignment as any).assignedByUser,
+          assignedByUser: assignment.assignedByUser,
           createdAt: assignment.createdAt,
           updatedAt: assignment.updatedAt,
         },
@@ -684,7 +753,7 @@ router.put(
       }
 
       // Prepare update data
-      const updateData: any = {};
+      const updateData: AssignmentUpdateData = {};
 
       if (status !== undefined) {
         // Validate status changes
@@ -696,7 +765,7 @@ router.put(
           };
           return res.status(400).json(response);
         }
-        updateData.status = status as any;
+        updateData.status = status as AssignmentStatus;
       }
 
       if (permissions !== undefined) {
