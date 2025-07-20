@@ -238,7 +238,7 @@
     "stats": {
       "totalUsers": "Total Users",
       "totalPatients": "Total Patients",
-      "organizations": "Organizations", 
+      "organizations": "Organizations",
       "activeAssignments": "Active Assignments",
       "total": "Total",
       "active": "Active",
@@ -246,7 +246,7 @@
     },
     "accessTypes": {
       "medicalEmergency": "Medical Emergency",
-      "technicalSupport": "Technical Support", 
+      "technicalSupport": "Technical Support",
       "dataRecovery": "Data Recovery",
       "auditInvestigation": "Audit Investigation"
     },
@@ -267,7 +267,7 @@
     "createButton": "Create Assignment",
     "searchPlaceholder": "Search by patient or caregiver name...",
     "searchLabel": "Search assignments",
-    "filterByStatus": "Filter by status", 
+    "filterByStatus": "Filter by status",
     "filterByType": "Filter by caregiver type",
     "allStatus": "All Status",
     "allTypes": "All Types",

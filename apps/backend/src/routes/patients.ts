@@ -28,16 +28,16 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
                 id: true,
                 email: true,
                 name: true,
-                isActive: true
-              }
+                isActive: true,
+              },
             },
             organization: {
               select: {
                 id: true,
                 name: true,
-                isActive: true
-              }
-            }
+                isActive: true,
+              },
+            },
           },
           orderBy: { name: 'asc' },
         });
@@ -55,16 +55,16 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
                 id: true,
                 email: true,
                 name: true,
-                isActive: true
-              }
+                isActive: true,
+              },
             },
             organization: {
               select: {
                 id: true,
                 name: true,
-                isActive: true
-              }
-            }
+                isActive: true,
+              },
+            },
           },
           orderBy: { name: 'asc' },
         });
@@ -78,9 +78,9 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
             caregiverAssignments: {
               some: {
                 caregiverId: req.user.userId,
-                status: 'active'
-              }
-            }
+                status: 'active',
+              },
+            },
           },
           include: {
             user: {
@@ -88,16 +88,16 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
                 id: true,
                 email: true,
                 name: true,
-                isActive: true
-              }
+                isActive: true,
+              },
             },
             organization: {
               select: {
                 id: true,
                 name: true,
-                isActive: true
-              }
-            }
+                isActive: true,
+              },
+            },
           },
           orderBy: { name: 'asc' },
         });
@@ -115,16 +115,16 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
                 id: true,
                 email: true,
                 name: true,
-                isActive: true
-              }
+                isActive: true,
+              },
             },
             organization: {
               select: {
                 id: true,
                 name: true,
-                isActive: true
-              }
-            }
+                isActive: true,
+              },
+            },
           },
           orderBy: { name: 'asc' },
         });
@@ -170,79 +170,84 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
 });
 
 // Create new patient
-router.post('/', authenticateToken, authorizeRole(['patient', 'healthcare_provider']), async (req: AuthenticatedRequest, res) => {
-  try {
-    const { name, dateOfBirth, diagnosisDate, userId } = req.body;
+router.post(
+  '/',
+  authenticateToken,
+  authorizeRole(['patient', 'healthcare_provider']),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { name, dateOfBirth, diagnosisDate, userId } = req.body;
 
-    // Validate input
-    if (!name || !dateOfBirth || !diagnosisDate) {
+      // Validate input
+      if (!name || !dateOfBirth || !diagnosisDate) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Missing required fields',
+        };
+        return res.status(400).json(response);
+      }
+
+      // For patients, they can only create their own record
+      const targetUserId = req.user?.role === 'patient' ? req.user.userId : userId;
+
+      if (!targetUserId) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'User ID is required',
+        };
+        return res.status(400).json(response);
+      }
+
+      // Check if patient already exists for this user
+      const existingPatient = await prisma.patient.findUnique({
+        where: { userId: targetUserId },
+      });
+
+      if (existingPatient) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Patient record already exists for this user',
+        };
+        return res.status(400).json(response);
+      }
+
+      // Create patient
+      const patient = await prisma.patient.create({
+        data: {
+          userId: targetUserId,
+          organizationId: req.user?.organizationId || 'default_org',
+          name,
+          dateOfBirth: new Date(dateOfBirth),
+          diagnosisDate: new Date(diagnosisDate),
+        },
+      });
+
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          id: patient.id,
+          userId: patient.userId,
+          name: patient.name,
+          dateOfBirth: patient.dateOfBirth,
+          diagnosisDate: patient.diagnosisDate,
+          caregiverIds: [],
+          healthcareProviderIds: [],
+          createdAt: patient.createdAt,
+          updatedAt: patient.updatedAt,
+        },
+      };
+
+      res.status(201).json(response);
+    } catch (error) {
+      console.error('Create patient error:', error);
       const response: ApiResponse = {
         success: false,
-        error: 'Missing required fields',
+        error: 'Internal server error',
       };
-      return res.status(400).json(response);
+      res.status(500).json(response);
     }
-
-    // For patients, they can only create their own record
-    const targetUserId = req.user?.role === 'patient' ? req.user.userId : userId;
-
-    if (!targetUserId) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'User ID is required',
-      };
-      return res.status(400).json(response);
-    }
-
-    // Check if patient already exists for this user
-    const existingPatient = await prisma.patient.findUnique({
-      where: { userId: targetUserId },
-    });
-
-    if (existingPatient) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'Patient record already exists for this user',
-      };
-      return res.status(400).json(response);
-    }
-
-    // Create patient
-    const patient = await prisma.patient.create({
-      data: {
-        userId: targetUserId,
-        organizationId: req.user?.organizationId || 'default_org',
-        name,
-        dateOfBirth: new Date(dateOfBirth),
-        diagnosisDate: new Date(diagnosisDate),
-      },
-    });
-
-    const response: ApiResponse = {
-      success: true,
-      data: {
-        id: patient.id,
-        userId: patient.userId,
-        name: patient.name,
-        dateOfBirth: patient.dateOfBirth,
-        diagnosisDate: patient.diagnosisDate,
-        caregiverIds: [],
-        healthcareProviderIds: [],
-        createdAt: patient.createdAt,
-        updatedAt: patient.updatedAt,
-      },
-    };
-
-    res.status(201).json(response);
-  } catch (error) {
-    console.error('Create patient error:', error);
-    const response: ApiResponse = {
-      success: false,
-      error: 'Internal server error',
-    };
-    res.status(500).json(response);
   }
-});
+);
 
 // Get patient by ID
 router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
@@ -269,15 +274,15 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
                 id: true,
                 email: true,
                 name: true,
-                isActive: true
-              }
+                isActive: true,
+              },
             },
             organization: {
               select: {
                 id: true,
                 name: true,
-                isActive: true
-              }
+                isActive: true,
+              },
             },
             caregiverAssignments: {
               where: { status: 'active' },
@@ -287,12 +292,12 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
                     id: true,
                     name: true,
                     email: true,
-                    role: true
-                  }
-                }
-              }
-            }
-          }
+                    role: true,
+                  },
+                },
+              },
+            },
+          },
         });
         break;
 
@@ -309,15 +314,15 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
                 id: true,
                 email: true,
                 name: true,
-                isActive: true
-              }
+                isActive: true,
+              },
             },
             organization: {
               select: {
                 id: true,
                 name: true,
-                isActive: true
-              }
+                isActive: true,
+              },
             },
             caregiverAssignments: {
               where: { status: 'active' },
@@ -327,12 +332,12 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
                     id: true,
                     name: true,
                     email: true,
-                    role: true
-                  }
-                }
-              }
-            }
-          }
+                    role: true,
+                  },
+                },
+              },
+            },
+          },
         });
         break;
 
@@ -345,9 +350,9 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
             caregiverAssignments: {
               some: {
                 caregiverId: req.user.userId,
-                status: 'active'
-              }
-            }
+                status: 'active',
+              },
+            },
           },
           include: {
             user: {
@@ -355,15 +360,15 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
                 id: true,
                 email: true,
                 name: true,
-                isActive: true
-              }
+                isActive: true,
+              },
             },
             organization: {
               select: {
                 id: true,
                 name: true,
-                isActive: true
-              }
+                isActive: true,
+              },
             },
             caregiverAssignments: {
               where: { status: 'active' },
@@ -373,12 +378,12 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
                     id: true,
                     name: true,
                     email: true,
-                    role: true
-                  }
-                }
-              }
-            }
-          }
+                    role: true,
+                  },
+                },
+              },
+            },
+          },
         });
         break;
 
@@ -395,15 +400,15 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
                 id: true,
                 email: true,
                 name: true,
-                isActive: true
-              }
+                isActive: true,
+              },
             },
             organization: {
               select: {
                 id: true,
                 name: true,
-                isActive: true
-              }
+                isActive: true,
+              },
             },
             caregiverAssignments: {
               where: { status: 'active' },
@@ -413,12 +418,12 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
                     id: true,
                     name: true,
                     email: true,
-                    role: true
-                  }
-                }
-              }
-            }
-          }
+                    role: true,
+                  },
+                },
+              },
+            },
+          },
         });
         break;
       }

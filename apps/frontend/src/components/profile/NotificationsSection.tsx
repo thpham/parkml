@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Bell, 
-  Mail, 
-  MessageSquare, 
+import {
+  Bell,
+  Mail,
+  MessageSquare,
   Clock,
   Volume2,
   Smartphone,
@@ -12,7 +12,7 @@ import {
   AlertCircle,
   Settings,
   Save,
-  Trash2
+  Trash2,
 } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 import toast from 'react-hot-toast';
@@ -78,7 +78,7 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
       systemUpdates: true,
       securityAlerts: true,
       weeklyReports: false,
-      frequency: 'daily'
+      frequency: 'daily',
     },
     push: {
       enabled: true,
@@ -89,21 +89,21 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
       quietHours: {
         enabled: true,
         start: '22:00',
-        end: '07:00'
-      }
+        end: '07:00',
+      },
     },
     sms: {
       enabled: false,
       emergencyOnly: true,
       appointmentReminders: false,
-      phoneNumber: ''
+      phoneNumber: '',
     },
     inApp: {
       sound: true,
       vibration: true,
       badges: true,
-      popups: true
-    }
+      popups: true,
+    },
   });
   const [notificationHistory, setNotificationHistory] = useState<NotificationHistory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -120,8 +120,8 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
       setIsLoading(true);
       const response = await fetch('/api/user/notification-settings', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('parkml_token')}`,
+        },
       });
 
       if (response.ok) {
@@ -139,8 +139,8 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
     try {
       const response = await fetch('/api/user/notification-history', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('parkml_token')}`,
+        },
       });
 
       if (response.ok) {
@@ -154,10 +154,10 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
             type: 'push',
             category: 'reminder',
             title: 'Symptom Tracking Reminder',
-            message: 'Don\'t forget to log your symptoms for today',
+            message: "Don't forget to log your symptoms for today",
             timestamp: '2024-01-20T09:00:00Z',
             read: true,
-            success: true
+            success: true,
           },
           {
             id: '2',
@@ -167,7 +167,7 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
             message: 'Your weekly health summary is ready',
             timestamp: '2024-01-19T10:00:00Z',
             read: false,
-            success: true
+            success: true,
           },
           {
             id: '3',
@@ -177,8 +177,8 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
             message: 'You have a doctor appointment tomorrow at 2:00 PM',
             timestamp: '2024-01-18T16:00:00Z',
             read: true,
-            success: true
-          }
+            success: true,
+          },
         ]);
       }
     } catch (error) {
@@ -186,21 +186,26 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
     }
   };
 
-  const handleSettingChange = (category: keyof NotificationSettings, key: string, value: any, nested?: string) => {
+  const handleSettingChange = (
+    category: keyof NotificationSettings,
+    key: string,
+    value: any,
+    nested?: string
+  ) => {
     setSettings(prev => ({
       ...prev,
-      [category]: nested 
+      [category]: nested
         ? {
             ...(prev[category] as any),
             [nested]: {
               ...(prev[category] as any)[nested],
-              [key]: value
-            }
+              [key]: value,
+            },
           }
         : {
             ...(prev[category] as any),
-            [key]: value
-          }
+            [key]: value,
+          },
     }));
     setHasChanges(true);
   };
@@ -211,10 +216,10 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
       const response = await fetch('/api/user/notification-settings', {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${localStorage.getItem('parkml_token')}`,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(settings)
+        body: JSON.stringify(settings),
       });
 
       if (response.ok) {
@@ -236,10 +241,10 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
       const response = await fetch('/api/user/test-notification', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${localStorage.getItem('parkml_token')}`,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ type })
+        body: JSON.stringify({ type }),
       });
 
       if (response.ok) {
@@ -258,14 +263,12 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
       await fetch(`/api/user/notifications/${notificationId}/read`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('parkml_token')}`,
+        },
       });
 
       setNotificationHistory(prev =>
-        prev.map(notif =>
-          notif.id === notificationId ? { ...notif, read: true } : notif
-        )
+        prev.map(notif => (notif.id === notificationId ? { ...notif, read: true } : notif))
       );
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -281,8 +284,8 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
       await fetch('/api/user/notification-history', {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('parkml_token')}`,
+        },
       });
 
       setNotificationHistory([]);
@@ -295,20 +298,29 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'email': return Mail;
-      case 'push': return Smartphone;
-      case 'sms': return MessageSquare;
-      default: return Bell;
+      case 'email':
+        return Mail;
+      case 'push':
+        return Smartphone;
+      case 'sms':
+        return MessageSquare;
+      default:
+        return Bell;
     }
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'reminder': return 'badge-info';
-      case 'alert': return 'badge-warning';
-      case 'update': return 'badge-success';
-      case 'report': return 'badge-primary';
-      default: return 'badge-ghost';
+      case 'reminder':
+        return 'badge-info';
+      case 'alert':
+        return 'badge-warning';
+      case 'update':
+        return 'badge-success';
+      case 'report':
+        return 'badge-primary';
+      default:
+        return 'badge-ghost';
     }
   };
 
@@ -331,16 +343,10 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
           <h2 className="text-xl font-semibold text-base-content">
             {t('profile:notifications.title')}
           </h2>
-          <p className="text-base-content/60 mt-1">
-            {t('profile:notifications.description')}
-          </p>
+          <p className="text-base-content/60 mt-1">{t('profile:notifications.description')}</p>
         </div>
         {hasChanges && (
-          <button
-            onClick={handleSave}
-            className="btn btn-primary btn-sm"
-            disabled={isLoading}
-          >
+          <button onClick={handleSave} className="btn btn-primary btn-sm" disabled={isLoading}>
             {isLoading ? (
               <span className="loading loading-spinner loading-sm"></span>
             ) : (
@@ -383,7 +389,7 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
                   <input
                     type="checkbox"
                     checked={settings.email.enabled}
-                    onChange={(e) => handleSettingChange('email', 'enabled', e.target.checked)}
+                    onChange={e => handleSettingChange('email', 'enabled', e.target.checked)}
                     className="toggle toggle-primary"
                   />
                   <button
@@ -395,16 +401,20 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
                   </button>
                 </div>
               </div>
-              
+
               {settings.email.enabled && (
                 <div className="space-y-3">
                   <div className="form-control">
                     <label className="cursor-pointer label">
-                      <span className="label-text">{t('profile:notifications.email.symptomReminders')}</span>
+                      <span className="label-text">
+                        {t('profile:notifications.email.symptomReminders')}
+                      </span>
                       <input
                         type="checkbox"
                         checked={settings.email.symptomReminders}
-                        onChange={(e) => handleSettingChange('email', 'symptomReminders', e.target.checked)}
+                        onChange={e =>
+                          handleSettingChange('email', 'symptomReminders', e.target.checked)
+                        }
                         className="checkbox checkbox-primary"
                       />
                     </label>
@@ -412,11 +422,15 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
 
                   <div className="form-control">
                     <label className="cursor-pointer label">
-                      <span className="label-text">{t('profile:notifications.email.appointmentReminders')}</span>
+                      <span className="label-text">
+                        {t('profile:notifications.email.appointmentReminders')}
+                      </span>
                       <input
                         type="checkbox"
                         checked={settings.email.appointmentReminders}
-                        onChange={(e) => handleSettingChange('email', 'appointmentReminders', e.target.checked)}
+                        onChange={e =>
+                          handleSettingChange('email', 'appointmentReminders', e.target.checked)
+                        }
                         className="checkbox checkbox-primary"
                       />
                     </label>
@@ -424,11 +438,15 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
 
                   <div className="form-control">
                     <label className="cursor-pointer label">
-                      <span className="label-text">{t('profile:notifications.email.medicationReminders')}</span>
+                      <span className="label-text">
+                        {t('profile:notifications.email.medicationReminders')}
+                      </span>
                       <input
                         type="checkbox"
                         checked={settings.email.medicationReminders}
-                        onChange={(e) => handleSettingChange('email', 'medicationReminders', e.target.checked)}
+                        onChange={e =>
+                          handleSettingChange('email', 'medicationReminders', e.target.checked)
+                        }
                         className="checkbox checkbox-primary"
                       />
                     </label>
@@ -436,11 +454,15 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
 
                   <div className="form-control">
                     <label className="cursor-pointer label">
-                      <span className="label-text">{t('profile:notifications.email.weeklyReports')}</span>
+                      <span className="label-text">
+                        {t('profile:notifications.email.weeklyReports')}
+                      </span>
                       <input
                         type="checkbox"
                         checked={settings.email.weeklyReports}
-                        onChange={(e) => handleSettingChange('email', 'weeklyReports', e.target.checked)}
+                        onChange={e =>
+                          handleSettingChange('email', 'weeklyReports', e.target.checked)
+                        }
                         className="checkbox checkbox-primary"
                       />
                     </label>
@@ -448,16 +470,22 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
 
                   <div className="form-control">
                     <label className="label">
-                      <span className="label-text">{t('profile:notifications.email.frequency')}</span>
+                      <span className="label-text">
+                        {t('profile:notifications.email.frequency')}
+                      </span>
                     </label>
                     <select
                       value={settings.email.frequency}
-                      onChange={(e) => handleSettingChange('email', 'frequency', e.target.value)}
+                      onChange={e => handleSettingChange('email', 'frequency', e.target.value)}
                       className="select select-bordered select-sm"
                     >
-                      <option value="immediate">{t('profile:notifications.frequencies.immediate')}</option>
+                      <option value="immediate">
+                        {t('profile:notifications.frequencies.immediate')}
+                      </option>
                       <option value="daily">{t('profile:notifications.frequencies.daily')}</option>
-                      <option value="weekly">{t('profile:notifications.frequencies.weekly')}</option>
+                      <option value="weekly">
+                        {t('profile:notifications.frequencies.weekly')}
+                      </option>
                     </select>
                   </div>
                 </div>
@@ -477,7 +505,7 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
                   <input
                     type="checkbox"
                     checked={settings.push.enabled}
-                    onChange={(e) => handleSettingChange('push', 'enabled', e.target.checked)}
+                    onChange={e => handleSettingChange('push', 'enabled', e.target.checked)}
                     className="toggle toggle-secondary"
                   />
                   <button
@@ -489,16 +517,20 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
                   </button>
                 </div>
               </div>
-              
+
               {settings.push.enabled && (
                 <div className="space-y-3">
                   <div className="form-control">
                     <label className="cursor-pointer label">
-                      <span className="label-text">{t('profile:notifications.push.symptomReminders')}</span>
+                      <span className="label-text">
+                        {t('profile:notifications.push.symptomReminders')}
+                      </span>
                       <input
                         type="checkbox"
                         checked={settings.push.symptomReminders}
-                        onChange={(e) => handleSettingChange('push', 'symptomReminders', e.target.checked)}
+                        onChange={e =>
+                          handleSettingChange('push', 'symptomReminders', e.target.checked)
+                        }
                         className="checkbox checkbox-secondary"
                       />
                     </label>
@@ -506,25 +538,35 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
 
                   <div className="form-control">
                     <label className="cursor-pointer label">
-                      <span className="label-text">{t('profile:notifications.push.emergencyAlerts')}</span>
+                      <span className="label-text">
+                        {t('profile:notifications.push.emergencyAlerts')}
+                      </span>
                       <input
                         type="checkbox"
                         checked={settings.push.emergencyAlerts}
-                        onChange={(e) => handleSettingChange('push', 'emergencyAlerts', e.target.checked)}
+                        onChange={e =>
+                          handleSettingChange('push', 'emergencyAlerts', e.target.checked)
+                        }
                         className="checkbox checkbox-secondary"
                       />
                     </label>
                   </div>
 
-                  <div className="divider text-xs">{t('profile:notifications.push.quietHours')}</div>
+                  <div className="divider text-xs">
+                    {t('profile:notifications.push.quietHours')}
+                  </div>
 
                   <div className="form-control">
                     <label className="cursor-pointer label">
-                      <span className="label-text">{t('profile:notifications.push.enableQuietHours')}</span>
+                      <span className="label-text">
+                        {t('profile:notifications.push.enableQuietHours')}
+                      </span>
                       <input
                         type="checkbox"
                         checked={settings.push.quietHours.enabled}
-                        onChange={(e) => handleSettingChange('push', 'enabled', e.target.checked, 'quietHours')}
+                        onChange={e =>
+                          handleSettingChange('push', 'enabled', e.target.checked, 'quietHours')
+                        }
                         className="checkbox checkbox-secondary"
                       />
                     </label>
@@ -534,23 +576,31 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
                     <div className="grid grid-cols-2 gap-2">
                       <div className="form-control">
                         <label className="label">
-                          <span className="label-text text-xs">{t('profile:notifications.push.quietStart')}</span>
+                          <span className="label-text text-xs">
+                            {t('profile:notifications.push.quietStart')}
+                          </span>
                         </label>
                         <input
                           type="time"
                           value={settings.push.quietHours.start}
-                          onChange={(e) => handleSettingChange('push', 'start', e.target.value, 'quietHours')}
+                          onChange={e =>
+                            handleSettingChange('push', 'start', e.target.value, 'quietHours')
+                          }
                           className="input input-bordered input-sm"
                         />
                       </div>
                       <div className="form-control">
                         <label className="label">
-                          <span className="label-text text-xs">{t('profile:notifications.push.quietEnd')}</span>
+                          <span className="label-text text-xs">
+                            {t('profile:notifications.push.quietEnd')}
+                          </span>
                         </label>
                         <input
                           type="time"
                           value={settings.push.quietHours.end}
-                          onChange={(e) => handleSettingChange('push', 'end', e.target.value, 'quietHours')}
+                          onChange={e =>
+                            handleSettingChange('push', 'end', e.target.value, 'quietHours')
+                          }
                           className="input input-bordered input-sm"
                         />
                       </div>
@@ -573,7 +623,7 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
                   <input
                     type="checkbox"
                     checked={settings.sms.enabled}
-                    onChange={(e) => handleSettingChange('sms', 'enabled', e.target.checked)}
+                    onChange={e => handleSettingChange('sms', 'enabled', e.target.checked)}
                     className="toggle toggle-accent"
                   />
                   <button
@@ -585,17 +635,19 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
                   </button>
                 </div>
               </div>
-              
+
               {settings.sms.enabled && (
                 <div className="space-y-3">
                   <div className="form-control">
                     <label className="label">
-                      <span className="label-text">{t('profile:notifications.sms.phoneNumber')}</span>
+                      <span className="label-text">
+                        {t('profile:notifications.sms.phoneNumber')}
+                      </span>
                     </label>
                     <input
                       type="tel"
                       value={settings.sms.phoneNumber}
-                      onChange={(e) => handleSettingChange('sms', 'phoneNumber', e.target.value)}
+                      onChange={e => handleSettingChange('sms', 'phoneNumber', e.target.value)}
                       placeholder="+41 XX XXX XX XX"
                       className="input input-bordered"
                     />
@@ -603,11 +655,15 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
 
                   <div className="form-control">
                     <label className="cursor-pointer label">
-                      <span className="label-text">{t('profile:notifications.sms.emergencyOnly')}</span>
+                      <span className="label-text">
+                        {t('profile:notifications.sms.emergencyOnly')}
+                      </span>
                       <input
                         type="checkbox"
                         checked={settings.sms.emergencyOnly}
-                        onChange={(e) => handleSettingChange('sms', 'emergencyOnly', e.target.checked)}
+                        onChange={e =>
+                          handleSettingChange('sms', 'emergencyOnly', e.target.checked)
+                        }
                         className="checkbox checkbox-accent"
                       />
                     </label>
@@ -616,11 +672,15 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
                   {!settings.sms.emergencyOnly && (
                     <div className="form-control">
                       <label className="cursor-pointer label">
-                        <span className="label-text">{t('profile:notifications.sms.appointmentReminders')}</span>
+                        <span className="label-text">
+                          {t('profile:notifications.sms.appointmentReminders')}
+                        </span>
                         <input
                           type="checkbox"
                           checked={settings.sms.appointmentReminders}
-                          onChange={(e) => handleSettingChange('sms', 'appointmentReminders', e.target.checked)}
+                          onChange={e =>
+                            handleSettingChange('sms', 'appointmentReminders', e.target.checked)
+                          }
                           className="checkbox checkbox-accent"
                         />
                       </label>
@@ -638,7 +698,7 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
                 <Monitor className="h-5 w-5 text-info" />
                 {t('profile:notifications.inApp.title')}
               </h3>
-              
+
               <div className="space-y-3">
                 <div className="form-control">
                   <label className="cursor-pointer label">
@@ -649,7 +709,7 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
                     <input
                       type="checkbox"
                       checked={settings.inApp.sound}
-                      onChange={(e) => handleSettingChange('inApp', 'sound', e.target.checked)}
+                      onChange={e => handleSettingChange('inApp', 'sound', e.target.checked)}
                       className="checkbox checkbox-info"
                     />
                   </label>
@@ -664,7 +724,7 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
                     <input
                       type="checkbox"
                       checked={settings.inApp.vibration}
-                      onChange={(e) => handleSettingChange('inApp', 'vibration', e.target.checked)}
+                      onChange={e => handleSettingChange('inApp', 'vibration', e.target.checked)}
                       className="checkbox checkbox-info"
                     />
                   </label>
@@ -679,7 +739,7 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
                     <input
                       type="checkbox"
                       checked={settings.inApp.badges}
-                      onChange={(e) => handleSettingChange('inApp', 'badges', e.target.checked)}
+                      onChange={e => handleSettingChange('inApp', 'badges', e.target.checked)}
                       className="checkbox checkbox-info"
                     />
                   </label>
@@ -694,7 +754,7 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
                     <input
                       type="checkbox"
                       checked={settings.inApp.popups}
-                      onChange={(e) => handleSettingChange('inApp', 'popups', e.target.checked)}
+                      onChange={e => handleSettingChange('inApp', 'popups', e.target.checked)}
                       className="checkbox checkbox-info"
                     />
                   </label>
@@ -731,12 +791,12 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {notificationHistory.map((notification) => {
+              {notificationHistory.map(notification => {
                 const Icon = getNotificationIcon(notification.type);
-                
+
                 return (
-                  <div 
-                    key={notification.id} 
+                  <div
+                    key={notification.id}
                     className={`card bg-base-200 border ${!notification.read ? 'border-primary' : 'border-base-300'}`}
                   >
                     <div className="card-body p-4">
@@ -744,14 +804,18 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
                         <div className="flex-shrink-0">
                           <Icon className="h-5 w-5 text-primary" />
                         </div>
-                        
+
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-1">
-                            <h4 className={`font-medium ${!notification.read ? 'text-primary' : ''}`}>
+                            <h4
+                              className={`font-medium ${!notification.read ? 'text-primary' : ''}`}
+                            >
                               {notification.title}
                             </h4>
                             <div className="flex items-center space-x-2">
-                              <div className={`badge badge-sm ${getCategoryColor(notification.category)}`}>
+                              <div
+                                className={`badge badge-sm ${getCategoryColor(notification.category)}`}
+                              >
                                 {t(`profile:notifications.categories.${notification.category}`)}
                               </div>
                               {notification.success ? (
@@ -761,16 +825,16 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
                               )}
                             </div>
                           </div>
-                          
+
                           <p className="text-sm text-base-content/70 mb-2">
                             {notification.message}
                           </p>
-                          
+
                           <div className="flex items-center justify-between">
                             <span className="text-xs text-base-content/60">
                               {new Date(notification.timestamp).toLocaleString()}
                             </span>
-                            
+
                             {!notification.read && (
                               <button
                                 onClick={() => markAsRead(notification.id)}
@@ -799,11 +863,7 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
             <h4 className="font-medium">{t('profile:notifications.unsavedChanges')}</h4>
             <p className="text-sm">{t('profile:notifications.unsavedChangesDesc')}</p>
           </div>
-          <button
-            onClick={handleSave}
-            className="btn btn-sm btn-primary"
-            disabled={isLoading}
-          >
+          <button onClick={handleSave} className="btn btn-sm btn-primary" disabled={isLoading}>
             {t('common:save')}
           </button>
         </div>

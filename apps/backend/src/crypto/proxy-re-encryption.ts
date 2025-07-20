@@ -1,10 +1,10 @@
 /**
  * Proxy Re-Encryption System for Patient-Controlled Data Delegation
- * 
+ *
  * Allows patients to securely delegate access to their encrypted medical data
  * without revealing their private keys. Uses elliptic curve cryptography for
  * efficient proxy re-encryption operations.
- * 
+ *
  * Key Features:
  * - Patient maintains control over who can access their data
  * - Secure delegation without key exposure
@@ -30,11 +30,11 @@ export interface ProxyKeyPair {
  */
 export interface ReEncryptionKey {
   id: string;
-  delegatorId: string;      // Patient who is delegating
-  delegateeId: string;      // User receiving access
+  delegatorId: string; // Patient who is delegating
+  delegateeId: string; // User receiving access
   dataCategories: DataCategory[];
   accessLevel: AccessLevel;
-  keyData: string;          // Encrypted re-encryption key
+  keyData: string; // Encrypted re-encryption key
   validFrom: Date;
   validUntil: Date;
   isRevoked: boolean;
@@ -45,8 +45,8 @@ export interface ReEncryptionKey {
  * Delegation request structure
  */
 export interface DelegationRequest {
-  delegatorId: string;      // Patient delegating access
-  delegateeId: string;      // User receiving access
+  delegatorId: string; // Patient delegating access
+  delegateeId: string; // User receiving access
   dataCategories: DataCategory[];
   accessLevel: AccessLevel;
   validityDays: number;
@@ -59,14 +59,14 @@ export interface DelegationRequest {
  */
 export interface DataCapsule {
   id: string;
-  encryptedData: string;    // Data encrypted with patient's public key
+  encryptedData: string; // Data encrypted with patient's public key
   metadata: {
     patientId: string;
     dataCategory: DataCategory;
     encryptedAt: Date;
     algorithm: string;
   };
-  accessSignature: string;  // Signature for integrity verification
+  accessSignature: string; // Signature for integrity verification
 }
 
 /**
@@ -83,10 +83,10 @@ export class ProxyReEncryption {
   public static generateKeyPair(): ProxyKeyPair {
     const privateKey = this.CURVE.utils.randomPrivateKey();
     const publicKey = this.CURVE.getPublicKey(privateKey);
-    
+
     return {
       privateKey,
-      publicKey
+      publicKey,
     };
   }
 
@@ -100,27 +100,27 @@ export class ProxyReEncryption {
   ): Promise<string> {
     // Generate random proxy value
     const proxyValue = this.CURVE.utils.randomPrivateKey();
-    
+
     // Create re-encryption key: rk = hash(delegator_private + proxy_value + delegatee_public)
     const keyMaterial = new Uint8Array([
       ...delegatorPrivateKey,
       ...proxyValue,
       ...delegateePublicKey,
-      ...new TextEncoder().encode(this.DELEGATION_SALT)
+      ...new TextEncoder().encode(this.DELEGATION_SALT),
     ]);
-    
+
     const reEncryptionKey = sha256(keyMaterial);
-    
+
     // Encrypt the re-encryption key with a derived key
     const delegationContext = `${request.delegatorId}:${request.delegateeId}:${Date.now()}`;
     const encryptionKey = sha256(new TextEncoder().encode(delegationContext));
-    
+
     // XOR encryption for the re-encryption key
     const encryptedKey = new Uint8Array(reEncryptionKey.length);
     for (let i = 0; i < reEncryptionKey.length; i++) {
       encryptedKey[i] = reEncryptionKey[i] ^ encryptionKey[i % encryptionKey.length];
     }
-    
+
     return Buffer.from(encryptedKey).toString('base64');
   }
 
@@ -138,7 +138,7 @@ export class ProxyReEncryption {
 
     // Get delegatee's public key
     const delegateePublicKey = await this.getUserPublicKey(request.delegateeId);
-    
+
     // Generate re-encryption key
     const reEncryptionKeyData = await this.generateReEncryptionKey(
       delegatorPrivateKey,
@@ -161,8 +161,8 @@ export class ProxyReEncryption {
         validUntil,
         reason: request.reason,
         organizationId: request.organizationId,
-        isRevoked: false
-      }
+        isRevoked: false,
+      },
     });
 
     // Create audit entry
@@ -177,8 +177,8 @@ export class ProxyReEncryption {
       details: {
         delegationId: delegation.id,
         validityDays: request.validityDays,
-        reason: request.reason
-      }
+        reason: request.reason,
+      },
     });
 
     return {
@@ -191,7 +191,7 @@ export class ProxyReEncryption {
       validFrom: delegation.validFrom,
       validUntil: delegation.validUntil,
       isRevoked: delegation.isRevoked,
-      organizationId: delegation.organizationId
+      organizationId: delegation.organizationId,
     };
   }
 
@@ -210,8 +210,8 @@ export class ProxyReEncryption {
       where: { id: delegationId },
       include: {
         delegator: { select: { id: true, name: true } },
-        delegatee: { select: { id: true, name: true } }
-      }
+        delegatee: { select: { id: true, name: true } },
+      },
     });
 
     if (!delegation) {
@@ -234,10 +234,10 @@ export class ProxyReEncryption {
     // Decrypt the re-encryption key
     const delegationContext = `${delegation.delegatorId}:${delegation.delegateeId}:${delegation.createdAt.getTime()}`;
     const encryptionKey = sha256(new TextEncoder().encode(delegationContext));
-    
+
     const encryptedKeyBuffer = Buffer.from(delegation.keyData, 'base64');
     const reEncryptionKey = new Uint8Array(encryptedKeyBuffer.length);
-    
+
     for (let i = 0; i < encryptedKeyBuffer.length; i++) {
       reEncryptionKey[i] = encryptedKeyBuffer[i] ^ encryptionKey[i % encryptionKey.length];
     }
@@ -245,11 +245,11 @@ export class ProxyReEncryption {
     // Re-encrypt the data for the delegatee
     const originalData = Buffer.from(encryptedData, 'base64');
     const delegateePublicKey = await this.getUserPublicKey(delegation.delegateeId);
-    
+
     // Simple re-encryption: XOR with re-encryption key and delegatee's public key hash
     const reEncryptionSeed = sha256(new Uint8Array([...reEncryptionKey, ...delegateePublicKey]));
     const reEncryptedData = new Uint8Array(originalData.length);
-    
+
     for (let i = 0; i < originalData.length; i++) {
       reEncryptedData[i] = originalData[i] ^ reEncryptionSeed[i % reEncryptionSeed.length];
     }
@@ -265,8 +265,8 @@ export class ProxyReEncryption {
       success: true,
       details: {
         delegationId: delegation.id,
-        dataSize: originalData.length
-      }
+        dataSize: originalData.length,
+      },
     });
 
     return Buffer.from(reEncryptedData).toString('base64');
@@ -284,7 +284,7 @@ export class ProxyReEncryption {
 
     // Get delegation information
     const delegation = await prisma.proxyReEncryptionKey.findUnique({
-      where: { id: delegationId }
+      where: { id: delegationId },
     });
 
     if (!delegation) {
@@ -294,24 +294,24 @@ export class ProxyReEncryption {
     // Decrypt the re-encryption key
     const delegationContext = `${delegation.delegatorId}:${delegation.delegateeId}:${delegation.createdAt.getTime()}`;
     const encryptionKey = sha256(new TextEncoder().encode(delegationContext));
-    
+
     const encryptedKeyBuffer = Buffer.from(delegation.keyData, 'base64');
     const reEncryptionKey = new Uint8Array(encryptedKeyBuffer.length);
-    
+
     for (let i = 0; i < encryptedKeyBuffer.length; i++) {
       reEncryptionKey[i] = encryptedKeyBuffer[i] ^ encryptionKey[i % encryptionKey.length];
     }
 
     // Get delegatee's public key for reconstruction
     const delegateePublicKey = this.CURVE.getPublicKey(delegateePrivateKey);
-    
+
     // Reconstruct the decryption seed
     const reEncryptionSeed = sha256(new Uint8Array([...reEncryptionKey, ...delegateePublicKey]));
-    
+
     // Decrypt the re-encrypted data
     const encryptedBuffer = Buffer.from(reEncryptedData, 'base64');
     const decryptedData = new Uint8Array(encryptedBuffer.length);
-    
+
     for (let i = 0; i < encryptedBuffer.length; i++) {
       decryptedData[i] = encryptedBuffer[i] ^ reEncryptionSeed[i % reEncryptionSeed.length];
     }
@@ -330,7 +330,7 @@ export class ProxyReEncryption {
     console.log(`🚫 Revoking delegation ${delegationId}`);
 
     const delegation = await prisma.proxyReEncryptionKey.findUnique({
-      where: { id: delegationId }
+      where: { id: delegationId },
     });
 
     if (!delegation) {
@@ -352,8 +352,8 @@ export class ProxyReEncryption {
         isRevoked: true,
         revokedAt: new Date(),
         revokedBy: revokerId,
-        revocationReason: reason
-      }
+        revocationReason: reason,
+      },
     });
 
     // Create audit entry
@@ -368,8 +368,8 @@ export class ProxyReEncryption {
       details: {
         delegationId,
         revokerId,
-        reason
-      }
+        reason,
+      },
     });
   }
 
@@ -380,21 +380,19 @@ export class ProxyReEncryption {
     userId: string,
     type: 'delegated_to_me' | 'delegated_by_me' = 'delegated_to_me'
   ): Promise<ReEncryptionKey[]> {
-    const where = type === 'delegated_to_me' 
-      ? { delegateeId: userId }
-      : { delegatorId: userId };
+    const where = type === 'delegated_to_me' ? { delegateeId: userId } : { delegatorId: userId };
 
     const delegations = await prisma.proxyReEncryptionKey.findMany({
       where: {
         ...where,
         isRevoked: false,
-        validUntil: { gt: new Date() }
+        validUntil: { gt: new Date() },
       },
       include: {
         delegator: { select: { id: true, name: true, email: true } },
-        delegatee: { select: { id: true, name: true, email: true } }
+        delegatee: { select: { id: true, name: true, email: true } },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
 
     return delegations.map((d: any) => ({
@@ -407,7 +405,7 @@ export class ProxyReEncryption {
       validFrom: d.validFrom,
       validUntil: d.validUntil,
       isRevoked: d.isRevoked,
-      organizationId: d.organizationId
+      organizationId: d.organizationId,
     }));
   }
 
@@ -417,7 +415,7 @@ export class ProxyReEncryption {
   private static async validateDelegationRequest(request: DelegationRequest): Promise<void> {
     // Check if delegator exists and is a patient
     const delegator = await prisma.user.findUnique({
-      where: { id: request.delegatorId }
+      where: { id: request.delegatorId },
     });
 
     if (!delegator) {
@@ -430,7 +428,7 @@ export class ProxyReEncryption {
 
     // Check if delegatee exists
     const delegatee = await prisma.user.findUnique({
-      where: { id: request.delegateeId }
+      where: { id: request.delegateeId },
     });
 
     if (!delegatee) {
@@ -443,8 +441,8 @@ export class ProxyReEncryption {
         delegatorId: request.delegatorId,
         delegateeId: request.delegateeId,
         isRevoked: false,
-        validUntil: { gt: new Date() }
-      }
+        validUntil: { gt: new Date() },
+      },
     });
 
     if (existingDelegation) {
@@ -496,14 +494,14 @@ export class ProxyReEncryption {
           accessLevel: entry.accessLevel,
           dataCategories: entry.dataCategories,
           proxyReEncryption: true,
-          timestamp: new Date()
+          timestamp: new Date(),
         }),
         success: entry.success,
         ipAddress: '127.0.0.1',
         userAgent: 'proxy-re-encryption-system',
         cryptographicProof: await this.generateDelegationProof(entry),
-        emergencyDetails: JSON.stringify(entry.details)
-      }
+        emergencyDetails: JSON.stringify(entry.details),
+      },
     });
   }
 
@@ -521,7 +519,7 @@ export class ProxyReEncryption {
       delegatorId: entry.delegatorId,
       delegateeId: entry.delegateeId,
       timestamp: Date.now(),
-      details: entry.details
+      details: entry.details,
     };
 
     const hash = sha256(new TextEncoder().encode(JSON.stringify(proofData)));

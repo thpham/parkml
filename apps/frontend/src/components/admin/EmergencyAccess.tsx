@@ -3,16 +3,16 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { useAuth } from '../../contexts/AuthContext';
 import { EmergencyAccess as EmergencyAccessType, ApiResponse, Patient } from '@parkml/shared';
 import { Avatar } from '../shared';
-import { 
-  AlertTriangle, 
-  Clock, 
-  Shield, 
-  User, 
+import {
+  AlertTriangle,
+  Clock,
+  Shield,
+  User,
   Calendar,
   CheckCircle,
   XCircle,
   Plus,
-  Search
+  Search,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -42,18 +42,19 @@ const EmergencyAccess: React.FC = () => {
     try {
       setLoading(true);
       const params = new URLSearchParams(
-        Object.fromEntries(
-          Object.entries(filters).filter(([_, value]) => value !== '')
-        )
+        Object.fromEntries(Object.entries(filters).filter(([_, value]) => value !== ''))
       );
 
       const response = await fetch(`/api/emergency-access?${params}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
-      const data: ApiResponse<{ emergencyAccesses: EmergencyAccessWithDetails[], pagination: any }> = await response.json();
+      const data: ApiResponse<{
+        emergencyAccesses: EmergencyAccessWithDetails[];
+        pagination: any;
+      }> = await response.json();
 
       if (data.success) {
         setEmergencyAccess(data.data?.emergencyAccesses || []);
@@ -74,7 +75,7 @@ const EmergencyAccess: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
       });
@@ -103,7 +104,7 @@ const EmergencyAccess: React.FC = () => {
       const response = await fetch(`/api/emergency-access/${id}/revoke`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -153,10 +154,10 @@ const EmergencyAccess: React.FC = () => {
 
   const formatAccessType = (type: string) => {
     const typeMap: Record<string, string> = {
-      'medical_emergency': t('emergency.accessTypes.medicalEmergency'),
-      'technical_support': t('emergency.accessTypes.technicalSupport'),
-      'data_recovery': t('emergency.accessTypes.dataRecovery'),
-      'audit_investigation': t('emergency.accessTypes.auditInvestigation'),
+      medical_emergency: t('emergency.accessTypes.medicalEmergency'),
+      technical_support: t('emergency.accessTypes.technicalSupport'),
+      data_recovery: t('emergency.accessTypes.dataRecovery'),
+      audit_investigation: t('emergency.accessTypes.auditInvestigation'),
     };
     return typeMap[type] || type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
@@ -198,10 +199,7 @@ const EmergencyAccess: React.FC = () => {
               <h1 className="card-title text-2xl">{t('emergency.title')}</h1>
               <p className="text-base-content/70">{t('emergency.subtitle')}</p>
             </div>
-            <button
-              onClick={() => setShowRequestForm(true)}
-              className="btn btn-error"
-            >
+            <button onClick={() => setShowRequestForm(true)} className="btn btn-error">
               <Plus className="h-4 w-4" />
               {t('emergency.requestButton')}
             </button>
@@ -214,7 +212,9 @@ const EmergencyAccess: React.FC = () => {
         <div className="card-body">
           <div className="flex items-center space-x-4">
             <div className="flex-1 form-control">
-              <label htmlFor="search" className="sr-only">{t('emergency.ariaLabels.searchEmergencyAccess')}</label>
+              <label htmlFor="search" className="sr-only">
+                {t('emergency.ariaLabels.searchEmergencyAccess')}
+              </label>
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 opacity-50" />
                 <input
@@ -222,34 +222,44 @@ const EmergencyAccess: React.FC = () => {
                   id="search"
                   placeholder={t('emergency.searchPlaceholder')}
                   value={filters.search}
-                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  onChange={e => handleFilterChange('search', e.target.value)}
                   className="input input-bordered w-full pl-10"
                 />
               </div>
             </div>
-            
+
             <div className="form-control">
-              <label htmlFor="accessType" className="sr-only">{t('emergency.ariaLabels.filterByAccessType')}</label>
+              <label htmlFor="accessType" className="sr-only">
+                {t('emergency.ariaLabels.filterByAccessType')}
+              </label>
               <select
                 id="accessType"
                 value={filters.accessType}
-                onChange={(e) => handleFilterChange('accessType', e.target.value)}
+                onChange={e => handleFilterChange('accessType', e.target.value)}
                 className="select select-bordered"
               >
                 <option value="">{t('emergency.allTypes')}</option>
-                <option value="medical_emergency">{t('emergency.accessTypes.medicalEmergency')}</option>
-                <option value="technical_support">{t('emergency.accessTypes.technicalSupport')}</option>
+                <option value="medical_emergency">
+                  {t('emergency.accessTypes.medicalEmergency')}
+                </option>
+                <option value="technical_support">
+                  {t('emergency.accessTypes.technicalSupport')}
+                </option>
                 <option value="data_recovery">{t('emergency.accessTypes.dataRecovery')}</option>
-                <option value="audit_investigation">{t('emergency.accessTypes.auditInvestigation')}</option>
+                <option value="audit_investigation">
+                  {t('emergency.accessTypes.auditInvestigation')}
+                </option>
               </select>
             </div>
-            
+
             <div className="form-control">
-              <label htmlFor="isActive" className="sr-only">{t('emergency.ariaLabels.filterByStatus')}</label>
+              <label htmlFor="isActive" className="sr-only">
+                {t('emergency.ariaLabels.filterByStatus')}
+              </label>
               <select
                 id="isActive"
                 value={filters.isActive}
-                onChange={(e) => handleFilterChange('isActive', e.target.value)}
+                onChange={e => handleFilterChange('isActive', e.target.value)}
                 className="select select-bordered"
               >
                 <option value="">{t('emergency.allStatus')}</option>
@@ -268,7 +278,7 @@ const EmergencyAccess: React.FC = () => {
             {t('emergency.recordsCount', { count: emergencyAccess.length })}
           </h2>
         </div>
-        
+
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <span className="loading loading-spinner loading-lg text-error"></span>
@@ -277,22 +287,24 @@ const EmergencyAccess: React.FC = () => {
           <div className="p-6 text-center">
             <AlertTriangle className="mx-auto h-12 w-12 opacity-50" />
             <h3 className="mt-2 text-sm font-medium">{t('emergency.noRecordsTitle')}</h3>
-            <p className="mt-1 text-sm opacity-70">
-              {t('emergency.noRecordsMessage')}
-            </p>
+            <p className="mt-1 text-sm opacity-70">{t('emergency.noRecordsMessage')}</p>
           </div>
         ) : (
           <div className="overflow-hidden">
             <ul className="divide-y divide-gray-200">
-              {emergencyAccess.map((access) => (
+              {emergencyAccess.map(access => (
                 <li key={access.id} className="px-6 py-4 hover:bg-base-200/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <Avatar
                         variant="icon"
-                        status={access.isActive && !isExpired(access.endTime || '') ? 'error' : 'inactive'}
+                        status={
+                          access.isActive && !isExpired(access.endTime || '') ? 'error' : 'inactive'
+                        }
                         size="md"
-                        aria-label={t('emergency.ariaLabels.emergencyAccessRecord', { accessType: formatAccessType(access.accessType) })}
+                        aria-label={t('emergency.ariaLabels.emergencyAccessRecord', {
+                          accessType: formatAccessType(access.accessType),
+                        })}
                       >
                         {getAccessTypeIcon(access.accessType)}
                       </Avatar>
@@ -300,18 +312,16 @@ const EmergencyAccess: React.FC = () => {
                         <div className="text-sm font-medium">
                           {access.patient?.name || t('emergency.patientNotFound')}
                         </div>
-                        <div className="text-sm opacity-70">
-                          {access.reason}
-                        </div>
+                        <div className="text-sm opacity-70">{access.reason}</div>
                         <div className="flex items-center text-xs opacity-60 mt-1">
                           <Calendar className="h-3 w-3 mr-1" />
-                          {t('emergency.requestedLabel')} {new Date(access.startTime).toLocaleString()}
+                          {t('emergency.requestedLabel')}{' '}
+                          {new Date(access.startTime).toLocaleString()}
                           {access.endTime && (
                             <span className="ml-3">
-                              {access.isActive && !isExpired(access.endTime) 
+                              {access.isActive && !isExpired(access.endTime)
                                 ? getTimeRemaining(access.endTime)
-                                : `${t('emergency.endedLabel')} ${new Date(access.endTime).toLocaleString()}`
-                              }
+                                : `${t('emergency.endedLabel')} ${new Date(access.endTime).toLocaleString()}`}
                             </span>
                           )}
                         </div>
@@ -319,7 +329,9 @@ const EmergencyAccess: React.FC = () => {
                     </div>
                     <div className="flex items-center space-x-4">
                       <div className="text-right">
-                        <div className={`badge ${getAccessTypeBadgeColor(access.accessType)} gap-1`}>
+                        <div
+                          className={`badge ${getAccessTypeBadgeColor(access.accessType)} gap-1`}
+                        >
                           {getAccessTypeIcon(access.accessType)}
                           {formatAccessType(access.accessType)}
                         </div>
@@ -391,7 +403,7 @@ const EmergencyAccessForm: React.FC<EmergencyAccessFormProps> = ({ onSubmit, onC
     try {
       const response = await fetch('/api/patients', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -408,7 +420,7 @@ const EmergencyAccessForm: React.FC<EmergencyAccessFormProps> = ({ onSubmit, onC
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       onSubmit(formData);
     } finally {
@@ -416,7 +428,9 @@ const EmergencyAccessForm: React.FC<EmergencyAccessFormProps> = ({ onSubmit, onC
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     const { name, value, type } = e.target;
     setFormData({
       ...formData,
@@ -431,11 +445,13 @@ const EmergencyAccessForm: React.FC<EmergencyAccessFormProps> = ({ onSubmit, onC
           <AlertTriangle className="h-5 w-5 text-error mr-2" />
           {t('emergency.requestTitle')}
         </h3>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="form-control">
             <label className="label" htmlFor="patientId">
-              <span className="label-text">{t('emergency.patientLabel')} {t('emergency.requiredField')}</span>
+              <span className="label-text">
+                {t('emergency.patientLabel')} {t('emergency.requiredField')}
+              </span>
             </label>
             <select
               id="patientId"
@@ -446,7 +462,7 @@ const EmergencyAccessForm: React.FC<EmergencyAccessFormProps> = ({ onSubmit, onC
               className="select select-bordered select-error w-full"
             >
               <option value="">{t('emergency.selectPatient')}</option>
-              {patients.map((patient) => (
+              {patients.map(patient => (
                 <option key={patient.id} value={patient.id}>
                   {patient.name}
                 </option>
@@ -456,7 +472,9 @@ const EmergencyAccessForm: React.FC<EmergencyAccessFormProps> = ({ onSubmit, onC
 
           <div className="form-control">
             <label className="label" htmlFor="accessType">
-              <span className="label-text">{t('emergency.accessTypeLabel')} {t('emergency.requiredField')}</span>
+              <span className="label-text">
+                {t('emergency.accessTypeLabel')} {t('emergency.requiredField')}
+              </span>
             </label>
             <select
               id="accessType"
@@ -466,16 +484,24 @@ const EmergencyAccessForm: React.FC<EmergencyAccessFormProps> = ({ onSubmit, onC
               required
               className="select select-bordered select-error w-full"
             >
-              <option value="medical_emergency">{t('emergency.accessTypes.medicalEmergency')}</option>
-              <option value="technical_support">{t('emergency.accessTypes.technicalSupport')}</option>
+              <option value="medical_emergency">
+                {t('emergency.accessTypes.medicalEmergency')}
+              </option>
+              <option value="technical_support">
+                {t('emergency.accessTypes.technicalSupport')}
+              </option>
               <option value="data_recovery">{t('emergency.accessTypes.dataRecovery')}</option>
-              <option value="audit_investigation">{t('emergency.accessTypes.auditInvestigation')}</option>
+              <option value="audit_investigation">
+                {t('emergency.accessTypes.auditInvestigation')}
+              </option>
             </select>
           </div>
 
           <div className="form-control">
             <label className="label" htmlFor="durationHours">
-              <span className="label-text">{t('emergency.durationLabel')} {t('emergency.requiredField')}</span>
+              <span className="label-text">
+                {t('emergency.durationLabel')} {t('emergency.requiredField')}
+              </span>
             </label>
             <input
               type="number"
@@ -492,7 +518,9 @@ const EmergencyAccessForm: React.FC<EmergencyAccessFormProps> = ({ onSubmit, onC
 
           <div className="form-control">
             <label className="label" htmlFor="reason">
-              <span className="label-text">{t('emergency.reasonLabel')} {t('emergency.requiredField')}</span>
+              <span className="label-text">
+                {t('emergency.reasonLabel')} {t('emergency.requiredField')}
+              </span>
             </label>
             <textarea
               id="reason"
@@ -514,18 +542,10 @@ const EmergencyAccessForm: React.FC<EmergencyAccessFormProps> = ({ onSubmit, onC
           </div>
 
           <div className="modal-action">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="btn btn-ghost"
-            >
+            <button type="button" onClick={onCancel} className="btn btn-ghost">
               {t('emergency.cancel')}
             </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn btn-error"
-            >
+            <button type="submit" disabled={loading} className="btn btn-error">
               {loading ? <span className="loading loading-spinner loading-sm"></span> : null}
               {loading ? t('emergency.requesting') : t('emergency.requestAccessButton')}
             </button>

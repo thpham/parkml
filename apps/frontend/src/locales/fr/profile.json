@@ -9,7 +9,7 @@
     "personalInfoDesc": "Informations de base et coordonnées",
     "security": "Sécurité",
     "securityDesc": "Mot de passe, 2FA et paramètres de sécurité",
-    "preferences": "Préférences", 
+    "preferences": "Préférences",
     "preferencesDesc": "Langue, thème et préférences de l'application",
     "notifications": "Notifications",
     "notificationsDesc": "Paramètres email, push et notifications"
@@ -82,7 +82,7 @@
       "theme": "Thème",
       "themes": {
         "light": "Clair",
-        "dark": "Sombre", 
+        "dark": "Sombre",
         "system": "Système"
       },
       "language": "Langue"

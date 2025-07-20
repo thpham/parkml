@@ -31,22 +31,21 @@ async function setupDatabase() {
 
   if (!dbExists) {
     console.log('📊 Database does not exist, creating fresh database...');
-    
+
     // Generate Prisma client
     runCommand('npx prisma generate', 'Generating Prisma client');
-    
+
     // Create database and apply migrations
     runCommand('npx prisma migrate dev --name init', 'Creating database and applying migrations');
-    
+
     // Seed the database
     runCommand('npm run db:seed', 'Seeding database with initial data');
-    
   } else if (migrationsExist) {
     console.log('📊 Database exists, checking for schema changes...');
-    
+
     // Generate Prisma client
     runCommand('npx prisma generate', 'Generating Prisma client');
-    
+
     // Check if migrations need to be applied
     try {
       execSync('npx prisma migrate status', { stdio: 'pipe' });
@@ -55,35 +54,34 @@ async function setupDatabase() {
       console.log('🔄 Database schema drift detected, resetting...');
       runCommand('npx prisma migrate reset --force', 'Resetting database to sync with migrations');
     }
-    
+
     // Check if we need to seed (if no users exist)
     try {
       const { prisma } = await import('../database/prisma-client');
       const userCount = await prisma.user.count();
-      
+
       if (userCount === 0) {
         console.log('🌱 No users found, seeding database...');
         runCommand('npm run db:seed', 'Seeding database with initial data');
       } else {
         console.log(`✅ Database already has ${userCount} users, skipping seed\n`);
       }
-      
+
       await prisma.$disconnect();
     } catch {
       console.log('🌱 Seeding database to ensure data is present...');
       runCommand('npm run db:seed', 'Seeding database with initial data');
     }
-    
   } else {
     console.log('📊 Database exists but no migrations found, resetting...');
-    
+
     // Generate Prisma client
     runCommand('npx prisma generate', 'Generating Prisma client');
-    
+
     // Reset and migrate
     runCommand('npx prisma migrate reset --force', 'Resetting database');
     runCommand('npx prisma migrate dev --name init', 'Creating initial migration');
-    
+
     // Seed the database
     runCommand('npm run db:seed', 'Seeding database with initial data');
   }

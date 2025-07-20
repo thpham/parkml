@@ -9,19 +9,17 @@ interface NonMotorSymptomsSectionProps {
   errors: FieldErrors<Partial<SymptomEntry>>;
 }
 
-const NonMotorSymptomsSection: React.FC<NonMotorSymptomsSectionProps> = ({
-  register,
-}) => {
+const NonMotorSymptomsSection: React.FC<NonMotorSymptomsSectionProps> = ({ register }) => {
   const { t } = useTranslation('symptoms');
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-medium">{t('nonMotor.title')}</h2>
-      
+
       {/* Cognitive Function */}
       <div className="card bg-base-200">
         <div className="card-body">
           <h3 className="card-title text-md">{t('nonMotor.cognitive.title')}</h3>
-        
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">
               <label className="label">
@@ -33,7 +31,7 @@ const NonMotorSymptomsSection: React.FC<NonMotorSymptomsSectionProps> = ({
                 className="input input-bordered w-full"
               />
             </div>
-            
+
             <div className="form-control">
               <label className="label">
                 <span className="label-text">{t('nonMotor.cognitive.alertness')}</span>
@@ -50,7 +48,7 @@ const NonMotorSymptomsSection: React.FC<NonMotorSymptomsSectionProps> = ({
               </select>
             </div>
           </div>
-        
+
           <div className="form-control mt-4">
             <label className="label">
               <span className="label-text">{t('nonMotor.cognitive.memoryRecentEvents')}</span>
@@ -60,8 +58,11 @@ const NonMotorSymptomsSection: React.FC<NonMotorSymptomsSectionProps> = ({
                 { value: 'good', label: t('nonMotor.qualityLevels.good') },
                 { value: 'fair', label: t('nonMotor.qualityLevels.fair') },
                 { value: 'poor', label: t('nonMotor.qualityLevels.poor') },
-              ].map((level) => (
-                <label key={level.value} className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors">
+              ].map(level => (
+                <label
+                  key={level.value}
+                  className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors"
+                >
                   <input
                     {...register('nonMotorSymptoms.cognitive.memory.recentEvents')}
                     type="radio"
@@ -73,7 +74,7 @@ const NonMotorSymptomsSection: React.FC<NonMotorSymptomsSectionProps> = ({
               ))}
             </div>
           </div>
-        
+
           <div className="form-control mt-4">
             <label className="label">
               <span className="label-text">{t('nonMotor.cognitive.concentrationAttention')}</span>
@@ -83,8 +84,11 @@ const NonMotorSymptomsSection: React.FC<NonMotorSymptomsSectionProps> = ({
                 { value: 'good', label: t('nonMotor.qualityLevels.good') },
                 { value: 'fair', label: t('nonMotor.qualityLevels.fair') },
                 { value: 'poor', label: t('nonMotor.qualityLevels.poor') },
-              ].map((level) => (
-                <label key={level.value} className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors">
+              ].map(level => (
+                <label
+                  key={level.value}
+                  className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors"
+                >
                   <input
                     {...register('nonMotorSymptoms.cognitive.concentration')}
                     type="radio"
@@ -96,7 +100,7 @@ const NonMotorSymptomsSection: React.FC<NonMotorSymptomsSectionProps> = ({
               ))}
             </div>
           </div>
-        
+
           <div className="form-control mt-4">
             <label className="label">
               <span className="label-text">{t('nonMotor.cognitive.notes')}</span>
@@ -110,12 +114,12 @@ const NonMotorSymptomsSection: React.FC<NonMotorSymptomsSectionProps> = ({
           </div>
         </div>
       </div>
-      
+
       {/* Sleep Assessment */}
       <div className="card bg-base-200">
         <div className="card-body">
           <h3 className="card-title text-md">{t('nonMotor.sleep.title')}</h3>
-        
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="form-control">
               <label className="label">
@@ -127,7 +131,7 @@ const NonMotorSymptomsSection: React.FC<NonMotorSymptomsSectionProps> = ({
                 className="input input-bordered w-full"
               />
             </div>
-            
+
             <div className="form-control">
               <label className="label">
                 <span className="label-text">{t('nonMotor.sleep.wakeTime')}</span>
@@ -138,7 +142,7 @@ const NonMotorSymptomsSection: React.FC<NonMotorSymptomsSectionProps> = ({
                 className="input input-bordered w-full"
               />
             </div>
-            
+
             <div className="form-control">
               <label className="label">
                 <span className="label-text">{t('nonMotor.sleep.totalSleepHours')}</span>
@@ -153,7 +157,7 @@ const NonMotorSymptomsSection: React.FC<NonMotorSymptomsSectionProps> = ({
               />
             </div>
           </div>
-        
+
           <div className="form-control mt-4">
             <label className="label">
               <span className="label-text">{t('nonMotor.sleep.sleepQuality')}</span>
@@ -162,9 +166,15 @@ const NonMotorSymptomsSection: React.FC<NonMotorSymptomsSectionProps> = ({
               {[
                 { value: 'restful', label: t('nonMotor.sleepQualityTypes.restful') },
                 { value: 'restless', label: t('nonMotor.sleepQualityTypes.restless') },
-                { value: 'frequent_awakenings', label: t('nonMotor.sleepQualityTypes.frequentAwakenings') },
-              ].map((quality) => (
-                <label key={quality.value} className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors">
+                {
+                  value: 'frequent_awakenings',
+                  label: t('nonMotor.sleepQualityTypes.frequentAwakenings'),
+                },
+              ].map(quality => (
+                <label
+                  key={quality.value}
+                  className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors"
+                >
                   <input
                     {...register('nonMotorSymptoms.sleep.sleepQuality')}
                     type="radio"
@@ -176,7 +186,7 @@ const NonMotorSymptomsSection: React.FC<NonMotorSymptomsSectionProps> = ({
               ))}
             </div>
           </div>
-        
+
           <div className="form-control mt-4">
             <label className="label">
               <span className="label-text">{t('nonMotor.sleep.notes')}</span>

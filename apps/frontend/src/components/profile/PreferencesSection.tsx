@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Settings, 
-  Globe, 
-  Moon, 
-  Sun, 
+import {
+  Settings,
+  Globe,
+  Moon,
+  Sun,
   Monitor,
   Palette,
   Volume2,
   Clock,
   Save,
-  RotateCcw
+  RotateCcw,
 } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 import toast from 'react-hot-toast';
@@ -56,20 +56,20 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
       push: true,
       sms: false,
       reminderTime: '09:00',
-      frequency: 'daily'
+      frequency: 'daily',
     },
     accessibility: {
       reduceMotion: false,
       highContrast: false,
       largeText: false,
-      screenReader: false
+      screenReader: false,
     },
     privacy: {
       dataSharing: false,
       analytics: true,
       marketing: false,
-      profileVisibility: 'private'
-    }
+      profileVisibility: 'private',
+    },
   });
   const [isLoading, setIsLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -83,8 +83,8 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
       setIsLoading(true);
       const response = await fetch('/api/user/preferences', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('parkml_token')}`,
+        },
       });
 
       if (response.ok) {
@@ -101,9 +101,10 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
   const handlePreferenceChange = (category: string, key: string, value: any) => {
     setPreferences(prev => ({
       ...prev,
-      [category]: typeof prev[category as keyof UserPreferences] === 'object' 
-        ? { ...(prev[category as keyof UserPreferences] as any), [key]: value }
-        : value
+      [category]:
+        typeof prev[category as keyof UserPreferences] === 'object'
+          ? { ...(prev[category as keyof UserPreferences] as any), [key]: value }
+          : value,
     }));
     setHasChanges(true);
   };
@@ -114,21 +115,21 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
       const response = await fetch('/api/user/preferences', {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${localStorage.getItem('parkml_token')}`,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(preferences)
+        body: JSON.stringify(preferences),
       });
 
       if (response.ok) {
         setHasChanges(false);
         toast.success(t('profile:preferences.saveSuccess'));
-        
+
         // Apply language change immediately
         if (preferences.language) {
           await setLanguage(preferences.language as 'en' | 'fr');
         }
-        
+
         // Apply theme change
         applyTheme(preferences.theme);
       } else {
@@ -156,16 +157,21 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
       html.setAttribute('data-theme', 'light');
     } else {
       // System theme
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
       html.setAttribute('data-theme', systemTheme);
     }
   };
 
   const getThemeIcon = (theme: string) => {
     switch (theme) {
-      case 'light': return Sun;
-      case 'dark': return Moon;
-      default: return Monitor;
+      case 'light':
+        return Sun;
+      case 'dark':
+        return Moon;
+      default:
+        return Monitor;
     }
   };
 
@@ -188,25 +194,15 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
           <h2 className="text-xl font-semibold text-base-content">
             {t('profile:preferences.title')}
           </h2>
-          <p className="text-base-content/60 mt-1">
-            {t('profile:preferences.description')}
-          </p>
+          <p className="text-base-content/60 mt-1">{t('profile:preferences.description')}</p>
         </div>
         {hasChanges && (
           <div className="flex space-x-2">
-            <button
-              onClick={handleReset}
-              className="btn btn-outline btn-sm"
-              disabled={isLoading}
-            >
+            <button onClick={handleReset} className="btn btn-outline btn-sm" disabled={isLoading}>
               <RotateCcw className="h-4 w-4 mr-1" />
               {t('common:reset')}
             </button>
-            <button
-              onClick={handleSave}
-              className="btn btn-primary btn-sm"
-              disabled={isLoading}
-            >
+            <button onClick={handleSave} className="btn btn-primary btn-sm" disabled={isLoading}>
               {isLoading ? (
                 <span className="loading loading-spinner loading-sm"></span>
               ) : (
@@ -226,14 +222,16 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
               <Palette className="h-5 w-5 text-primary" />
               {t('profile:preferences.appearance.title')}
             </h3>
-            
+
             <div className="space-y-4">
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">{t('profile:preferences.appearance.theme')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:preferences.appearance.theme')}
+                  </span>
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  {['light', 'dark', 'system'].map((theme) => {
+                  {['light', 'dark', 'system'].map(theme => {
                     const Icon = getThemeIcon(theme);
                     return (
                       <button
@@ -251,11 +249,13 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
 
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">{t('profile:preferences.appearance.language')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:preferences.appearance.language')}
+                  </span>
                 </label>
                 <select
                   value={preferences.language}
-                  onChange={(e) => handlePreferenceChange('language', '', e.target.value)}
+                  onChange={e => handlePreferenceChange('language', '', e.target.value)}
                   className="select select-bordered"
                 >
                   <option value="en">English</option>
@@ -275,15 +275,17 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
               <Globe className="h-5 w-5 text-secondary" />
               {t('profile:preferences.regional.title')}
             </h3>
-            
+
             <div className="space-y-4">
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">{t('profile:preferences.regional.timezone')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:preferences.regional.timezone')}
+                  </span>
                 </label>
                 <select
                   value={preferences.timezone}
-                  onChange={(e) => handlePreferenceChange('timezone', '', e.target.value)}
+                  onChange={e => handlePreferenceChange('timezone', '', e.target.value)}
                   className="select select-bordered"
                 >
                   <option value="Europe/Zurich">Europe/Zurich (CET)</option>
@@ -298,11 +300,13 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
 
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">{t('profile:preferences.regional.dateFormat')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:preferences.regional.dateFormat')}
+                  </span>
                 </label>
                 <select
                   value={preferences.dateFormat}
-                  onChange={(e) => handlePreferenceChange('dateFormat', '', e.target.value)}
+                  onChange={e => handlePreferenceChange('dateFormat', '', e.target.value)}
                   className="select select-bordered"
                 >
                   <option value="DD/MM/YYYY">DD/MM/YYYY (31/12/2024)</option>
@@ -313,7 +317,9 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
 
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">{t('profile:preferences.regional.timeFormat')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:preferences.regional.timeFormat')}
+                  </span>
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -343,15 +349,19 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
               <Volume2 className="h-5 w-5 text-accent" />
               {t('profile:preferences.notifications.title')}
             </h3>
-            
+
             <div className="space-y-4">
               <div className="form-control">
                 <label className="cursor-pointer label">
-                  <span className="label-text font-medium">{t('profile:preferences.notifications.email')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:preferences.notifications.email')}
+                  </span>
                   <input
                     type="checkbox"
                     checked={preferences.notifications.email}
-                    onChange={(e) => handlePreferenceChange('notifications', 'email', e.target.checked)}
+                    onChange={e =>
+                      handlePreferenceChange('notifications', 'email', e.target.checked)
+                    }
                     className="toggle toggle-primary"
                   />
                 </label>
@@ -359,11 +369,15 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
 
               <div className="form-control">
                 <label className="cursor-pointer label">
-                  <span className="label-text font-medium">{t('profile:preferences.notifications.push')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:preferences.notifications.push')}
+                  </span>
                   <input
                     type="checkbox"
                     checked={preferences.notifications.push}
-                    onChange={(e) => handlePreferenceChange('notifications', 'push', e.target.checked)}
+                    onChange={e =>
+                      handlePreferenceChange('notifications', 'push', e.target.checked)
+                    }
                     className="toggle toggle-primary"
                   />
                 </label>
@@ -371,11 +385,13 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
 
               <div className="form-control">
                 <label className="cursor-pointer label">
-                  <span className="label-text font-medium">{t('profile:preferences.notifications.sms')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:preferences.notifications.sms')}
+                  </span>
                   <input
                     type="checkbox"
                     checked={preferences.notifications.sms}
-                    onChange={(e) => handlePreferenceChange('notifications', 'sms', e.target.checked)}
+                    onChange={e => handlePreferenceChange('notifications', 'sms', e.target.checked)}
                     className="toggle toggle-primary"
                   />
                 </label>
@@ -383,28 +399,42 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
 
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">{t('profile:preferences.notifications.reminderTime')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:preferences.notifications.reminderTime')}
+                  </span>
                 </label>
                 <input
                   type="time"
                   value={preferences.notifications.reminderTime}
-                  onChange={(e) => handlePreferenceChange('notifications', 'reminderTime', e.target.value)}
+                  onChange={e =>
+                    handlePreferenceChange('notifications', 'reminderTime', e.target.value)
+                  }
                   className="input input-bordered"
                 />
               </div>
 
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">{t('profile:preferences.notifications.frequency')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:preferences.notifications.frequency')}
+                  </span>
                 </label>
                 <select
                   value={preferences.notifications.frequency}
-                  onChange={(e) => handlePreferenceChange('notifications', 'frequency', e.target.value)}
+                  onChange={e =>
+                    handlePreferenceChange('notifications', 'frequency', e.target.value)
+                  }
                   className="select select-bordered"
                 >
-                  <option value="daily">{t('profile:preferences.notifications.frequencies.daily')}</option>
-                  <option value="weekly">{t('profile:preferences.notifications.frequencies.weekly')}</option>
-                  <option value="monthly">{t('profile:preferences.notifications.frequencies.monthly')}</option>
+                  <option value="daily">
+                    {t('profile:preferences.notifications.frequencies.daily')}
+                  </option>
+                  <option value="weekly">
+                    {t('profile:preferences.notifications.frequencies.weekly')}
+                  </option>
+                  <option value="monthly">
+                    {t('profile:preferences.notifications.frequencies.monthly')}
+                  </option>
                 </select>
               </div>
             </div>
@@ -418,15 +448,19 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
               <Settings className="h-5 w-5 text-info" />
               {t('profile:preferences.accessibility.title')}
             </h3>
-            
+
             <div className="space-y-4">
               <div className="form-control">
                 <label className="cursor-pointer label">
-                  <span className="label-text font-medium">{t('profile:preferences.accessibility.reduceMotion')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:preferences.accessibility.reduceMotion')}
+                  </span>
                   <input
                     type="checkbox"
                     checked={preferences.accessibility.reduceMotion}
-                    onChange={(e) => handlePreferenceChange('accessibility', 'reduceMotion', e.target.checked)}
+                    onChange={e =>
+                      handlePreferenceChange('accessibility', 'reduceMotion', e.target.checked)
+                    }
                     className="toggle toggle-primary"
                   />
                 </label>
@@ -439,11 +473,15 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
 
               <div className="form-control">
                 <label className="cursor-pointer label">
-                  <span className="label-text font-medium">{t('profile:preferences.accessibility.highContrast')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:preferences.accessibility.highContrast')}
+                  </span>
                   <input
                     type="checkbox"
                     checked={preferences.accessibility.highContrast}
-                    onChange={(e) => handlePreferenceChange('accessibility', 'highContrast', e.target.checked)}
+                    onChange={e =>
+                      handlePreferenceChange('accessibility', 'highContrast', e.target.checked)
+                    }
                     className="toggle toggle-primary"
                   />
                 </label>
@@ -451,11 +489,15 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
 
               <div className="form-control">
                 <label className="cursor-pointer label">
-                  <span className="label-text font-medium">{t('profile:preferences.accessibility.largeText')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:preferences.accessibility.largeText')}
+                  </span>
                   <input
                     type="checkbox"
                     checked={preferences.accessibility.largeText}
-                    onChange={(e) => handlePreferenceChange('accessibility', 'largeText', e.target.checked)}
+                    onChange={e =>
+                      handlePreferenceChange('accessibility', 'largeText', e.target.checked)
+                    }
                     className="toggle toggle-primary"
                   />
                 </label>
@@ -463,11 +505,15 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
 
               <div className="form-control">
                 <label className="cursor-pointer label">
-                  <span className="label-text font-medium">{t('profile:preferences.accessibility.screenReader')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:preferences.accessibility.screenReader')}
+                  </span>
                   <input
                     type="checkbox"
                     checked={preferences.accessibility.screenReader}
-                    onChange={(e) => handlePreferenceChange('accessibility', 'screenReader', e.target.checked)}
+                    onChange={e =>
+                      handlePreferenceChange('accessibility', 'screenReader', e.target.checked)
+                    }
                     className="toggle toggle-primary"
                   />
                 </label>
@@ -483,16 +529,20 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
               <Settings className="h-5 w-5 text-warning" />
               {t('profile:preferences.privacy.title')}
             </h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div className="form-control">
                   <label className="cursor-pointer label">
-                    <span className="label-text font-medium">{t('profile:preferences.privacy.dataSharing')}</span>
+                    <span className="label-text font-medium">
+                      {t('profile:preferences.privacy.dataSharing')}
+                    </span>
                     <input
                       type="checkbox"
                       checked={preferences.privacy.dataSharing}
-                      onChange={(e) => handlePreferenceChange('privacy', 'dataSharing', e.target.checked)}
+                      onChange={e =>
+                        handlePreferenceChange('privacy', 'dataSharing', e.target.checked)
+                      }
                       className="toggle toggle-primary"
                     />
                   </label>
@@ -505,11 +555,15 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
 
                 <div className="form-control">
                   <label className="cursor-pointer label">
-                    <span className="label-text font-medium">{t('profile:preferences.privacy.analytics')}</span>
+                    <span className="label-text font-medium">
+                      {t('profile:preferences.privacy.analytics')}
+                    </span>
                     <input
                       type="checkbox"
                       checked={preferences.privacy.analytics}
-                      onChange={(e) => handlePreferenceChange('privacy', 'analytics', e.target.checked)}
+                      onChange={e =>
+                        handlePreferenceChange('privacy', 'analytics', e.target.checked)
+                      }
                       className="toggle toggle-primary"
                     />
                   </label>
@@ -524,11 +578,15 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
               <div className="space-y-4">
                 <div className="form-control">
                   <label className="cursor-pointer label">
-                    <span className="label-text font-medium">{t('profile:preferences.privacy.marketing')}</span>
+                    <span className="label-text font-medium">
+                      {t('profile:preferences.privacy.marketing')}
+                    </span>
                     <input
                       type="checkbox"
                       checked={preferences.privacy.marketing}
-                      onChange={(e) => handlePreferenceChange('privacy', 'marketing', e.target.checked)}
+                      onChange={e =>
+                        handlePreferenceChange('privacy', 'marketing', e.target.checked)
+                      }
                       className="toggle toggle-primary"
                     />
                   </label>
@@ -541,16 +599,26 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
 
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text font-medium">{t('profile:preferences.privacy.profileVisibility')}</span>
+                    <span className="label-text font-medium">
+                      {t('profile:preferences.privacy.profileVisibility')}
+                    </span>
                   </label>
                   <select
                     value={preferences.privacy.profileVisibility}
-                    onChange={(e) => handlePreferenceChange('privacy', 'profileVisibility', e.target.value)}
+                    onChange={e =>
+                      handlePreferenceChange('privacy', 'profileVisibility', e.target.value)
+                    }
                     className="select select-bordered"
                   >
-                    <option value="public">{t('profile:preferences.privacy.visibility.public')}</option>
-                    <option value="contacts">{t('profile:preferences.privacy.visibility.contacts')}</option>
-                    <option value="private">{t('profile:preferences.privacy.visibility.private')}</option>
+                    <option value="public">
+                      {t('profile:preferences.privacy.visibility.public')}
+                    </option>
+                    <option value="contacts">
+                      {t('profile:preferences.privacy.visibility.contacts')}
+                    </option>
+                    <option value="private">
+                      {t('profile:preferences.privacy.visibility.private')}
+                    </option>
                   </select>
                 </div>
               </div>
@@ -568,17 +636,10 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
             <p className="text-sm">{t('profile:preferences.unsavedChangesDesc')}</p>
           </div>
           <div className="flex space-x-2">
-            <button
-              onClick={handleReset}
-              className="btn btn-sm btn-outline"
-            >
+            <button onClick={handleReset} className="btn btn-sm btn-outline">
               {t('common:discard')}
             </button>
-            <button
-              onClick={handleSave}
-              className="btn btn-sm btn-primary"
-              disabled={isLoading}
-            >
+            <button onClick={handleSave} className="btn btn-sm btn-primary" disabled={isLoading}>
               {t('common:save')}
             </button>
           </div>

@@ -3,16 +3,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { useAuth } from '../../contexts/AuthContext';
 import { CaregiverAssignment, ApiResponse, User, Patient } from '@parkml/shared';
 import { Avatar } from '../shared';
-import { 
-  UserPlus, 
-  Users, 
-  Calendar, 
-  Check, 
-  X, 
-  Clock,
-  AlertCircle,
-  Search
-} from 'lucide-react';
+import { UserPlus, Users, Calendar, Check, X, Clock, AlertCircle, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface AssignmentWithDetails extends CaregiverAssignment {
@@ -43,14 +34,12 @@ const CaregiverAssignments: React.FC = () => {
     try {
       setLoading(true);
       const params = new URLSearchParams(
-        Object.fromEntries(
-          Object.entries(filters).filter(([_, value]) => value !== '')
-        )
+        Object.fromEntries(Object.entries(filters).filter(([_, value]) => value !== ''))
       );
 
       const response = await fetch(`/api/assignments?${params}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -75,7 +64,7 @@ const CaregiverAssignments: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
       });
@@ -101,7 +90,7 @@ const CaregiverAssignments: React.FC = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ status }),
       });
@@ -153,19 +142,19 @@ const CaregiverAssignments: React.FC = () => {
 
   const formatStatus = (status: string) => {
     const statusMap: Record<string, string> = {
-      'pending': t('assignments.status.pending'),
-      'active': t('assignments.status.active'),
-      'inactive': t('assignments.status.inactive'),
-      'declined': t('assignments.status.declined'),
-      'revoked': t('assignments.status.revoked'),
+      pending: t('assignments.status.pending'),
+      active: t('assignments.status.active'),
+      inactive: t('assignments.status.inactive'),
+      declined: t('assignments.status.declined'),
+      revoked: t('assignments.status.revoked'),
     };
     return statusMap[status] || status.charAt(0).toUpperCase() + status.slice(1);
   };
 
   const formatCaregiverType = (type: string) => {
     const typeMap: Record<string, string> = {
-      'professional': t('assignments.caregiverTypes.professional'),
-      'family': t('assignments.caregiverTypes.family'),
+      professional: t('assignments.caregiverTypes.professional'),
+      family: t('assignments.caregiverTypes.family'),
     };
     return typeMap[type] || type;
   };
@@ -185,10 +174,7 @@ const CaregiverAssignments: React.FC = () => {
               <p className="text-base-content/70">{t('assignments.subtitle')}</p>
             </div>
             {isAdmin && (
-              <button
-                onClick={() => setShowCreateForm(true)}
-                className="btn btn-primary"
-              >
+              <button onClick={() => setShowCreateForm(true)} className="btn btn-primary">
                 <UserPlus className="h-4 w-4" />
                 {t('assignments.createButton')}
               </button>
@@ -202,7 +188,9 @@ const CaregiverAssignments: React.FC = () => {
         <div className="card-body">
           <div className="flex items-center space-x-4">
             <div className="flex-1 form-control">
-              <label htmlFor="search" className="sr-only">{t('assignments.searchLabel')}</label>
+              <label htmlFor="search" className="sr-only">
+                {t('assignments.searchLabel')}
+              </label>
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 opacity-50" />
                 <input
@@ -210,18 +198,20 @@ const CaregiverAssignments: React.FC = () => {
                   id="search"
                   placeholder={t('assignments.searchPlaceholder')}
                   value={filters.search}
-                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  onChange={e => handleFilterChange('search', e.target.value)}
                   className="input input-bordered w-full pl-10"
                 />
               </div>
             </div>
-            
+
             <div className="form-control">
-              <label htmlFor="status" className="sr-only">{t('assignments.filterByStatus')}</label>
+              <label htmlFor="status" className="sr-only">
+                {t('assignments.filterByStatus')}
+              </label>
               <select
                 id="status"
                 value={filters.status}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
+                onChange={e => handleFilterChange('status', e.target.value)}
                 className="select select-bordered"
               >
                 <option value="">{t('assignments.allStatus')}</option>
@@ -232,13 +222,15 @@ const CaregiverAssignments: React.FC = () => {
                 <option value="revoked">{t('assignments.status.revoked')}</option>
               </select>
             </div>
-            
+
             <div className="form-control">
-              <label htmlFor="caregiverType" className="sr-only">{t('assignments.filterByType')}</label>
+              <label htmlFor="caregiverType" className="sr-only">
+                {t('assignments.filterByType')}
+              </label>
               <select
                 id="caregiverType"
                 value={filters.caregiverType}
-                onChange={(e) => handleFilterChange('caregiverType', e.target.value)}
+                onChange={e => handleFilterChange('caregiverType', e.target.value)}
                 className="select select-bordered"
               >
                 <option value="">{t('assignments.allTypes')}</option>
@@ -257,7 +249,7 @@ const CaregiverAssignments: React.FC = () => {
             {t('assignments.assignmentsCount', { count: assignments.length })}
           </h2>
         </div>
-        
+
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <span className="loading loading-spinner loading-lg"></span>
@@ -266,14 +258,12 @@ const CaregiverAssignments: React.FC = () => {
           <div className="p-6 text-center">
             <Users className="mx-auto h-12 w-12 opacity-50" />
             <h3 className="mt-2 text-sm font-medium">{t('assignments.noAssignmentsTitle')}</h3>
-            <p className="mt-1 text-sm opacity-70">
-              {t('assignments.noAssignmentsMessage')}
-            </p>
+            <p className="mt-1 text-sm opacity-70">{t('assignments.noAssignmentsMessage')}</p>
           </div>
         ) : (
           <div className="overflow-hidden">
             <ul className="divide-y divide-gray-200">
-              {assignments.map((assignment) => (
+              {assignments.map(assignment => (
                 <li key={assignment.id} className="px-6 py-4 hover:bg-base-200/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
@@ -290,14 +280,17 @@ const CaregiverAssignments: React.FC = () => {
                           {assignment.caregiver.name} → {assignment.patient.name}
                         </div>
                         <div className="text-sm opacity-70">
-                          {formatCaregiverType(assignment.caregiverType)} {t('assignments.caregiverSuffix')}
+                          {formatCaregiverType(assignment.caregiverType)}{' '}
+                          {t('assignments.caregiverSuffix')}
                         </div>
                         <div className="flex items-center text-xs opacity-60 mt-1">
                           <Calendar className="h-3 w-3 mr-1" />
-                          {t('assignments.createdLabel')} {new Date(assignment.createdAt).toLocaleDateString()}
+                          {t('assignments.createdLabel')}{' '}
+                          {new Date(assignment.createdAt).toLocaleDateString()}
                           {assignment.startDate && (
                             <span className="ml-3">
-                              {t('assignments.startedLabel')} {new Date(assignment.startDate).toLocaleDateString()}
+                              {t('assignments.startedLabel')}{' '}
+                              {new Date(assignment.startDate).toLocaleDateString()}
                             </span>
                           )}
                         </div>
@@ -306,10 +299,14 @@ const CaregiverAssignments: React.FC = () => {
                     <div className="flex items-center space-x-4">
                       <div className="text-center">
                         <div className="text-xs opacity-70">{t('assignments.consentLabel')}</div>
-                        <div className={`text-xs font-medium ${
-                          assignment.consentGiven ? 'text-success' : 'text-error'
-                        }`}>
-                          {assignment.consentGiven ? t('assignments.consentGiven') : t('assignments.consentPending')}
+                        <div
+                          className={`text-xs font-medium ${
+                            assignment.consentGiven ? 'text-success' : 'text-error'
+                          }`}
+                        >
+                          {assignment.consentGiven
+                            ? t('assignments.consentGiven')
+                            : t('assignments.consentPending')}
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -327,7 +324,9 @@ const CaregiverAssignments: React.FC = () => {
                               <Check className="h-4 w-4" />
                             </button>
                             <button
-                              onClick={() => handleUpdateAssignmentStatus(assignment.id, 'declined')}
+                              onClick={() =>
+                                handleUpdateAssignmentStatus(assignment.id, 'declined')
+                              }
                               className="btn btn-ghost btn-xs text-error"
                               title={t('assignments.decline')}
                             >
@@ -347,7 +346,7 @@ const CaregiverAssignments: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   {assignment.notes && (
                     <div className="mt-2 ml-14 text-sm opacity-80">
                       <strong>{t('assignments.notes')}</strong> {assignment.notes}
@@ -399,7 +398,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
     try {
       const response = await fetch('/api/patients', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -417,7 +416,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
     try {
       const response = await fetch('/api/users?role=professional_caregiver&role=family_caregiver', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -434,7 +433,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       onSubmit(formData);
     } finally {
@@ -442,7 +441,9 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -453,11 +454,13 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
     <div className="modal modal-open">
       <div className="modal-box max-w-md">
         <h3 className="font-bold text-lg mb-4">{t('assignments.createTitle')}</h3>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="form-control">
             <label className="label" htmlFor="patientId">
-              <span className="label-text">{t('assignments.patientLabel')} {t('assignments.requiredField')}</span>
+              <span className="label-text">
+                {t('assignments.patientLabel')} {t('assignments.requiredField')}
+              </span>
             </label>
             <select
               id="patientId"
@@ -468,7 +471,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
               className="select select-bordered w-full"
             >
               <option value="">{t('assignments.selectPatient')}</option>
-              {patients.map((patient) => (
+              {patients.map(patient => (
                 <option key={patient.id} value={patient.id}>
                   {patient.name}
                 </option>
@@ -478,7 +481,9 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
 
           <div className="form-control">
             <label className="label" htmlFor="caregiverId">
-              <span className="label-text">{t('assignments.caregiverLabel')} {t('assignments.requiredField')}</span>
+              <span className="label-text">
+                {t('assignments.caregiverLabel')} {t('assignments.requiredField')}
+              </span>
             </label>
             <select
               id="caregiverId"
@@ -489,7 +494,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
               className="select select-bordered w-full"
             >
               <option value="">{t('assignments.selectCaregiver')}</option>
-              {caregivers.map((caregiver) => (
+              {caregivers.map(caregiver => (
                 <option key={caregiver.id} value={caregiver.id}>
                   {caregiver.name} ({caregiver.email})
                 </option>
@@ -499,7 +504,9 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
 
           <div className="form-control">
             <label className="label" htmlFor="caregiverType">
-              <span className="label-text">{t('assignments.caregiverTypeLabel')} {t('assignments.requiredField')}</span>
+              <span className="label-text">
+                {t('assignments.caregiverTypeLabel')} {t('assignments.requiredField')}
+              </span>
             </label>
             <select
               id="caregiverType"
@@ -529,18 +536,10 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
           </div>
 
           <div className="modal-action">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="btn btn-ghost"
-            >
+            <button type="button" onClick={onCancel} className="btn btn-ghost">
               {t('assignments.cancel')}
             </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn btn-primary"
-            >
+            <button type="submit" disabled={loading} className="btn btn-primary">
               {loading ? <span className="loading loading-spinner loading-sm"></span> : null}
               {loading ? t('assignments.creating') : t('assignments.createAssignmentButton')}
             </button>

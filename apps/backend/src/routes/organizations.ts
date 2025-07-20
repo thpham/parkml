@@ -1,140 +1,134 @@
 import { Router } from 'express';
 import { prisma } from '../database/prisma-client';
 import { ApiResponse } from '@parkml/shared';
-import { 
-  authenticateToken, 
+import {
+  authenticateToken,
   requireSuperAdmin,
   requireClinicAdmin,
   logUserActivity,
-  AuthenticatedRequest 
+  AuthenticatedRequest,
 } from '../middleware/auth';
 
 const router = Router();
 
 // Get all organizations (super admin only)
-router.get('/', 
-  authenticateToken, 
-  requireSuperAdmin, 
-  async (_req: AuthenticatedRequest, res) => {
-    try {
-      const organizations = await prisma.organization.findMany({
-        include: {
-          _count: {
-            select: {
-              users: true,
-              patients: true,
-              auditLogs: true
-            }
-          }
+router.get('/', authenticateToken, requireSuperAdmin, async (_req: AuthenticatedRequest, res) => {
+  try {
+    const organizations = await prisma.organization.findMany({
+      include: {
+        _count: {
+          select: {
+            users: true,
+            patients: true,
+            auditLogs: true,
+          },
         },
-        orderBy: { name: 'asc' }
-      });
+      },
+      orderBy: { name: 'asc' },
+    });
 
-      const response: ApiResponse = {
-        success: true,
-        data: organizations.map((org: any) => ({
-          id: org.id,
-          name: org.name,
-          description: org.description,
-          settings: JSON.parse(org.settings || '{}'),
-          isActive: org.isActive,
-          createdAt: org.createdAt,
-          updatedAt: org.updatedAt,
-          stats: {
-            userCount: org._count.users,
-            patientCount: org._count.patients,
-            auditLogCount: org._count.auditLogs
-          }
-        }))
-      };
+    const response: ApiResponse = {
+      success: true,
+      data: organizations.map((org: any) => ({
+        id: org.id,
+        name: org.name,
+        description: org.description,
+        settings: JSON.parse(org.settings || '{}'),
+        isActive: org.isActive,
+        createdAt: org.createdAt,
+        updatedAt: org.updatedAt,
+        stats: {
+          userCount: org._count.users,
+          patientCount: org._count.patients,
+          auditLogCount: org._count.auditLogs,
+        },
+      })),
+    };
 
-      res.json(response);
-    } catch (error) {
-      console.error('Get organizations error:', error);
-      const response: ApiResponse = {
-        success: false,
-        error: 'Internal server error',
-      };
-      res.status(500).json(response);
-    }
+    res.json(response);
+  } catch (error) {
+    console.error('Get organizations error:', error);
+    const response: ApiResponse = {
+      success: false,
+      error: 'Internal server error',
+    };
+    res.status(500).json(response);
   }
-);
+});
 
 // Get current user's organization
-router.get('/current', 
-  authenticateToken, 
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      if (!req.user) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'User not authenticated',
-        };
-        return res.status(401).json(response);
-      }
-
-      if (!req.user.organizationId) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'User is not associated with any organization',
-        };
-        return res.status(404).json(response);
-      }
-
-      const organization = await prisma.organization.findUnique({
-        where: { id: req.user.organizationId },
-        include: {
-          _count: {
-            select: {
-              users: true,
-              patients: true,
-              auditLogs: true
-            }
-          }
-        }
-      });
-
-      if (!organization) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Organization not found',
-        };
-        return res.status(404).json(response);
-      }
-
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          id: organization.id,
-          name: organization.name,
-          description: organization.description,
-          settings: JSON.parse(organization.settings || '{}'),
-          isActive: organization.isActive,
-          createdAt: organization.createdAt,
-          updatedAt: organization.updatedAt,
-          stats: {
-            userCount: organization._count.users,
-            patientCount: organization._count.patients,
-            auditLogCount: organization._count.auditLogs
-          }
-        }
-      };
-
-      res.json(response);
-    } catch (error) {
-      console.error('Get current organization error:', error);
+router.get('/current', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    if (!req.user) {
       const response: ApiResponse = {
         success: false,
-        error: 'Internal server error',
+        error: 'User not authenticated',
       };
-      res.status(500).json(response);
+      return res.status(401).json(response);
     }
+
+    if (!req.user.organizationId) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'User is not associated with any organization',
+      };
+      return res.status(404).json(response);
+    }
+
+    const organization = await prisma.organization.findUnique({
+      where: { id: req.user.organizationId },
+      include: {
+        _count: {
+          select: {
+            users: true,
+            patients: true,
+            auditLogs: true,
+          },
+        },
+      },
+    });
+
+    if (!organization) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Organization not found',
+      };
+      return res.status(404).json(response);
+    }
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        id: organization.id,
+        name: organization.name,
+        description: organization.description,
+        settings: JSON.parse(organization.settings || '{}'),
+        isActive: organization.isActive,
+        createdAt: organization.createdAt,
+        updatedAt: organization.updatedAt,
+        stats: {
+          userCount: organization._count.users,
+          patientCount: organization._count.patients,
+          auditLogCount: organization._count.auditLogs,
+        },
+      },
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Get current organization error:', error);
+    const response: ApiResponse = {
+      success: false,
+      error: 'Internal server error',
+    };
+    res.status(500).json(response);
   }
-);
+});
 
 // Create new organization (super admin only)
-router.post('/', 
-  authenticateToken, 
+router.post(
+  '/',
+  authenticateToken,
   requireSuperAdmin,
   logUserActivity('CREATE', 'organization'),
   async (req: AuthenticatedRequest, res) => {
@@ -152,7 +146,7 @@ router.post('/',
 
       // Check if organization name already exists
       const existingOrg = await prisma.organization.findFirst({
-        where: { name }
+        where: { name },
       });
 
       if (existingOrg) {
@@ -169,17 +163,17 @@ router.post('/',
           name,
           description: description || '',
           settings: JSON.stringify(settings || {}),
-          isActive: true
+          isActive: true,
         },
         include: {
           _count: {
             select: {
               users: true,
               patients: true,
-              auditLogs: true
-            }
-          }
-        }
+              auditLogs: true,
+            },
+          },
+        },
       });
 
       const response: ApiResponse = {
@@ -195,9 +189,9 @@ router.post('/',
           stats: {
             userCount: organization._count.users,
             patientCount: organization._count.patients,
-            auditLogCount: organization._count.auditLogs
-          }
-        }
+            auditLogCount: organization._count.auditLogs,
+          },
+        },
       };
 
       res.status(201).json(response);
@@ -213,83 +207,81 @@ router.post('/',
 );
 
 // Get organization by ID
-router.get('/:id', 
-  authenticateToken, 
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      if (!req.user) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'User not authenticated',
-        };
-        return res.status(401).json(response);
-      }
-
-      const { id } = req.params;
-
-      // Check authorization
-      if (req.user.role !== 'super_admin' && req.user.organizationId !== id) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Access denied to this organization',
-        };
-        return res.status(403).json(response);
-      }
-
-      const organization = await prisma.organization.findUnique({
-        where: { id },
-        include: {
-          _count: {
-            select: {
-              users: true,
-              patients: true,
-              auditLogs: true
-            }
-          }
-        }
-      });
-
-      if (!organization) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Organization not found',
-        };
-        return res.status(404).json(response);
-      }
-
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          id: organization.id,
-          name: organization.name,
-          description: organization.description,
-          settings: JSON.parse(organization.settings || '{}'),
-          isActive: organization.isActive,
-          createdAt: organization.createdAt,
-          updatedAt: organization.updatedAt,
-          stats: {
-            userCount: organization._count.users,
-            patientCount: organization._count.patients,
-            auditLogCount: organization._count.auditLogs
-          }
-        }
-      };
-
-      res.json(response);
-    } catch (error) {
-      console.error('Get organization error:', error);
+router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    if (!req.user) {
       const response: ApiResponse = {
         success: false,
-        error: 'Internal server error',
+        error: 'User not authenticated',
       };
-      res.status(500).json(response);
+      return res.status(401).json(response);
     }
+
+    const { id } = req.params;
+
+    // Check authorization
+    if (req.user.role !== 'super_admin' && req.user.organizationId !== id) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Access denied to this organization',
+      };
+      return res.status(403).json(response);
+    }
+
+    const organization = await prisma.organization.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            users: true,
+            patients: true,
+            auditLogs: true,
+          },
+        },
+      },
+    });
+
+    if (!organization) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Organization not found',
+      };
+      return res.status(404).json(response);
+    }
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        id: organization.id,
+        name: organization.name,
+        description: organization.description,
+        settings: JSON.parse(organization.settings || '{}'),
+        isActive: organization.isActive,
+        createdAt: organization.createdAt,
+        updatedAt: organization.updatedAt,
+        stats: {
+          userCount: organization._count.users,
+          patientCount: organization._count.patients,
+          auditLogCount: organization._count.auditLogs,
+        },
+      },
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Get organization error:', error);
+    const response: ApiResponse = {
+      success: false,
+      error: 'Internal server error',
+    };
+    res.status(500).json(response);
   }
-);
+});
 
 // Update organization
-router.put('/:id', 
-  authenticateToken, 
+router.put(
+  '/:id',
+  authenticateToken,
   logUserActivity('UPDATE', 'organization'),
   async (req: AuthenticatedRequest, res) => {
     try {
@@ -326,7 +318,7 @@ router.put('/:id',
 
       // Get current organization
       const currentOrg = await prisma.organization.findUnique({
-        where: { id }
+        where: { id },
       });
 
       if (!currentOrg) {
@@ -340,10 +332,10 @@ router.put('/:id',
       // Check if new name conflicts with existing organization
       if (name && name !== currentOrg.name) {
         const existingOrg = await prisma.organization.findFirst({
-          where: { 
+          where: {
             name,
-            id: { not: id }
-          }
+            id: { not: id },
+          },
         });
 
         if (existingOrg) {
@@ -371,10 +363,10 @@ router.put('/:id',
             select: {
               users: true,
               patients: true,
-              auditLogs: true
-            }
-          }
-        }
+              auditLogs: true,
+            },
+          },
+        },
       });
 
       const response: ApiResponse = {
@@ -390,9 +382,9 @@ router.put('/:id',
           stats: {
             userCount: updatedOrg._count.users,
             patientCount: updatedOrg._count.patients,
-            auditLogCount: updatedOrg._count.auditLogs
-          }
-        }
+            auditLogCount: updatedOrg._count.auditLogs,
+          },
+        },
       };
 
       res.json(response);
@@ -408,8 +400,9 @@ router.put('/:id',
 );
 
 // Delete organization (super admin only)
-router.delete('/:id', 
-  authenticateToken, 
+router.delete(
+  '/:id',
+  authenticateToken,
   requireSuperAdmin,
   logUserActivity('DELETE', 'organization'),
   async (req: AuthenticatedRequest, res) => {
@@ -423,10 +416,10 @@ router.delete('/:id',
           _count: {
             select: {
               users: true,
-              patients: true
-            }
-          }
-        }
+              patients: true,
+            },
+          },
+        },
       });
 
       if (!organization) {
@@ -448,14 +441,14 @@ router.delete('/:id',
 
       // Delete organization
       await prisma.organization.delete({
-        where: { id }
+        where: { id },
       });
 
       const response: ApiResponse = {
         success: true,
         data: {
-          message: 'Organization deleted successfully'
-        }
+          message: 'Organization deleted successfully',
+        },
       };
 
       res.json(response);
@@ -471,8 +464,9 @@ router.delete('/:id',
 );
 
 // Get organization users (admin only)
-router.get('/:id/users', 
-  authenticateToken, 
+router.get(
+  '/:id/users',
+  authenticateToken,
   requireClinicAdmin,
   async (req: AuthenticatedRequest, res) => {
     try {
@@ -511,16 +505,16 @@ router.get('/:id/users',
               id: true,
               name: true,
               dateOfBirth: true,
-              diagnosisDate: true
-            }
-          }
+              diagnosisDate: true,
+            },
+          },
         },
-        orderBy: { name: 'asc' }
+        orderBy: { name: 'asc' },
       });
 
       const response: ApiResponse = {
         success: true,
-        data: users
+        data: users,
       };
 
       res.json(response);
@@ -536,8 +530,9 @@ router.get('/:id/users',
 );
 
 // Get organization patients (admin only)
-router.get('/:id/patients', 
-  authenticateToken, 
+router.get(
+  '/:id/patients',
+  authenticateToken,
   requireClinicAdmin,
   async (req: AuthenticatedRequest, res) => {
     try {
@@ -569,18 +564,18 @@ router.get('/:id/patients',
               email: true,
               name: true,
               isActive: true,
-              lastLoginAt: true
-            }
+              lastLoginAt: true,
+            },
           },
           _count: {
             select: {
               caregiverAssignments: true,
               symptomEntries: true,
-              weeklySummaries: true
-            }
-          }
+              weeklySummaries: true,
+            },
+          },
         },
-        orderBy: { name: 'asc' }
+        orderBy: { name: 'asc' },
       });
 
       const response: ApiResponse = {
@@ -598,9 +593,9 @@ router.get('/:id/patients',
           stats: {
             caregiverCount: patient._count.caregiverAssignments,
             symptomEntryCount: patient._count.symptomEntries,
-            weeklySummaryCount: patient._count.weeklySummaries
-          }
-        }))
+            weeklySummaryCount: patient._count.weeklySummaries,
+          },
+        })),
       };
 
       res.json(response);
@@ -616,8 +611,9 @@ router.get('/:id/patients',
 );
 
 // Switch organization (super admin only)
-router.post('/switch/:id', 
-  authenticateToken, 
+router.post(
+  '/switch/:id',
+  authenticateToken,
   requireSuperAdmin,
   logUserActivity('SWITCH', 'organization'),
   async (req: AuthenticatedRequest, res) => {
@@ -634,7 +630,7 @@ router.post('/switch/:id',
 
       // Check if organization exists
       const organization = await prisma.organization.findUnique({
-        where: { id }
+        where: { id },
       });
 
       if (!organization) {
@@ -662,10 +658,10 @@ router.post('/switch/:id',
             select: {
               id: true,
               name: true,
-              isActive: true
-            }
-          }
-        }
+              isActive: true,
+            },
+          },
+        },
       });
 
       const response: ApiResponse = {
@@ -682,9 +678,9 @@ router.post('/switch/:id',
             isActive: updatedUser.isActive,
             lastLoginAt: updatedUser.lastLoginAt,
             createdAt: updatedUser.createdAt,
-            updatedAt: updatedUser.updatedAt
-          }
-        }
+            updatedAt: updatedUser.updatedAt,
+          },
+        },
       };
 
       res.json(response);

@@ -25,7 +25,7 @@ const OrganizationManagement: React.FC = () => {
       setLoading(true);
       const response = await fetch('/api/organizations', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -50,7 +50,7 @@ const OrganizationManagement: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
       });
@@ -76,7 +76,7 @@ const OrganizationManagement: React.FC = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
       });
@@ -102,7 +102,7 @@ const OrganizationManagement: React.FC = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ isActive: !isActive }),
       });
@@ -110,7 +110,9 @@ const OrganizationManagement: React.FC = () => {
       const data: ApiResponse = await response.json();
 
       if (data.success) {
-        toast.success(`${t('organizations.sectionTitle')} ${!isActive ? t('organizations.success.activated') : t('organizations.success.deactivated')} successfully`);
+        toast.success(
+          `${t('organizations.sectionTitle')} ${!isActive ? t('organizations.success.activated') : t('organizations.success.deactivated')} successfully`
+        );
         fetchOrganizations();
       } else {
         toast.error(data.error || t('organizations.errors.statusUpdateError'));
@@ -127,7 +129,9 @@ const OrganizationManagement: React.FC = () => {
         <div className="text-error mb-4">
           <Building className="h-12 w-12 mx-auto" />
         </div>
-        <h2 className="text-xl font-semibold mb-2">{t('messages.accessDenied', { ns: 'common' })}</h2>
+        <h2 className="text-xl font-semibold mb-2">
+          {t('messages.accessDenied', { ns: 'common' })}
+        </h2>
         <p className="opacity-70">{t('organizations.errors.accessDeniedMessage')}</p>
       </div>
     );
@@ -151,10 +155,7 @@ const OrganizationManagement: React.FC = () => {
               <h1 className="card-title text-2xl">{t('organizations.title')}</h1>
               <p className="text-base-content/70">{t('organizations.subtitle')}</p>
             </div>
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="btn btn-primary"
-            >
+            <button onClick={() => setShowCreateForm(true)} className="btn btn-primary">
               <Plus className="h-4 w-4" />
               {t('organizations.createButton')}
             </button>
@@ -165,21 +166,21 @@ const OrganizationManagement: React.FC = () => {
       {/* Organizations List */}
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
-          <h2 className="card-title">{t('organizations.organizationCount', { count: organizations.length })}</h2>
+          <h2 className="card-title">
+            {t('organizations.organizationCount', { count: organizations.length })}
+          </h2>
         </div>
-        
+
         {organizations.length === 0 ? (
           <div className="p-6 text-center">
             <Building className="mx-auto h-12 w-12 opacity-50" />
             <h3 className="mt-2 text-sm font-medium">{t('organizations.noOrganizationsTitle')}</h3>
-            <p className="mt-1 text-sm opacity-70">
-              {t('organizations.noOrganizationsMessage')}
-            </p>
+            <p className="mt-1 text-sm opacity-70">{t('organizations.noOrganizationsMessage')}</p>
           </div>
         ) : (
           <div className="overflow-hidden">
             <ul className="divide-y divide-gray-200">
-              {organizations.map((org) => (
+              {organizations.map(org => (
                 <li key={org.id} className="px-6 py-4 hover:bg-base-200/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
@@ -192,41 +193,35 @@ const OrganizationManagement: React.FC = () => {
                         <Building />
                       </Avatar>
                       <div className="ml-4">
-                        <div className="text-sm font-medium">
-                          {org.name}
-                        </div>
+                        <div className="text-sm font-medium">{org.name}</div>
                         <div className="text-sm opacity-70">
                           {org.description || t('misc.noDescription', { ns: 'common' })}
                         </div>
                         <div className="text-xs opacity-60">
-                          {t('organizations.createdLabel')} {new Date(org.createdAt).toLocaleDateString()}
+                          {t('organizations.createdLabel')}{' '}
+                          {new Date(org.createdAt).toLocaleDateString()}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <div className={`badge ${
-                        org.isActive 
-                          ? 'badge-success' 
-                          : 'badge-error'
-                      }`}>
-                        {org.isActive ? t('status.active', { ns: 'common' }) : t('status.inactive', { ns: 'common' })}
+                      <div className={`badge ${org.isActive ? 'badge-success' : 'badge-error'}`}>
+                        {org.isActive
+                          ? t('status.active', { ns: 'common' })
+                          : t('status.inactive', { ns: 'common' })}
                       </div>
-                      <button
-                        onClick={() => setEditingOrg(org)}
-                        className="btn btn-ghost btn-sm"
-                      >
+                      <button onClick={() => setEditingOrg(org)} className="btn btn-ghost btn-sm">
                         <Edit className="h-3 w-3" />
                         {t('buttons.edit', { ns: 'common' })}
                       </button>
                       <button
                         onClick={() => toggleOrganizationStatus(org.id, org.isActive)}
                         className={`btn btn-sm ${
-                          org.isActive
-                            ? 'btn-error btn-outline'
-                            : 'btn-success btn-outline'
+                          org.isActive ? 'btn-error btn-outline' : 'btn-success btn-outline'
                         }`}
                       >
-                        {org.isActive ? t('buttons.deactivate', { ns: 'common' }) : t('buttons.activate', { ns: 'common' })}
+                        {org.isActive
+                          ? t('buttons.deactivate', { ns: 'common' })
+                          : t('buttons.activate', { ns: 'common' })}
                       </button>
                     </div>
                   </div>
@@ -249,7 +244,7 @@ const OrganizationManagement: React.FC = () => {
       {editingOrg && (
         <OrganizationForm
           organization={editingOrg}
-          onSubmit={(formData) => handleUpdateOrganization(editingOrg.id, formData)}
+          onSubmit={formData => handleUpdateOrganization(editingOrg.id, formData)}
           onCancel={() => setEditingOrg(null)}
         />
       )}
@@ -264,7 +259,11 @@ interface OrganizationFormProps {
   onCancel: () => void;
 }
 
-const OrganizationForm: React.FC<OrganizationFormProps> = ({ organization, onSubmit, onCancel }) => {
+const OrganizationForm: React.FC<OrganizationFormProps> = ({
+  organization,
+  onSubmit,
+  onCancel,
+}) => {
   const { t } = useTranslation('admin');
   const [formData, setFormData] = useState({
     name: organization?.name || '',
@@ -292,7 +291,7 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ organization, onSub
         <h3 className="font-bold text-lg mb-4">
           {organization ? t('organizations.editTitle') : t('organizations.createTitle')}
         </h3>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="form-control">
             <label className="label" htmlFor="name">
@@ -366,18 +365,13 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ organization, onSub
           </div>
 
           <div className="modal-action">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="btn btn-ghost"
-            >
+            <button type="button" onClick={onCancel} className="btn btn-ghost">
               {t('buttons.cancel', { ns: 'common' })}
             </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-            >
-              {organization ? t('buttons.update', { ns: 'common' }) : t('buttons.create', { ns: 'common' })}
+            <button type="submit" className="btn btn-primary">
+              {organization
+                ? t('buttons.update', { ns: 'common' })
+                : t('buttons.create', { ns: 'common' })}
             </button>
           </div>
         </form>

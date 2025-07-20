@@ -112,39 +112,45 @@ if (process.env.NODE_ENV === 'production') {
 app.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  
+
   try {
     // Initialize crypto service
     console.log('🔐 Initializing encryption system...');
     await initializeCrypto();
     console.log('✅ Encryption system ready');
-    
+
     // Initialize emergency access cleanup service
     initializeEmergencyAccessCleanup();
-    
+
     // Initialize 2FA setup cleanup service (every 5 minutes)
-    setInterval(async () => {
-      try {
-        await cleanup2FASetups();
-      } catch (error) {
-        console.error('2FA cleanup service error:', error);
-      }
-    }, 5 * 60 * 1000); // 5 minutes
-    console.log('🔐 2FA cleanup service initialized (runs every 5 minutes)');
-    
-    // Initialize session cleanup service (every 30 minutes)
-    setInterval(async () => {
-      try {
-        const cleanedCount = await SessionManagerService.cleanupExpiredSessions();
-        if (cleanedCount > 0) {
-          console.log(`🧹 Session cleanup: removed ${cleanedCount} expired sessions`);
+    setInterval(
+      async () => {
+        try {
+          await cleanup2FASetups();
+        } catch (error) {
+          console.error('2FA cleanup service error:', error);
         }
-      } catch (error) {
-        console.error('Session cleanup service error:', error);
-      }
-    }, 30 * 60 * 1000); // 30 minutes
+      },
+      5 * 60 * 1000
+    ); // 5 minutes
+    console.log('🔐 2FA cleanup service initialized (runs every 5 minutes)');
+
+    // Initialize session cleanup service (every 30 minutes)
+    setInterval(
+      async () => {
+        try {
+          const cleanedCount = await SessionManagerService.cleanupExpiredSessions();
+          if (cleanedCount > 0) {
+            console.log(`🧹 Session cleanup: removed ${cleanedCount} expired sessions`);
+          }
+        } catch (error) {
+          console.error('Session cleanup service error:', error);
+        }
+      },
+      30 * 60 * 1000
+    ); // 30 minutes
     console.log('🧹 Session cleanup service initialized (runs every 30 minutes)');
-    
+
     console.log('🚀 ParkML server fully initialized');
   } catch (error) {
     console.error('❌ Failed to initialize server:', error);

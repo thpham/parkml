@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { prisma } from '../database/prisma-client';
 import { ApiResponse } from '@parkml/shared';
-import { 
-  authenticateToken, 
-  authorizeRole, 
+import {
+  authenticateToken,
+  authorizeRole,
   logUserActivity,
-  AuthenticatedRequest 
+  AuthenticatedRequest,
 } from '../middleware/auth';
 
 const router = Router();
@@ -35,29 +35,29 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
                 user: {
                   select: {
                     email: true,
-                    name: true
-                  }
-                }
-              }
+                    name: true,
+                  },
+                },
+              },
             },
             caregiver: {
               select: {
                 id: true,
                 name: true,
                 email: true,
-                role: true
-              }
+                role: true,
+              },
             },
             assignedByUser: {
               select: {
                 id: true,
                 name: true,
                 email: true,
-                role: true
-              }
-            }
+                role: true,
+              },
+            },
           },
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: 'desc' },
         });
         break;
 
@@ -65,8 +65,8 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
         assignments = await prisma.caregiverAssignment.findMany({
           where: {
             patient: {
-              organizationId: req.user.organizationId
-            }
+              organizationId: req.user.organizationId,
+            },
           },
           include: {
             patient: {
@@ -77,29 +77,29 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
                 user: {
                   select: {
                     email: true,
-                    name: true
-                  }
-                }
-              }
+                    name: true,
+                  },
+                },
+              },
             },
             caregiver: {
               select: {
                 id: true,
                 name: true,
                 email: true,
-                role: true
-              }
+                role: true,
+              },
             },
             assignedByUser: {
               select: {
                 id: true,
                 name: true,
                 email: true,
-                role: true
-              }
-            }
+                role: true,
+              },
+            },
           },
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: 'desc' },
         });
         break;
 
@@ -107,7 +107,7 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
       case 'family_caregiver':
         assignments = await prisma.caregiverAssignment.findMany({
           where: {
-            caregiverId: req.user.userId
+            caregiverId: req.user.userId,
           },
           include: {
             patient: {
@@ -118,29 +118,29 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
                 user: {
                   select: {
                     email: true,
-                    name: true
-                  }
-                }
-              }
+                    name: true,
+                  },
+                },
+              },
             },
             caregiver: {
               select: {
                 id: true,
                 name: true,
                 email: true,
-                role: true
-              }
+                role: true,
+              },
             },
             assignedByUser: {
               select: {
                 id: true,
                 name: true,
                 email: true,
-                role: true
-              }
-            }
+                role: true,
+              },
+            },
           },
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: 'desc' },
         });
         break;
 
@@ -148,7 +148,7 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
         // Get patient ID from patient record
         const patientRecord = await prisma.patient.findUnique({
           where: { userId: req.user.userId },
-          select: { id: true }
+          select: { id: true },
         });
 
         if (!patientRecord) {
@@ -161,7 +161,7 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
 
         assignments = await prisma.caregiverAssignment.findMany({
           where: {
-            patientId: patientRecord.id
+            patientId: patientRecord.id,
           },
           include: {
             patient: {
@@ -172,29 +172,29 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
                 user: {
                   select: {
                     email: true,
-                    name: true
-                  }
-                }
-              }
+                    name: true,
+                  },
+                },
+              },
             },
             caregiver: {
               select: {
                 id: true,
                 name: true,
                 email: true,
-                role: true
-              }
+                role: true,
+              },
             },
             assignedByUser: {
               select: {
                 id: true,
                 name: true,
                 email: true,
-                role: true
-              }
-            }
+                role: true,
+              },
+            },
           },
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: 'desc' },
         });
         break;
       }
@@ -227,8 +227,8 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
         assignedBy: assignment.assignedBy,
         assignedByUser: assignment.assignedByUser,
         createdAt: assignment.createdAt,
-        updatedAt: assignment.updatedAt
-      }))
+        updatedAt: assignment.updatedAt,
+      })),
     };
 
     res.json(response);
@@ -243,8 +243,9 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
 });
 
 // Create new caregiver assignment
-router.post('/', 
-  authenticateToken, 
+router.post(
+  '/',
+  authenticateToken,
   authorizeRole(['super_admin', 'clinic_admin', 'patient']),
   logUserActivity('CREATE', 'assignment'),
   async (req: AuthenticatedRequest, res) => {
@@ -285,10 +286,10 @@ router.post('/',
             select: {
               id: true,
               email: true,
-              name: true
-            }
-          }
-        }
+              name: true,
+            },
+          },
+        },
       });
 
       if (!patient) {
@@ -324,8 +325,8 @@ router.post('/',
           email: true,
           name: true,
           role: true,
-          organizationId: true
-        }
+          organizationId: true,
+        },
       });
 
       if (!caregiver) {
@@ -359,9 +360,9 @@ router.post('/',
           patientId,
           caregiverId,
           status: {
-            in: ['pending', 'active']
-          }
-        }
+            in: ['pending', 'active'],
+          },
+        },
       });
 
       if (existingAssignment) {
@@ -373,20 +374,23 @@ router.post('/',
       }
 
       // Set default permissions based on caregiver type
-      const defaultPermissions = caregiverType === 'professional' ? {
-        view_all_symptoms: true,
-        edit_symptoms: true,
-        generate_reports: true,
-        set_reminders: true,
-        communicate_all: true,
-        emergency_contact: true
-      } : {
-        view_symptoms: true,
-        edit_symptoms: true,
-        view_reports: true,
-        receive_notifications: true,
-        communicate_professional: true
-      };
+      const defaultPermissions =
+        caregiverType === 'professional'
+          ? {
+              view_all_symptoms: true,
+              edit_symptoms: true,
+              generate_reports: true,
+              set_reminders: true,
+              communicate_all: true,
+              emergency_contact: true,
+            }
+          : {
+              view_symptoms: true,
+              edit_symptoms: true,
+              view_reports: true,
+              receive_notifications: true,
+              communicate_professional: true,
+            };
 
       const finalPermissions = permissions || defaultPermissions;
 
@@ -420,7 +424,7 @@ router.post('/',
           notes: notes || '',
           assignedBy: req.user.userId,
           consentGiven,
-          consentDate
+          consentDate,
         },
         include: {
           patient: {
@@ -431,28 +435,28 @@ router.post('/',
               user: {
                 select: {
                   email: true,
-                  name: true
-                }
-              }
-            }
+                  name: true,
+                },
+              },
+            },
           },
           caregiver: {
             select: {
               id: true,
               name: true,
               email: true,
-              role: true
-            }
+              role: true,
+            },
           },
           assignedByUser: {
             select: {
               id: true,
               name: true,
               email: true,
-              role: true
-            }
-          }
-        }
+              role: true,
+            },
+          },
+        },
       });
 
       const response: ApiResponse = {
@@ -474,8 +478,8 @@ router.post('/',
           assignedBy: assignment.assignedBy,
           assignedByUser: (assignment as any).assignedByUser,
           createdAt: assignment.createdAt,
-          updatedAt: assignment.updatedAt
-        }
+          updatedAt: assignment.updatedAt,
+        },
       };
 
       res.status(201).json(response);
@@ -515,28 +519,28 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
             user: {
               select: {
                 email: true,
-                name: true
-              }
-            }
-          }
+                name: true,
+              },
+            },
+          },
         },
         caregiver: {
           select: {
             id: true,
             name: true,
             email: true,
-            role: true
-          }
+            role: true,
+          },
         },
         assignedByUser: {
           select: {
             id: true,
             name: true,
             email: true,
-            role: true
-          }
-        }
-      }
+            role: true,
+          },
+        },
+      },
     });
 
     if (!assignment) {
@@ -552,7 +556,10 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
 
     if (req.user.role === 'super_admin') {
       hasAccess = true;
-    } else if (req.user.role === 'clinic_admin' && assignment.patient.organizationId === req.user.organizationId) {
+    } else if (
+      req.user.role === 'clinic_admin' &&
+      assignment.patient.organizationId === req.user.organizationId
+    ) {
       hasAccess = true;
     } else if (assignment.caregiverId === req.user.userId) {
       hasAccess = true;
@@ -587,8 +594,8 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
         assignedBy: assignment.assignedBy,
         assignedByUser: assignment.assignedByUser,
         createdAt: assignment.createdAt,
-        updatedAt: assignment.updatedAt
-      }
+        updatedAt: assignment.updatedAt,
+      },
     };
 
     res.json(response);
@@ -603,8 +610,9 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
 });
 
 // Update assignment (for status changes, permissions, etc.)
-router.put('/:id', 
-  authenticateToken, 
+router.put(
+  '/:id',
+  authenticateToken,
   logUserActivity('UPDATE', 'assignment'),
   async (req: AuthenticatedRequest, res) => {
     try {
@@ -627,10 +635,10 @@ router.put('/:id',
             select: {
               id: true,
               userId: true,
-              organizationId: true
-            }
-          }
-        }
+              organizationId: true,
+            },
+          },
+        },
       });
 
       if (!currentAssignment) {
@@ -646,7 +654,10 @@ router.put('/:id',
 
       if (req.user.role === 'super_admin') {
         canUpdate = true;
-      } else if (req.user.role === 'clinic_admin' && currentAssignment.patient.organizationId === req.user.organizationId) {
+      } else if (
+        req.user.role === 'clinic_admin' &&
+        currentAssignment.patient.organizationId === req.user.organizationId
+      ) {
         canUpdate = true;
       } else if (currentAssignment.patient.userId === req.user.userId) {
         // Patients can update consent and some permissions
@@ -717,28 +728,28 @@ router.put('/:id',
               user: {
                 select: {
                   email: true,
-                  name: true
-                }
-              }
-            }
+                  name: true,
+                },
+              },
+            },
           },
           caregiver: {
             select: {
               id: true,
               name: true,
               email: true,
-              role: true
-            }
+              role: true,
+            },
           },
           assignedByUser: {
             select: {
               id: true,
               name: true,
               email: true,
-              role: true
-            }
-          }
-        }
+              role: true,
+            },
+          },
+        },
       });
 
       const response: ApiResponse = {
@@ -760,8 +771,8 @@ router.put('/:id',
           assignedBy: updatedAssignment.assignedBy,
           assignedByUser: updatedAssignment.assignedByUser,
           createdAt: updatedAssignment.createdAt,
-          updatedAt: updatedAssignment.updatedAt
-        }
+          updatedAt: updatedAssignment.updatedAt,
+        },
       };
 
       res.json(response);
@@ -777,8 +788,9 @@ router.put('/:id',
 );
 
 // Delete assignment
-router.delete('/:id', 
-  authenticateToken, 
+router.delete(
+  '/:id',
+  authenticateToken,
   authorizeRole(['super_admin', 'clinic_admin', 'patient']),
   logUserActivity('DELETE', 'assignment'),
   async (req: AuthenticatedRequest, res) => {
@@ -801,10 +813,10 @@ router.delete('/:id',
             select: {
               id: true,
               userId: true,
-              organizationId: true
-            }
-          }
-        }
+              organizationId: true,
+            },
+          },
+        },
       });
 
       if (!assignment) {
@@ -820,7 +832,10 @@ router.delete('/:id',
 
       if (req.user.role === 'super_admin') {
         canDelete = true;
-      } else if (req.user.role === 'clinic_admin' && assignment.patient.organizationId === req.user.organizationId) {
+      } else if (
+        req.user.role === 'clinic_admin' &&
+        assignment.patient.organizationId === req.user.organizationId
+      ) {
         canDelete = true;
       } else if (assignment.patient.userId === req.user.userId) {
         // Patients can delete their own assignments
@@ -837,14 +852,14 @@ router.delete('/:id',
 
       // Delete assignment
       await prisma.caregiverAssignment.delete({
-        where: { id }
+        where: { id },
       });
 
       const response: ApiResponse = {
         success: true,
         data: {
-          message: 'Assignment deleted successfully'
-        }
+          message: 'Assignment deleted successfully',
+        },
       };
 
       res.json(response);

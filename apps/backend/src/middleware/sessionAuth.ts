@@ -53,7 +53,7 @@ export const authenticateSession = async (
       console.log('Invalid token access attempt:', {
         error: error instanceof Error ? error.message : 'Unknown error',
         userAgent: req.get('User-Agent'),
-        ip: req.ip
+        ip: req.ip,
       });
 
       const response: ApiResponse = {
@@ -78,17 +78,20 @@ export const authenticateSession = async (
     const sessionValidation = await SessionManagerService.validateSession(sessionToken, req);
 
     if (!sessionValidation.isValid) {
-      await SecurityAuditService.logSecurityEvent({
-        userId,
-        action: 'invalid_session_access',
-        status: 'failed',
-        riskLevel: 'high',
-        details: {
-          sessionId,
-          reason: 'session_validation_failed',
-          userAgent: req.get('User-Agent')
-        }
-      }, req);
+      await SecurityAuditService.logSecurityEvent(
+        {
+          userId,
+          action: 'invalid_session_access',
+          status: 'failed',
+          riskLevel: 'high',
+          details: {
+            sessionId,
+            reason: 'session_validation_failed',
+            userAgent: req.get('User-Agent'),
+          },
+        },
+        req
+      );
 
       const response: ApiResponse = {
         success: false,
@@ -100,18 +103,21 @@ export const authenticateSession = async (
 
     // Check if user IDs match between token and session
     if (sessionValidation.userId !== userId) {
-      await SecurityAuditService.logSecurityEvent({
-        userId,
-        action: 'session_user_mismatch',
-        status: 'suspicious',
-        riskLevel: 'critical',
-        details: {
-          tokenUserId: userId,
-          sessionUserId: sessionValidation.userId,
-          sessionId,
-          userAgent: req.get('User-Agent')
-        }
-      }, req);
+      await SecurityAuditService.logSecurityEvent(
+        {
+          userId,
+          action: 'session_user_mismatch',
+          status: 'suspicious',
+          riskLevel: 'critical',
+          details: {
+            tokenUserId: userId,
+            sessionUserId: sessionValidation.userId,
+            sessionId,
+            userAgent: req.get('User-Agent'),
+          },
+        },
+        req
+      );
 
       const response: ApiResponse = {
         success: false,
@@ -129,43 +135,46 @@ export const authenticateSession = async (
       organizationId: sessionValidation.organizationId,
       isActive,
       sessionId,
-      sessionToken
+      sessionToken,
     };
 
     req.session = {
       id: sessionId,
       isValid: true,
-      shouldRefresh: sessionValidation.shouldRefresh || false
+      shouldRefresh: sessionValidation.shouldRefresh || false,
     };
 
     // Log successful authentication with session validation
     if (sessionValidation.shouldRefresh) {
-      await SecurityAuditService.logSecurityEvent({
-        userId,
-        organizationId: sessionValidation.organizationId,
-        action: 'session_access',
-        resourceType: 'session',
-        resourceId: sessionId,
-        status: 'success',
-        riskLevel: 'low',
-        details: {
-          sessionRefreshed: true,
-          userAgent: req.get('User-Agent'),
-          timestamp: new Date().toISOString()
+      await SecurityAuditService.logSecurityEvent(
+        {
+          userId,
+          organizationId: sessionValidation.organizationId,
+          action: 'session_access',
+          resourceType: 'session',
+          resourceId: sessionId,
+          status: 'success',
+          riskLevel: 'low',
+          details: {
+            sessionRefreshed: true,
+            userAgent: req.get('User-Agent'),
+            timestamp: new Date().toISOString(),
+          },
+          sessionId,
         },
-        sessionId
-      }, req);
+        req
+      );
     }
 
     next();
   } catch (error) {
     console.error('Session authentication error:', error);
-    
+
     // Skip security audit logging for authentication errors since we don't have a valid userId
     console.log('Authentication error details:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       userAgent: req.get('User-Agent'),
-      ip: req.ip
+      ip: req.ip,
     });
 
     const response: ApiResponse = {
@@ -186,26 +195,25 @@ export const logoutSession = async (
 ): Promise<void> => {
   try {
     if (req.user?.sessionToken) {
-      await SessionManagerService.terminateSession(
-        req.user.sessionToken,
-        'user_logout',
+      await SessionManagerService.terminateSession(req.user.sessionToken, 'user_logout', req);
+
+      await SecurityAuditService.logSecurityEvent(
+        {
+          userId: req.user.userId,
+          organizationId: req.user.organizationId,
+          action: 'logout',
+          resourceType: 'session',
+          resourceId: req.user.sessionId,
+          status: 'success',
+          riskLevel: 'low',
+          details: {
+            logoutReason: 'user_initiated',
+            timestamp: new Date().toISOString(),
+          },
+          sessionId: req.user.sessionId,
+        },
         req
       );
-
-      await SecurityAuditService.logSecurityEvent({
-        userId: req.user.userId,
-        organizationId: req.user.organizationId,
-        action: 'logout',
-        resourceType: 'session',
-        resourceId: req.user.sessionId,
-        status: 'success',
-        riskLevel: 'low',
-        details: {
-          logoutReason: 'user_initiated',
-          timestamp: new Date().toISOString()
-        },
-        sessionId: req.user.sessionId
-      }, req);
     }
 
     next();
@@ -238,27 +246,30 @@ export const logoutAllOtherSessions = async (
       req.user.sessionToken // Keep current session
     );
 
-    await SecurityAuditService.logSecurityEvent({
-      userId: req.user.userId,
-      organizationId: req.user.organizationId,
-      action: 'logout_all_sessions',
-      resourceType: 'session',
-      status: 'success',
-      riskLevel: 'medium',
-      details: {
-        terminatedSessionsCount: terminatedCount,
-        keepCurrentSession: true,
-        timestamp: new Date().toISOString()
+    await SecurityAuditService.logSecurityEvent(
+      {
+        userId: req.user.userId,
+        organizationId: req.user.organizationId,
+        action: 'logout_all_sessions',
+        resourceType: 'session',
+        status: 'success',
+        riskLevel: 'medium',
+        details: {
+          terminatedSessionsCount: terminatedCount,
+          keepCurrentSession: true,
+          timestamp: new Date().toISOString(),
+        },
+        sessionId: req.user.sessionId,
       },
-      sessionId: req.user.sessionId
-    }, req);
+      req
+    );
 
     const response: ApiResponse = {
       success: true,
       data: {
         message: `Successfully logged out ${terminatedCount} other sessions`,
-        terminatedSessions: terminatedCount
-      }
+        terminatedSessions: terminatedCount,
+      },
     };
 
     res.json(response);

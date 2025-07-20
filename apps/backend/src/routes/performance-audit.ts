@@ -2,7 +2,7 @@
  * Performance Audit API Routes
  * Provides comprehensive performance monitoring and security audit capabilities
  * for the ParkML encryption system
- * 
+ *
  * Endpoints:
  * - POST /run-audit - Run comprehensive system audit
  * - GET /metrics - Get current performance metrics
@@ -26,13 +26,14 @@ const router = Router();
  * Run comprehensive system performance audit
  * POST /api/performance-audit/run-audit
  */
-router.post('/run-audit',
+router.post(
+  '/run-audit',
   authenticateToken,
   requireSuperAdmin(),
   async (_req: AuthenticatedRequest, res: Response) => {
     try {
       console.log('🔍 Starting system performance audit...');
-      
+
       const audit = await performanceAuditEngine.runSystemAudit();
 
       const response: ApiResponse = {
@@ -44,9 +45,11 @@ router.post('/run-audit',
           summary: {
             performanceScore: audit.overallScore,
             criticalIssues: audit.securityFindings.filter(f => f.severity === 'critical').length,
-            highPriorityRecommendations: audit.recommendations.filter(r => r.priority === 'critical' || r.priority === 'high').length,
+            highPriorityRecommendations: audit.recommendations.filter(
+              r => r.priority === 'critical' || r.priority === 'high'
+            ).length,
             totalFindings: audit.securityFindings.length,
-            totalRecommendations: audit.recommendations.length
+            totalRecommendations: audit.recommendations.length,
           },
           metrics: audit.metrics,
           topRecommendations: audit.recommendations
@@ -56,17 +59,16 @@ router.post('/run-audit',
             .filter(f => f.severity === 'critical' || f.severity === 'high')
             .slice(0, 5),
           auditComplete: true,
-          message: `System audit completed with score ${audit.overallScore}/100`
-        }
+          message: `System audit completed with score ${audit.overallScore}/100`,
+        },
       };
 
       res.status(201).json(response);
-
     } catch (error) {
       console.error('Performance audit error:', error);
       res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to run performance audit'
+        error: error instanceof Error ? error.message : 'Failed to run performance audit',
       } as ApiResponse);
     }
   }
@@ -76,7 +78,8 @@ router.post('/run-audit',
  * Get current performance metrics
  * GET /api/performance-audit/metrics
  */
-router.get('/metrics',
+router.get(
+  '/metrics',
   authenticateToken,
   requireSuperAdmin(),
   async (_req: AuthenticatedRequest, res: Response) => {
@@ -90,37 +93,59 @@ router.get('/metrics',
           monitoringActive: true, // Assume monitoring is active
           lastUpdated: new Date(),
           performanceHealth: {
-            status: metrics.errorRate < 5 ? 'healthy' : metrics.errorRate < 15 ? 'warning' : 'critical',
-            latencyStatus: metrics.avgLatency < 100 ? 'optimal' : metrics.avgLatency < 500 ? 'acceptable' : 'slow',
-            memoryStatus: metrics.memoryUsage < 100 ? 'normal' : metrics.memoryUsage < 200 ? 'elevated' : 'high'
+            status:
+              metrics.errorRate < 5 ? 'healthy' : metrics.errorRate < 15 ? 'warning' : 'critical',
+            latencyStatus:
+              metrics.avgLatency < 100
+                ? 'optimal'
+                : metrics.avgLatency < 500
+                  ? 'acceptable'
+                  : 'slow',
+            memoryStatus:
+              metrics.memoryUsage < 100
+                ? 'normal'
+                : metrics.memoryUsage < 200
+                  ? 'elevated'
+                  : 'high',
           },
           alerts: [
-            ...(metrics.errorRate > 10 ? [{ 
-              type: 'error_rate', 
-              message: `High error rate: ${metrics.errorRate.toFixed(1)}%`,
-              severity: 'high'
-            }] : []),
-            ...(metrics.avgLatency > 500 ? [{ 
-              type: 'latency', 
-              message: `High latency: ${metrics.avgLatency.toFixed(0)}ms`,
-              severity: 'medium'
-            }] : []),
-            ...(metrics.memoryUsage > 200 ? [{ 
-              type: 'memory', 
-              message: `High memory usage: ${metrics.memoryUsage.toFixed(0)}MB`,
-              severity: 'medium'
-            }] : [])
-          ]
-        }
+            ...(metrics.errorRate > 10
+              ? [
+                  {
+                    type: 'error_rate',
+                    message: `High error rate: ${metrics.errorRate.toFixed(1)}%`,
+                    severity: 'high',
+                  },
+                ]
+              : []),
+            ...(metrics.avgLatency > 500
+              ? [
+                  {
+                    type: 'latency',
+                    message: `High latency: ${metrics.avgLatency.toFixed(0)}ms`,
+                    severity: 'medium',
+                  },
+                ]
+              : []),
+            ...(metrics.memoryUsage > 200
+              ? [
+                  {
+                    type: 'memory',
+                    message: `High memory usage: ${metrics.memoryUsage.toFixed(0)}MB`,
+                    severity: 'medium',
+                  },
+                ]
+              : []),
+          ],
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('Get metrics error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to retrieve performance metrics'
+        error: 'Failed to retrieve performance metrics',
       } as ApiResponse);
     }
   }
@@ -130,7 +155,8 @@ router.get('/metrics',
  * List recent performance audits
  * GET /api/performance-audit/audits
  */
-router.get('/audits',
+router.get(
+  '/audits',
   authenticateToken,
   requireSuperAdmin(),
   async (req: AuthenticatedRequest, res: Response) => {
@@ -148,8 +174,8 @@ router.get('/audits',
           auditId: 'audit_20250118_001',
           timestamp: new Date(),
           overallScore: 87,
-          createdAt: new Date()
-        }
+          createdAt: new Date(),
+        },
       ];
 
       const response: ApiResponse = {
@@ -160,29 +186,35 @@ router.get('/audits',
             auditId: audit.auditId,
             timestamp: audit.timestamp,
             overallScore: audit.overallScore,
-            performanceGrade: audit.overallScore >= 90 ? 'A' : 
-                             audit.overallScore >= 80 ? 'B' : 
-                             audit.overallScore >= 70 ? 'C' : 
-                             audit.overallScore >= 60 ? 'D' : 'F',
-            createdAt: audit.createdAt
+            performanceGrade:
+              audit.overallScore >= 90
+                ? 'A'
+                : audit.overallScore >= 80
+                  ? 'B'
+                  : audit.overallScore >= 70
+                    ? 'C'
+                    : audit.overallScore >= 60
+                      ? 'D'
+                      : 'F',
+            createdAt: audit.createdAt,
           })),
           summary: {
             totalAudits: mockAudits.length,
-            averageScore: mockAudits.reduce((sum, a) => sum + a.overallScore, 0) / mockAudits.length,
+            averageScore:
+              mockAudits.reduce((sum, a) => sum + a.overallScore, 0) / mockAudits.length,
             trend: 'stable', // Could be 'improving', 'stable', 'declining'
-            lastAuditDate: mockAudits[0]?.timestamp
+            lastAuditDate: mockAudits[0]?.timestamp,
           },
-          note: 'Performance audit data will be available after database migration'
-        }
+          note: 'Performance audit data will be available after database migration',
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('List audits error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to retrieve audit history'
+        error: 'Failed to retrieve audit history',
       } as ApiResponse);
     }
   }
@@ -192,7 +224,8 @@ router.get('/audits',
  * Get specific audit results
  * GET /api/performance-audit/:auditId
  */
-router.get('/:auditId',
+router.get(
+  '/:auditId',
   authenticateToken,
   requireSuperAdmin(),
   async (req: AuthenticatedRequest, res: Response) => {
@@ -209,23 +242,23 @@ router.get('/:auditId',
             avgLatencyMs: 45.2,
             throughputOpsPerSec: 22.1,
             memoryUsageMB: 34.7,
-            errorRate: 0.8
+            errorRate: 0.8,
           },
           homomorphic: {
             avgComputationTimeMs: 1250.0,
             memoryUsageMB: 128.4,
-            successRate: 98.5
+            successRate: 98.5,
           },
           database: {
             avgQueryTimeMs: 23.8,
             connectionPoolUtilization: 0.65,
-            queryOptimizationScore: 92
+            queryOptimizationScore: 92,
           },
           wasm: {
             initializationTimeMs: 450.2,
             operationLatencyMs: 12.8,
-            memoryLeakDetected: false
-          }
+            memoryLeakDetected: false,
+          },
         },
         recommendations: [
           {
@@ -234,8 +267,8 @@ router.get('/:auditId',
             component: 'Homomorphic Engine',
             improvement: 'Optimize computation caching',
             estimatedImpact: '25% faster computations',
-            effort: 'medium'
-          }
+            effort: 'medium',
+          },
         ],
         securityFindings: [
           {
@@ -244,9 +277,9 @@ router.get('/:auditId',
             category: 'audit_trail',
             title: 'Audit Retention Policy',
             description: 'Consider implementing automated audit log rotation',
-            riskScore: 3.0
-          }
-        ]
+            riskScore: 3.0,
+          },
+        ],
       };
 
       const response: ApiResponse = {
@@ -257,30 +290,31 @@ router.get('/:auditId',
             strengths: [
               'Low encryption latency (< 50ms)',
               'High database query performance',
-              'No WASM memory leaks detected'
+              'No WASM memory leaks detected',
             ],
             concerns: [
               'Homomorphic computations could be faster',
-              'Memory usage could be optimized'
+              'Memory usage could be optimized',
             ],
-            actionItems: mockAudit.recommendations.filter(r => r.priority === 'critical' || r.priority === 'high')
+            actionItems: mockAudit.recommendations.filter(
+              r => r.priority === 'critical' || r.priority === 'high'
+            ),
           },
           complianceStatus: {
             hipaaCompliant: true,
             gdprCompliant: true,
             encryptionStandards: 'AES-256, RSA-2048',
-            auditTrailComplete: true
-          }
-        }
+            auditTrailComplete: true,
+          },
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('Get audit details error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to retrieve audit details'
+        error: 'Failed to retrieve audit details',
       } as ApiResponse);
     }
   }
@@ -290,7 +324,8 @@ router.get('/:auditId',
  * Start performance monitoring
  * POST /api/performance-audit/start-monitoring
  */
-router.post('/start-monitoring',
+router.post(
+  '/start-monitoring',
   authenticateToken,
   requireSuperAdmin(),
   async (_req: AuthenticatedRequest, res: Response) => {
@@ -307,21 +342,20 @@ router.post('/start-monitoring',
           retentionPeriod: '1 hour',
           monitoredComponents: [
             'Encryption Operations',
-            'Homomorphic Computations', 
+            'Homomorphic Computations',
             'Database Queries',
             'WASM Module Performance',
-            'Memory Usage'
-          ]
-        }
+            'Memory Usage',
+          ],
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('Start monitoring error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to start performance monitoring'
+        error: 'Failed to start performance monitoring',
       } as ApiResponse);
     }
   }
@@ -331,7 +365,8 @@ router.post('/start-monitoring',
  * Stop performance monitoring
  * POST /api/performance-audit/stop-monitoring
  */
-router.post('/stop-monitoring',
+router.post(
+  '/stop-monitoring',
   authenticateToken,
   requireSuperAdmin(),
   async (_req: AuthenticatedRequest, res: Response) => {
@@ -344,17 +379,16 @@ router.post('/stop-monitoring',
           monitoringActive: false,
           stoppedAt: new Date(),
           message: 'Performance monitoring stopped successfully',
-          finalMetrics: performanceAuditEngine.getMetricsSummary()
-        }
+          finalMetrics: performanceAuditEngine.getMetricsSummary(),
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('Stop monitoring error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to stop performance monitoring'
+        error: 'Failed to stop performance monitoring',
       } as ApiResponse);
     }
   }
@@ -364,7 +398,8 @@ router.post('/stop-monitoring',
  * Get performance recommendations
  * GET /api/performance-audit/recommendations
  */
-router.get('/recommendations',
+router.get(
+  '/recommendations',
   authenticateToken,
   requireSuperAdmin(),
   async (req: AuthenticatedRequest, res: Response) => {
@@ -381,7 +416,7 @@ router.get('/recommendations',
           implementation: 'Add Redis cache for frequently used encryption keys',
           estimatedImpact: '40% reduction in encryption latency',
           effort: 'medium',
-          status: 'pending'
+          status: 'pending',
         },
         {
           id: 'PERF_002',
@@ -391,7 +426,7 @@ router.get('/recommendations',
           implementation: 'Create indexes on (organizationId, patientId, createdAt) columns',
           estimatedImpact: '60% faster query performance',
           effort: 'low',
-          status: 'pending'
+          status: 'pending',
         },
         {
           id: 'PERF_003',
@@ -401,8 +436,8 @@ router.get('/recommendations',
           implementation: 'Implement lazy loading and module caching',
           estimatedImpact: '30% faster initialization',
           effort: 'high',
-          status: 'pending'
-        }
+          status: 'pending',
+        },
       ];
 
       let filteredRecommendations = allRecommendations;
@@ -412,7 +447,7 @@ router.get('/recommendations',
       }
 
       if (component) {
-        filteredRecommendations = filteredRecommendations.filter(r => 
+        filteredRecommendations = filteredRecommendations.filter(r =>
           r.component.toLowerCase().includes((component as string).toLowerCase())
         );
       }
@@ -427,9 +462,9 @@ router.get('/recommendations',
               critical: filteredRecommendations.filter(r => r.priority === 'critical').length,
               high: filteredRecommendations.filter(r => r.priority === 'high').length,
               medium: filteredRecommendations.filter(r => r.priority === 'medium').length,
-              low: filteredRecommendations.filter(r => r.priority === 'low').length
+              low: filteredRecommendations.filter(r => r.priority === 'low').length,
             },
-            estimatedTotalImpact: 'System-wide performance improvement of 35-50%'
+            estimatedTotalImpact: 'System-wide performance improvement of 35-50%',
           },
           implementationGuide: {
             quickWins: filteredRecommendations.filter(r => r.effort === 'low'),
@@ -437,21 +472,22 @@ router.get('/recommendations',
             priorityOrder: filteredRecommendations
               .sort((a, b) => {
                 const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-                return priorityOrder[a.priority as keyof typeof priorityOrder] - 
-                       priorityOrder[b.priority as keyof typeof priorityOrder];
+                return (
+                  priorityOrder[a.priority as keyof typeof priorityOrder] -
+                  priorityOrder[b.priority as keyof typeof priorityOrder]
+                );
               })
-              .map(r => r.id)
-          }
-        }
+              .map(r => r.id),
+          },
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('Get recommendations error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to retrieve performance recommendations'
+        error: 'Failed to retrieve performance recommendations',
       } as ApiResponse);
     }
   }
@@ -461,7 +497,8 @@ router.get('/recommendations',
  * Get security audit findings
  * GET /api/performance-audit/security-findings
  */
-router.get('/security-findings',
+router.get(
+  '/security-findings',
   authenticateToken,
   requireSuperAdmin(),
   async (req: AuthenticatedRequest, res: Response) => {
@@ -479,7 +516,7 @@ router.get('/security-findings',
           recommendation: 'Implement automated key rotation',
           riskScore: 6.5,
           status: 'open',
-          discoveredAt: new Date()
+          discoveredAt: new Date(),
         },
         {
           id: 'SEC_002',
@@ -490,7 +527,7 @@ router.get('/security-findings',
           recommendation: 'Increase retention to 7 years for compliance',
           riskScore: 3.0,
           status: 'open',
-          discoveredAt: new Date()
+          discoveredAt: new Date(),
         },
         {
           id: 'SEC_003',
@@ -501,8 +538,8 @@ router.get('/security-findings',
           recommendation: 'Review emergency access procedures and training',
           riskScore: 7.8,
           status: 'investigating',
-          discoveredAt: new Date()
-        }
+          discoveredAt: new Date(),
+        },
       ];
 
       let filteredFindings = allFindings;
@@ -526,34 +563,35 @@ router.get('/security-findings',
               critical: filteredFindings.filter(f => f.severity === 'critical').length,
               high: filteredFindings.filter(f => f.severity === 'high').length,
               medium: filteredFindings.filter(f => f.severity === 'medium').length,
-              low: filteredFindings.filter(f => f.severity === 'low').length
+              low: filteredFindings.filter(f => f.severity === 'low').length,
             },
             byCategory: {
               encryption: filteredFindings.filter(f => f.category === 'encryption').length,
               access_control: filteredFindings.filter(f => f.category === 'access_control').length,
               key_management: filteredFindings.filter(f => f.category === 'key_management').length,
               audit_trail: filteredFindings.filter(f => f.category === 'audit_trail').length,
-              data_exposure: filteredFindings.filter(f => f.category === 'data_exposure').length
-            }
+              data_exposure: filteredFindings.filter(f => f.category === 'data_exposure').length,
+            },
           },
           complianceStatus: {
             hipaa: 'compliant',
             gdpr: 'compliant',
             soc2: 'review_required',
-            iso27001: 'compliant'
+            iso27001: 'compliant',
           },
-          actionRequired: filteredFindings.filter(f => f.severity === 'critical' || f.severity === 'high'),
-          lastSecurityAudit: new Date()
-        }
+          actionRequired: filteredFindings.filter(
+            f => f.severity === 'critical' || f.severity === 'high'
+          ),
+          lastSecurityAudit: new Date(),
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('Get security findings error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to retrieve security findings'
+        error: 'Failed to retrieve security findings',
       } as ApiResponse);
     }
   }
@@ -563,7 +601,8 @@ router.get('/security-findings',
  * Get system health dashboard
  * GET /api/performance-audit/dashboard
  */
-router.get('/dashboard',
+router.get(
+  '/dashboard',
   authenticateToken,
   requireSuperAdmin(),
   async (_req: AuthenticatedRequest, res: Response) => {
@@ -577,41 +616,40 @@ router.get('/dashboard',
             overallStatus: 'healthy',
             performanceScore: 87,
             securityScore: 92,
-            lastUpdated: new Date()
+            lastUpdated: new Date(),
           },
           realTimeMetrics: metrics,
           alerts: {
             critical: 0,
             high: 1,
             medium: 2,
-            low: 3
+            low: 3,
           },
           trends: {
             performance: 'stable',
             security: 'improving',
-            reliability: 'excellent'
+            reliability: 'excellent',
           },
           quickStats: {
             encryptionOperationsToday: 1247,
             averageResponseTime: '45ms',
             systemUptime: '99.9%',
-            securityIncidents: 0
+            securityIncidents: 0,
           },
           recommendations: {
             immediate: 1,
             shortTerm: 3,
-            longTerm: 2
-          }
-        }
+            longTerm: 2,
+          },
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('Get dashboard error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to retrieve dashboard data'
+        error: 'Failed to retrieve dashboard data',
       } as ApiResponse);
     }
   }

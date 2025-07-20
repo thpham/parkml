@@ -2,16 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from '../../hooks/useTranslation';
 import toast from 'react-hot-toast';
-import { 
-  Eye, 
-  EyeOff, 
-  LogIn, 
-  Smartphone, 
-  Key, 
-  Shield,
-  ArrowLeft,
-  CheckCircle 
-} from 'lucide-react';
+import { Eye, EyeOff, LogIn, Smartphone, Key, Shield, ArrowLeft, CheckCircle } from 'lucide-react';
 
 interface LoginFormData {
   email: string;
@@ -33,13 +24,16 @@ interface TwoFactorResponse {
 
 const LoginForm: React.FC = () => {
   const { t } = useTranslation(['auth', 'common', 'security']);
-  
+
   // State management
   const [currentStep, setCurrentStep] = useState<LoginStep>('credentials');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [twoFactorMethod, setTwoFactorMethod] = useState<TwoFactorMethod>('totp');
-  const [loginCredentials, setLoginCredentials] = useState<{ email: string; password: string } | null>(null);
+  const [loginCredentials, setLoginCredentials] = useState<{
+    email: string;
+    password: string;
+  } | null>(null);
   const [, setTwoFactorData] = useState<TwoFactorResponse | null>(null);
 
   // Form hooks
@@ -47,17 +41,22 @@ const LoginForm: React.FC = () => {
   const twoFactorForm = useForm<TwoFactorFormData>();
 
   // Enhanced login function that handles multi-step authentication
-  const performLogin = async (email: string, password: string, twoFactorCode?: string, backupCode?: string) => {
+  const performLogin = async (
+    email: string,
+    password: string,
+    twoFactorCode?: string,
+    backupCode?: string
+  ) => {
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ 
-        email, 
-        password, 
+      body: JSON.stringify({
+        email,
+        password,
         ...(twoFactorCode && { twoFactorCode }),
-        ...(backupCode && { backupCode })
+        ...(backupCode && { backupCode }),
       }),
     });
 
@@ -75,15 +74,15 @@ const LoginForm: React.FC = () => {
     setIsSubmitting(true);
     try {
       const result = await performLogin(data.email, data.password);
-      
+
       // Check if 2FA is required
       if (result.data?.requiresTwoFactor) {
         setLoginCredentials({ email: data.email, password: data.password });
         setTwoFactorData(result.data);
         setCurrentStep('twoFactor');
-        toast(t('auth:login.twoFactorRequired'), { 
+        toast(t('auth:login.twoFactorRequired'), {
           icon: '🔐',
-          duration: 4000 
+          duration: 4000,
         });
       } else {
         // Complete login without 2FA
@@ -112,7 +111,7 @@ const LoginForm: React.FC = () => {
         twoFactorMethod === 'totp' ? data.twoFactorCode : undefined,
         twoFactorMethod === 'backup' ? data.backupCode : undefined
       );
-      
+
       await completeLogin(result);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('auth:login.twoFactorInvalid'));
@@ -126,13 +125,16 @@ const LoginForm: React.FC = () => {
     // Store user data in localStorage and update auth context
     localStorage.setItem('parkml_token', loginResult.data.token);
     localStorage.setItem('parkml_user', JSON.stringify(loginResult.data.user));
-    
+
     if (loginResult.data.user.organization) {
-      localStorage.setItem('parkml_organization', JSON.stringify(loginResult.data.user.organization));
+      localStorage.setItem(
+        'parkml_organization',
+        JSON.stringify(loginResult.data.user.organization)
+      );
     }
 
     toast.success(t('auth:login.successMessage'));
-    
+
     // Refresh the page to update auth context
     window.location.reload();
   };
@@ -174,7 +176,7 @@ const LoginForm: React.FC = () => {
 
       // Import WebAuthn browser functions
       const { startAuthentication } = await import('@simplewebauthn/browser');
-      
+
       // Perform WebAuthn authentication
       const authResponse = await startAuthentication(beginData.data.options);
 
@@ -282,11 +284,7 @@ const LoginForm: React.FC = () => {
             )}
           </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="btn btn-primary w-full"
-          >
+          <button type="submit" disabled={isSubmitting} className="btn btn-primary w-full">
             {isSubmitting ? (
               <span className="loading loading-spinner loading-sm"></span>
             ) : (
@@ -339,9 +337,7 @@ const LoginForm: React.FC = () => {
         </div>
 
         <div className="text-center mb-6">
-          <p className="text-base-content/70 text-sm">
-            {t('auth:login.twoFactorDescription')}
-          </p>
+          <p className="text-base-content/70 text-sm">{t('auth:login.twoFactorDescription')}</p>
         </div>
 
         {/* Method Selection */}
@@ -374,7 +370,8 @@ const LoginForm: React.FC = () => {
               </label>
               <input
                 {...twoFactorForm.register('twoFactorCode', {
-                  required: twoFactorMethod === 'totp' ? t('security:validation.codeRequired') : false,
+                  required:
+                    twoFactorMethod === 'totp' ? t('security:validation.codeRequired') : false,
                   pattern: {
                     value: /^\d{6}$/,
                     message: t('security:validation.codeInvalid'),
@@ -410,7 +407,10 @@ const LoginForm: React.FC = () => {
               </label>
               <input
                 {...twoFactorForm.register('backupCode', {
-                  required: twoFactorMethod === 'backup' ? t('security:validation.backupCodeRequired') : false,
+                  required:
+                    twoFactorMethod === 'backup'
+                      ? t('security:validation.backupCodeRequired')
+                      : false,
                   pattern: {
                     value: /^[A-Z0-9]{8}$/,
                     message: t('security:validation.backupCodeInvalid'),
@@ -441,11 +441,7 @@ const LoginForm: React.FC = () => {
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="btn btn-primary w-full"
-          >
+          <button type="submit" disabled={isSubmitting} className="btn btn-primary w-full">
             {isSubmitting ? (
               <span className="loading loading-spinner loading-sm"></span>
             ) : (

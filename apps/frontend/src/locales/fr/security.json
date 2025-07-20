@@ -1,7 +1,7 @@
 {
   "score": {
     "excellent": "Excellent",
-    "good": "Bon", 
+    "good": "Bon",
     "fair": "Correct",
     "poor": "Faible"
   },
@@ -37,7 +37,7 @@
     "requirements": {
       "minLength": "Au moins 8 caractères",
       "uppercase": "Lettre majuscule",
-      "lowercase": "Lettre minuscule", 
+      "lowercase": "Lettre minuscule",
       "numbers": "Chiffre",
       "specialChars": "Caractère spécial"
     },
@@ -141,7 +141,7 @@
     "title": "Clés d'accès",
     "description": "Connectez-vous en toute sécurité avec la biométrie ou l'authentification de l'appareil",
     "add": "Ajouter une clé d'accès",
-    "manage": "Gérer les clés d'accès", 
+    "manage": "Gérer les clés d'accès",
     "register": "Enregistrer une clé d'accès",
     "deviceName": "Nom de l'appareil",
     "deviceNamePlaceholder": "ex: iPhone 15 Pro",
@@ -188,7 +188,7 @@
     "suspiciousActivity": "Activité suspecte détectée",
     "actions": {
       "login": "Connexion",
-      "logout": "Déconnexion", 
+      "logout": "Déconnexion",
       "password_change": "Mot de passe modifié",
       "2fa_enabled": "2FA activé",
       "2fa_disabled": "2FA désactivé",
@@ -220,7 +220,7 @@
     "recentAttempts": "tentatives de connexion récentes"
   },
   "recommendations": {
-    "title": "Recommandations de sécurité", 
+    "title": "Recommandations de sécurité",
     "enable2fa": "Activez l'authentification à deux facteurs pour une meilleure sécurité",
     "addPasskey": "Ajoutez une clé d'accès pour l'authentification sans mot de passe",
     "strongPassword": "Utilisez un mot de passe plus fort avec des caractères mixtes"

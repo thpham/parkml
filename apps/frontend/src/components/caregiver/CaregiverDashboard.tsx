@@ -3,15 +3,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import { CaregiverAssignment, ApiResponse, Patient, User } from '@parkml/shared';
 import { Avatar } from '../shared';
-import { 
-  Users, 
-  Clock, 
-  CheckCircle, 
+import {
+  Users,
+  Clock,
+  CheckCircle,
   AlertCircle,
   Calendar,
   User as UserIcon,
   Heart,
-  Activity
+  Activity,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -35,7 +35,7 @@ const CaregiverDashboard: React.FC = () => {
     totalAssignments: 0,
     pendingAssignments: 0,
     activeAssignments: 0,
-    patientsCount: 0
+    patientsCount: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -50,7 +50,7 @@ const CaregiverDashboard: React.FC = () => {
       setLoading(true);
       const response = await fetch('/api/assignments', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -79,7 +79,7 @@ const CaregiverDashboard: React.FC = () => {
       totalAssignments: assignmentData.length,
       pendingAssignments: pending,
       activeAssignments: active,
-      patientsCount: uniquePatients
+      patientsCount: uniquePatients,
     });
   };
 
@@ -89,7 +89,7 @@ const CaregiverDashboard: React.FC = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ status }),
       });
@@ -97,7 +97,9 @@ const CaregiverDashboard: React.FC = () => {
       const data: ApiResponse = await response.json();
 
       if (data.success) {
-        toast.success(status === 'active' ? t('messages.assignmentAccepted') : t('messages.assignmentDeclined'));
+        toast.success(
+          status === 'active' ? t('messages.assignmentAccepted') : t('messages.assignmentDeclined')
+        );
         fetchAssignments(); // Refresh the list
       } else {
         toast.error(data.error || t('messages.updateError'));
@@ -149,14 +151,13 @@ const CaregiverDashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="card-title text-2xl">{t('dashboard.title')}</h1>
-              <p className="text-base-content/70">
-                {t('dashboard.subtitle')}
-              </p>
+              <p className="text-base-content/70">{t('dashboard.subtitle')}</p>
             </div>
             <div className="flex items-center space-x-2">
               <Heart className="h-6 w-6 text-error" />
               <span className="text-lg font-medium">
-                {formatCaregiverType(user?.role?.replace('_caregiver', '') || '')} {t('dashboard.caregiverSuffix')}
+                {formatCaregiverType(user?.role?.replace('_caregiver', '') || '')}{' '}
+                {t('dashboard.caregiverSuffix')}
               </span>
             </div>
           </div>
@@ -208,14 +209,12 @@ const CaregiverDashboard: React.FC = () => {
                 {t('dashboard.pendingRequests.title', { count: pendingAssignments.length })}
               </h2>
             </div>
-            <p className="text-sm opacity-70 mt-1">
-              {t('dashboard.pendingRequests.subtitle')}
-            </p>
+            <p className="text-sm opacity-70 mt-1">{t('dashboard.pendingRequests.subtitle')}</p>
           </div>
-          
+
           <div className="overflow-hidden">
             <ul className="divide-y divide-gray-200">
-              {pendingAssignments.map((assignment) => (
+              {pendingAssignments.map(assignment => (
                 <li key={assignment.id} className="px-6 py-4 bg-warning/10">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
@@ -223,7 +222,9 @@ const CaregiverDashboard: React.FC = () => {
                         variant="icon"
                         status="warning"
                         size="md"
-                        aria-label={t('dashboard.ariaLabels.pendingAssignment', { patient: assignment.patient.name })}
+                        aria-label={t('dashboard.ariaLabels.pendingAssignment', {
+                          patient: assignment.patient.name,
+                        })}
                       >
                         <UserIcon />
                       </Avatar>
@@ -232,11 +233,13 @@ const CaregiverDashboard: React.FC = () => {
                           {t('dashboard.pendingRequests.patient')} {assignment.patient.name}
                         </div>
                         <div className="text-sm opacity-70">
-                          {t('dashboard.pendingRequests.assignmentType')} {formatCaregiverType(assignment.caregiverType)}
+                          {t('dashboard.pendingRequests.assignmentType')}{' '}
+                          {formatCaregiverType(assignment.caregiverType)}
                         </div>
                         <div className="flex items-center text-xs opacity-60 mt-1">
                           <Calendar className="h-3 w-3 mr-1" />
-                          {t('dashboard.pendingRequests.requested')} {new Date(assignment.createdAt).toLocaleDateString()}
+                          {t('dashboard.pendingRequests.requested')}{' '}
+                          {new Date(assignment.createdAt).toLocaleDateString()}
                           {assignment.assignedByUser && (
                             <span className="ml-3">
                               {t('dashboard.pendingRequests.by')} {assignment.assignedByUser.name}
@@ -245,7 +248,8 @@ const CaregiverDashboard: React.FC = () => {
                         </div>
                         {assignment.notes && (
                           <div className="text-sm opacity-80 mt-1">
-                            <strong>{t('dashboard.pendingRequests.notes')}</strong> {assignment.notes}
+                            <strong>{t('dashboard.pendingRequests.notes')}</strong>{' '}
+                            {assignment.notes}
                           </div>
                         )}
                       </div>
@@ -281,7 +285,7 @@ const CaregiverDashboard: React.FC = () => {
             {t('dashboard.activeAssignments.title', { count: activeAssignments.length })}
           </h2>
         </div>
-        
+
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <span className="loading loading-spinner loading-lg"></span>
@@ -289,7 +293,9 @@ const CaregiverDashboard: React.FC = () => {
         ) : activeAssignments.length === 0 ? (
           <div className="p-6 text-center">
             <Users className="mx-auto h-12 w-12 opacity-50" />
-            <h3 className="mt-2 text-sm font-medium">{t('dashboard.activeAssignments.noActiveTitle')}</h3>
+            <h3 className="mt-2 text-sm font-medium">
+              {t('dashboard.activeAssignments.noActiveTitle')}
+            </h3>
             <p className="mt-1 text-sm opacity-70">
               {t('dashboard.activeAssignments.noActiveMessage')}
             </p>
@@ -297,7 +303,7 @@ const CaregiverDashboard: React.FC = () => {
         ) : (
           <div className="overflow-hidden">
             <ul className="divide-y divide-gray-200">
-              {activeAssignments.map((assignment) => (
+              {activeAssignments.map(assignment => (
                 <li key={assignment.id} className="px-6 py-4 hover:bg-base-200/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
@@ -305,23 +311,28 @@ const CaregiverDashboard: React.FC = () => {
                         variant="icon"
                         status="active"
                         size="md"
-                        aria-label={t('dashboard.ariaLabels.activeAssignment', { patient: assignment.patient.name })}
+                        aria-label={t('dashboard.ariaLabels.activeAssignment', {
+                          patient: assignment.patient.name,
+                        })}
                       >
                         <UserIcon />
                       </Avatar>
                       <div className="ml-4">
-                        <div className="text-sm font-medium">
-                          {assignment.patient.name}
-                        </div>
+                        <div className="text-sm font-medium">{assignment.patient.name}</div>
                         <div className="text-sm opacity-70">
-                          {formatCaregiverType(assignment.caregiverType)} {t('dashboard.activeAssignments.caregiverSuffix')}
+                          {formatCaregiverType(assignment.caregiverType)}{' '}
+                          {t('dashboard.activeAssignments.caregiverSuffix')}
                         </div>
                         <div className="flex items-center text-xs opacity-60 mt-1">
                           <Calendar className="h-3 w-3 mr-1" />
-                          {t('dashboard.activeAssignments.started')} {assignment.startDate ? new Date(assignment.startDate).toLocaleDateString() : 'N/A'}
+                          {t('dashboard.activeAssignments.started')}{' '}
+                          {assignment.startDate
+                            ? new Date(assignment.startDate).toLocaleDateString()
+                            : 'N/A'}
                           {assignment.consentGiven && assignment.consentDate && (
                             <span className="ml-3">
-                              {t('dashboard.activeAssignments.consent')} {new Date(assignment.consentDate).toLocaleDateString()}
+                              {t('dashboard.activeAssignments.consent')}{' '}
+                              {new Date(assignment.consentDate).toLocaleDateString()}
                             </span>
                           )}
                         </div>
@@ -333,16 +344,22 @@ const CaregiverDashboard: React.FC = () => {
                         {t('dashboard.activeAssignments.active')}
                       </div>
                       <div className="text-center">
-                        <div className="text-xs opacity-70">{t('dashboard.activeAssignments.consentStatus')}</div>
-                        <div className={`text-xs font-medium ${
-                          assignment.consentGiven ? 'text-success' : 'text-error'
-                        }`}>
-                          {assignment.consentGiven ? t('dashboard.activeAssignments.given') : t('dashboard.activeAssignments.pending')}
+                        <div className="text-xs opacity-70">
+                          {t('dashboard.activeAssignments.consentStatus')}
+                        </div>
+                        <div
+                          className={`text-xs font-medium ${
+                            assignment.consentGiven ? 'text-success' : 'text-error'
+                          }`}
+                        >
+                          {assignment.consentGiven
+                            ? t('dashboard.activeAssignments.given')
+                            : t('dashboard.activeAssignments.pending')}
                         </div>
                       </div>
                     </div>
                   </div>
-                  
+
                   {assignment.notes && (
                     <div className="mt-2 ml-14 text-sm opacity-80">
                       <strong>{t('dashboard.pendingRequests.notes')}</strong> {assignment.notes}

@@ -6,12 +6,15 @@
 import { prisma } from '../database/prisma-client';
 import { ABECrypto } from './abe-crypto';
 import { WASMCryptoLoader, HomomorphicEncryption } from './wasm-loader';
-import { PrismaEncryptionMiddleware, RequestEncryptionContextProvider } from './encryption-middleware';
-import { 
-  AccessLevel, 
-  DataCategory, 
+import {
+  PrismaEncryptionMiddleware,
+  RequestEncryptionContextProvider,
+} from './encryption-middleware';
+import {
+  AccessLevel,
+  DataCategory,
   HomomorphicComputationRequest,
-  CryptoAuditEntry
+  CryptoAuditEntry,
 } from '@parkml/shared';
 
 /**
@@ -87,8 +90,8 @@ export class CryptoService {
         keyType: 'patient',
         encryptedKey: userSecretKey.serialize(),
         attributes: JSON.stringify(userSecretKey.getAttributes()),
-        isActive: true
-      }
+        isActive: true,
+      },
     });
 
     // Create audit entry
@@ -101,16 +104,21 @@ export class CryptoService {
       encryptionContext: {
         requesterId: userId,
         organizationId,
-        requesterRole: userRole as 'super_admin' | 'clinic_admin' | 'professional_caregiver' | 'family_caregiver' | 'patient',
+        requesterRole: userRole as
+          | 'super_admin'
+          | 'clinic_admin'
+          | 'professional_caregiver'
+          | 'family_caregiver'
+          | 'patient',
         patientId: '',
         accessLevel: AccessLevel.PATIENT_FULL,
         dataCategories: [],
-        timestamp: new Date()
+        timestamp: new Date(),
       },
       success: true,
       ipAddress: '127.0.0.1',
       userAgent: 'system',
-      cryptographicProof: this.generateAuditProof()
+      cryptographicProof: this.generateAuditProof(),
     });
 
     console.log(`🔑 Generated encryption keys for user: ${userId}`);
@@ -145,8 +153,8 @@ export class CryptoService {
         reason: reason || 'Access delegation',
         validUntil: new Date(Date.now() + expirationHours * 60 * 60 * 1000),
         organizationId: 'default_org', // Default organization
-        isRevoked: false
-      }
+        isRevoked: false,
+      },
     });
 
     // Create audit entry
@@ -164,12 +172,12 @@ export class CryptoService {
         requesterRole: 'professional_caregiver',
         accessLevel,
         dataCategories,
-        timestamp: new Date()
+        timestamp: new Date(),
       },
       success: true,
       ipAddress: '127.0.0.1',
       userAgent: 'system',
-      cryptographicProof: this.generateAuditProof()
+      cryptographicProof: this.generateAuditProof(),
     });
 
     console.log(`🔄 Created access delegation: ${delegation.id}`);
@@ -190,8 +198,8 @@ export class CryptoService {
       data: {
         isRevoked: true,
         revokedAt: new Date(),
-        revokedBy: userId
-      }
+        revokedBy: userId,
+      },
     });
 
     // Create audit entry
@@ -209,12 +217,12 @@ export class CryptoService {
         requesterRole: 'clinic_admin',
         accessLevel: delegation.accessLevel as AccessLevel,
         dataCategories: JSON.parse(delegation.dataCategories),
-        timestamp: new Date()
+        timestamp: new Date(),
       },
       success: true,
       ipAddress: '127.0.0.1',
       userAgent: 'system',
-      cryptographicProof: this.generateAuditProof()
+      cryptographicProof: this.generateAuditProof(),
     });
 
     console.log(`❌ Revoked access delegation: ${delegationId}`);
@@ -239,8 +247,8 @@ export class CryptoService {
         cohortCriteria: JSON.stringify(request.cohortCriteria),
         requesterId: request.requesterId,
         purpose: request.purpose,
-        status: 'pending'
-      }
+        status: 'pending',
+      },
     });
 
     // Start computation asynchronously
@@ -264,7 +272,7 @@ export class CryptoService {
     // In a real implementation, this would be request-scoped
     const contextProvider = {
       getContext: () => null,
-      getUserSecretKey: () => null
+      getUserSecretKey: () => null,
     };
 
     const middleware = new PrismaEncryptionMiddleware(contextProvider);
@@ -291,7 +299,7 @@ export class CryptoService {
 
   private async initializeOrganizationAuthorities(): Promise<void> {
     const organizations = await prisma.organization.findMany({
-      where: { isActive: true }
+      where: { isActive: true },
     });
 
     for (const org of organizations) {
@@ -313,12 +321,12 @@ export class CryptoService {
       // Update status to running
       await prisma.homomorphicComputation.update({
         where: { id: computationId },
-        data: { status: 'running' }
+        data: { status: 'running' },
       });
 
       // Get computation details
       const computation = await prisma.homomorphicComputation.findUnique({
-        where: { id: computationId }
+        where: { id: computationId },
       });
 
       if (!computation) {
@@ -339,25 +347,27 @@ export class CryptoService {
         data: {
           status: 'completed',
           encryptedResult,
-          computedAt: new Date()
-        }
+          computedAt: new Date(),
+        },
       });
 
       console.log(`✅ Completed homomorphic computation: ${computationId}`);
     } catch (error) {
       console.error(`❌ Failed homomorphic computation ${computationId}:`, error);
-      
+
       await prisma.homomorphicComputation.update({
         where: { id: computationId },
         data: {
           status: 'failed',
-          errorMessage: error instanceof Error ? error.message : 'Unknown error'
-        }
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        },
       });
     }
   }
 
-  private async createCryptoAuditEntry(entry: Omit<CryptoAuditEntry, 'auditId' | 'timestamp'>): Promise<void> {
+  private async createCryptoAuditEntry(
+    entry: Omit<CryptoAuditEntry, 'auditId' | 'timestamp'>
+  ): Promise<void> {
     await prisma.cryptoAuditEntry.create({
       data: {
         operation: entry.operation,
@@ -371,8 +381,8 @@ export class CryptoService {
         errorMessage: entry.errorMessage,
         ipAddress: entry.ipAddress,
         userAgent: entry.userAgent,
-        cryptographicProof: entry.cryptographicProof
-      }
+        cryptographicProof: entry.cryptographicProof,
+      },
     });
   }
 
@@ -410,7 +420,7 @@ export function createCryptoMiddleware() {
     if (!cryptoService.isReady()) {
       return res.status(503).json({
         success: false,
-        error: 'Encryption service not available'
+        error: 'Encryption service not available',
       });
     }
 

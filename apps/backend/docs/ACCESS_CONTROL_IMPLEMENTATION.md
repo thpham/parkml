@@ -2,11 +2,14 @@
 
 ## Overview
 
-The ParkML platform now implements a comprehensive multi-tier access control system that provides fine-grained permissions for medical data access based on user roles, patient relationships, and data sensitivity categories.
+The ParkML platform now implements a comprehensive multi-tier access control
+system that provides fine-grained permissions for medical data access based on
+user roles, patient relationships, and data sensitivity categories.
 
 ## Key Features
 
 ### 1. **Multi-Tier Access Levels**
+
 - **PATIENT_FULL**: Complete access to own data
 - **CAREGIVER_PROFESSIONAL**: Medical professional access to patient data
 - **CAREGIVER_FAMILY**: Limited family caregiver access
@@ -15,8 +18,10 @@ The ParkML platform now implements a comprehensive multi-tier access control sys
 - **ANALYTICS_AGGREGATED**: Population health analytics access
 
 ### 2. **Data Categories**
+
 - **DEMOGRAPHICS**: Basic patient information
-- **MOTOR_SYMPTOMS**: Parkinson's motor symptoms (tremors, rigidity, bradykinesia)
+- **MOTOR_SYMPTOMS**: Parkinson's motor symptoms (tremors, rigidity,
+  bradykinesia)
 - **NON_MOTOR_SYMPTOMS**: Cognitive, mood, sleep symptoms
 - **AUTONOMIC_SYMPTOMS**: Blood pressure, bladder/bowel function
 - **DAILY_ACTIVITIES**: Activities of daily living assessments
@@ -27,28 +32,32 @@ The ParkML platform now implements a comprehensive multi-tier access control sys
 
 ### 3. **Access Control Matrix**
 
-| Role | Demographics | Motor Symptoms | Non-Motor | Autonomic | Daily Activities | Medication | Emergency Contacts | Safety Incidents | Environmental |
-|------|-------------|----------------|-----------|-----------|------------------|------------|-------------------|-----------------|---------------|
-| **Patient** | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
-| **Professional Caregiver** | ✅ Professional | ✅ Professional | ✅ Professional | ✅ Professional | ✅ Professional | ✅ Professional | ✅ Professional | ✅ Professional | ✅ Professional |
-| **Family Caregiver** | ✅ Family | ✅ Family | ✅ Family | ❌ | ✅ Family | ❌ | ✅ Family | ✅ Family | ✅ Family |
-| **Clinic Admin** | ✅ Professional | ✅ Professional | ✅ Professional | ✅ Professional | ✅ Professional | ✅ Professional | ✅ Professional | ✅ Professional | ✅ Professional |
-| **Super Admin** | ✅ Full/Professional | ✅ Full/Professional | ✅ Full/Professional | ✅ Full/Professional | ✅ Full/Professional | ✅ Full/Professional | ✅ Full/Professional | ✅ Full/Professional | ✅ Full/Professional |
+| Role                       | Demographics         | Motor Symptoms       | Non-Motor            | Autonomic            | Daily Activities     | Medication           | Emergency Contacts   | Safety Incidents     | Environmental        |
+| -------------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- |
+| **Patient**                | ✅ Full              | ✅ Full              | ✅ Full              | ✅ Full              | ✅ Full              | ✅ Full              | ✅ Full              | ✅ Full              | ✅ Full              |
+| **Professional Caregiver** | ✅ Professional      | ✅ Professional      | ✅ Professional      | ✅ Professional      | ✅ Professional      | ✅ Professional      | ✅ Professional      | ✅ Professional      | ✅ Professional      |
+| **Family Caregiver**       | ✅ Family            | ✅ Family            | ✅ Family            | ❌                   | ✅ Family            | ❌                   | ✅ Family            | ✅ Family            | ✅ Family            |
+| **Clinic Admin**           | ✅ Professional      | ✅ Professional      | ✅ Professional      | ✅ Professional      | ✅ Professional      | ✅ Professional      | ✅ Professional      | ✅ Professional      | ✅ Professional      |
+| **Super Admin**            | ✅ Full/Professional | ✅ Full/Professional | ✅ Full/Professional | ✅ Full/Professional | ✅ Full/Professional | ✅ Full/Professional | ✅ Full/Professional | ✅ Full/Professional | ✅ Full/Professional |
 
 ## Implementation Components
 
 ### 1. **Access Control Engine** (`access-control.ts`)
-- Evaluates permissions based on user role, patient relationships, and data categories
+
+- Evaluates permissions based on user role, patient relationships, and data
+  categories
 - Handles emergency access scenarios with time-limited permissions
 - Supports proxy re-encryption delegations
 - Creates comprehensive audit trails
 
 ### 2. **Access Control Middleware** (`access-control-middleware.ts`)
+
 - Express middleware for enforcing access control on API endpoints
 - Provides utility functions for checking data category access
 - Supports different access patterns (patient-only, emergency, organizational)
 
 ### 3. **Demo Endpoints** (`access-control-demo.ts`)
+
 - Comprehensive demonstration of different access levels
 - Shows granular permission enforcement
 - Provides access summaries and diagnostics
@@ -58,63 +67,79 @@ The ParkML platform now implements a comprehensive multi-tier access control sys
 ### Demo Endpoints (Base: `/api/access-control-demo`)
 
 1. **Motor Symptoms Access**
+
    ```
    GET /motor-symptoms/:patientId
    ```
+
    - Requires: Family caregiver access or higher
    - Demonstrates basic symptom data access
 
 2. **Autonomic Symptoms Access**
+
    ```
    GET /autonomic-symptoms/:patientId
    ```
+
    - Requires: Professional caregiver access
    - Shows sensitive medical data protection
 
 3. **Patient Data Access**
+
    ```
    GET /patient-data/:patientId
    ```
+
    - Requires: Patient-only access
    - Demonstrates full data access for patients
 
 4. **Emergency Access**
+
    ```
    GET /emergency-access/:emergencyAccessId
    ```
+
    - Requires: Active emergency access record
    - Shows temporary emergency permissions
 
 5. **Administrative Access**
+
    ```
    GET /admin-access/:patientId
    ```
+
    - Requires: Clinic admin or super admin role
    - Demonstrates organizational access control
 
 6. **Multi-Category Access**
+
    ```
    GET /multi-category/:patientId
    ```
+
    - Shows granular category-level permissions
    - Returns detailed access matrix
 
 7. **Access Summary**
+
    ```
    GET /access-summary
    ```
+
    - Returns user's available access levels
    - Shows data categories and system overview
 
 ## Enhanced Symptom Entries
 
-The symptom entries endpoints (`/api/symptom-entries`) now use the new access control system:
+The symptom entries endpoints (`/api/symptom-entries`) now use the new access
+control system:
 
 - **GET /**: List symptom entries with data filtering based on permissions
 - **POST /**: Create new entries with access validation
 - **GET /:id**: Get specific entry with category-level data filtering
 
 Response includes:
+
 - `accessLevel`: User's current access level
 - `accessibleCategories`: Array of accessible data categories
 - Data fields are null if not accessible to the user
@@ -205,7 +230,8 @@ curl -X GET http://localhost:5000/api/access-control-demo/emergency-access/emerg
 
 The access control system creates detailed audit trails including:
 
-- **Operation Type**: encrypt, decrypt, key_generation, access_control_evaluation
+- **Operation Type**: encrypt, decrypt, key_generation,
+  access_control_evaluation
 - **User Context**: User ID, role, organization
 - **Patient Context**: Patient ID and organization
 - **Data Categories**: Specific categories accessed
@@ -236,21 +262,31 @@ The access control system is designed to integrate seamlessly with:
 ## Advanced Cryptographic Features
 
 ### Implemented Systems
-1. ✅ **Emergency Access Enhancement**: Cryptographic emergency keys with multi-signature approval
+
+1. ✅ **Emergency Access Enhancement**: Cryptographic emergency keys with
+   multi-signature approval
 2. ✅ **Proxy Re-Encryption**: Patient-controlled delegation system implemented
 3. ✅ **Homomorphic Analytics**: Privacy-preserving population health insights
-4. ✅ **Data Migration**: Secure migration system for existing unencrypted records
-5. ✅ **Performance Optimization**: Comprehensive performance audit and optimization system
-6. ✅ **Security Audit**: Automated security assessment and vulnerability scanning
+4. ✅ **Data Migration**: Secure migration system for existing unencrypted
+   records
+5. ✅ **Performance Optimization**: Comprehensive performance audit and
+   optimization system
+6. ✅ **Security Audit**: Automated security assessment and vulnerability
+   scanning
 
 ### Documentation References
-- **[Cryptographic Emergency Access](./CRYPTOGRAPHIC_EMERGENCY_ACCESS.md)**: Advanced emergency access with cryptographic features
-- **[Performance Audit System](./PERFORMANCE_AUDIT_SYSTEM.md)**: System monitoring and security assessment
-- **[Data Migration System](./DATA_MIGRATION_SYSTEM.md)**: Secure migration of existing data to encrypted format
+
+- **[Cryptographic Emergency Access](./CRYPTOGRAPHIC_EMERGENCY_ACCESS.md)**:
+  Advanced emergency access with cryptographic features
+- **[Performance Audit System](./PERFORMANCE_AUDIT_SYSTEM.md)**: System
+  monitoring and security assessment
+- **[Data Migration System](./DATA_MIGRATION_SYSTEM.md)**: Secure migration of
+  existing data to encrypted format
 
 ### Additional API Endpoints
 
 #### Cryptographic Emergency Access
+
 ```
 POST /api/emergency-access-crypto/request
 POST /api/emergency-access-crypto/:requestId/approve
@@ -259,6 +295,7 @@ GET  /api/emergency-access-crypto/audit
 ```
 
 #### Data Migration
+
 ```
 POST /api/data-migration/start
 GET  /api/data-migration/estimate
@@ -267,6 +304,7 @@ POST /api/data-migration/:migrationId/cancel
 ```
 
 #### Performance Audit
+
 ```
 POST /api/performance-audit/run-audit
 GET  /api/performance-audit/metrics
@@ -275,6 +313,7 @@ GET  /api/performance-audit/security-findings
 ```
 
 #### Homomorphic Analytics
+
 ```
 GET  /api/homomorphic-analytics/population-insights
 POST /api/homomorphic-analytics/custom-query
@@ -282,6 +321,7 @@ GET  /api/homomorphic-analytics/privacy-metrics
 ```
 
 #### Proxy Re-Encryption
+
 ```
 POST /api/proxy-re-encryption/delegate-access
 GET  /api/proxy-re-encryption/delegations
@@ -301,4 +341,6 @@ ACCESS_CONTROL_ADMIN_TIMEOUT=480
 ACCESS_CONTROL_CAREGIVER_TIMEOUT=1440
 ```
 
-This implementation provides a robust, auditable, and scalable foundation for medical data access control that can be extended with additional cryptographic protection mechanisms.
+This implementation provides a robust, auditable, and scalable foundation for
+medical data access control that can be extended with additional cryptographic
+protection mechanisms.

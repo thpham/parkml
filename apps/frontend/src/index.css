@@ -16,8 +16,8 @@ body {
   margin: 0;
   min-height: 100vh;
   /* Use daisyUI theme colors for consistency and theme switching support */
-  background-color: hsl(var(--b2));  /* daisyUI base-200 (light background) */
-  color: hsl(var(--bc));             /* daisyUI base-content (text color) */
+  background-color: hsl(var(--b2)); /* daisyUI base-200 (light background) */
+  color: hsl(var(--bc)); /* daisyUI base-content (text color) */
 }
 
 #root {

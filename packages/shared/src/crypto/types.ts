@@ -16,7 +16,7 @@ export enum AccessLevel {
   /** Research access - Anonymized data for research purposes */
   RESEARCH_ANONYMIZED = 'research_anonymized',
   /** Analytics access - Aggregated data for population health insights */
-  ANALYTICS_AGGREGATED = 'analytics_aggregated'
+  ANALYTICS_AGGREGATED = 'analytics_aggregated',
 }
 
 /**
@@ -41,7 +41,7 @@ export enum DataCategory {
   /** Safety incidents and fall reports */
   SAFETY_INCIDENTS = 'safety_incidents',
   /** Environmental factors affecting symptoms */
-  ENVIRONMENTAL_FACTORS = 'environmental_factors'
+  ENVIRONMENTAL_FACTORS = 'environmental_factors',
 }
 
 /**
@@ -58,7 +58,12 @@ export interface EncryptionContext {
   /** Organization context for multi-tenant isolation */
   organizationId: string;
   /** Role of the requesting user */
-  requesterRole: 'super_admin' | 'clinic_admin' | 'professional_caregiver' | 'family_caregiver' | 'patient';
+  requesterRole:
+    | 'super_admin'
+    | 'clinic_admin'
+    | 'professional_caregiver'
+    | 'family_caregiver'
+    | 'patient';
   /** Specific data categories being requested */
   dataCategories: DataCategory[];
   /** Optional emergency access context */
@@ -248,7 +253,13 @@ export interface CryptoAuditEntry {
   /** Unique audit entry identifier */
   auditId: string;
   /** Type of cryptographic operation */
-  operation: 'encrypt' | 'decrypt' | 'key_generation' | 'key_delegation' | 'key_revocation' | 'emergency_access';
+  operation:
+    | 'encrypt'
+    | 'decrypt'
+    | 'key_generation'
+    | 'key_delegation'
+    | 'key_revocation'
+    | 'emergency_access';
   /** User performing the operation */
   userId: string;
   /** Patient data involved (if applicable) */

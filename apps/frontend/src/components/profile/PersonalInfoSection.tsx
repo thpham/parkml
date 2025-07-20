@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  User, 
-  Mail, 
-  MapPin, 
-  Phone,
-  Edit2,
-  Save,
-  X,
-  Check,
-  AlertCircle
-} from 'lucide-react';
+import { User, Mail, MapPin, Phone, Edit2, Save, X, Check, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import toast from 'react-hot-toast';
@@ -53,18 +43,18 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
       street: '',
       city: '',
       postalCode: '',
-      country: ''
+      country: '',
     },
     emergencyContact: {
       name: '',
       phone: '',
-      relationship: ''
+      relationship: '',
     },
     medicalInfo: {
       allergies: '',
       medications: '',
-      emergencyNotes: ''
-    }
+      emergencyNotes: '',
+    },
   });
   const [editedProfile, setEditedProfile] = useState<UserProfile>(profile);
 
@@ -77,8 +67,8 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
       setIsLoading(true);
       const response = await fetch('/api/auth/profile', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('parkml_token')}`,
+        },
       });
 
       if (response.ok) {
@@ -102,10 +92,10 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
       const response = await fetch('/api/auth/profile', {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${localStorage.getItem('parkml_token')}`,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(editedProfile)
+        body: JSON.stringify(editedProfile),
       });
 
       if (response.ok) {
@@ -141,13 +131,13 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
           ...prev,
           [nested]: {
             ...(prev as any)[nested],
-            [field]: value
-          }
+            [field]: value,
+          },
         };
       }
       return {
         ...prev,
-        [field]: value
+        [field]: value,
       };
     });
   };
@@ -171,9 +161,7 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
           <h2 className="text-xl font-semibold text-base-content">
             {t('profile:personalInfo.title')}
           </h2>
-          <p className="text-base-content/60 mt-1">
-            {t('profile:personalInfo.description')}
-          </p>
+          <p className="text-base-content/60 mt-1">{t('profile:personalInfo.description')}</p>
         </div>
         <div className="flex space-x-2">
           {isEditing ? (
@@ -186,11 +174,7 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
                 <X className="h-4 w-4 mr-1" />
                 {t('common:cancel')}
               </button>
-              <button
-                onClick={handleSave}
-                className="btn btn-primary btn-sm"
-                disabled={isLoading}
-              >
+              <button onClick={handleSave} className="btn btn-primary btn-sm" disabled={isLoading}>
                 {isLoading ? (
                   <span className="loading loading-spinner loading-sm"></span>
                 ) : (
@@ -200,10 +184,7 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
               </button>
             </>
           ) : (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="btn btn-outline btn-sm"
-            >
+            <button onClick={() => setIsEditing(true)} className="btn btn-outline btn-sm">
               <Edit2 className="h-4 w-4 mr-1" />
               {t('common:edit')}
             </button>
@@ -219,7 +200,7 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
               <User className="h-5 w-5 text-primary" />
               {t('profile:personalInfo.basicInfo')}
             </h3>
-            
+
             <div className="space-y-4">
               <div className="form-control">
                 <label className="label">
@@ -229,7 +210,7 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
                   <input
                     type="text"
                     value={editedProfile.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    onChange={e => handleInputChange('name', e.target.value)}
                     className="input input-bordered"
                     placeholder={t('profile:personalInfo.namePlaceholder')}
                   />
@@ -267,7 +248,7 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
                   <input
                     type="tel"
                     value={editedProfile.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    onChange={e => handleInputChange('phone', e.target.value)}
                     className="input input-bordered"
                     placeholder={t('profile:personalInfo.phonePlaceholder')}
                   />
@@ -280,18 +261,22 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
 
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">{t('profile:personalInfo.dateOfBirth')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:personalInfo.dateOfBirth')}
+                  </span>
                 </label>
                 {isEditing ? (
                   <input
                     type="date"
                     value={editedProfile.dateOfBirth}
-                    onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                    onChange={e => handleInputChange('dateOfBirth', e.target.value)}
                     className="input input-bordered"
                   />
                 ) : (
                   <div className="p-3 bg-base-100 rounded-lg">
-                    {profile.dateOfBirth ? new Date(profile.dateOfBirth).toLocaleDateString() : t('profile:personalInfo.notProvided')}
+                    {profile.dateOfBirth
+                      ? new Date(profile.dateOfBirth).toLocaleDateString()
+                      : t('profile:personalInfo.notProvided')}
                   </div>
                 )}
               </div>
@@ -306,7 +291,7 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
               <MapPin className="h-5 w-5 text-secondary" />
               {t('profile:personalInfo.address')}
             </h3>
-            
+
             <div className="space-y-4">
               <div className="form-control">
                 <label className="label">
@@ -316,7 +301,7 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
                   <input
                     type="text"
                     value={editedProfile.address.street}
-                    onChange={(e) => handleInputChange('street', e.target.value, 'address')}
+                    onChange={e => handleInputChange('street', e.target.value, 'address')}
                     className="input input-bordered"
                     placeholder={t('profile:personalInfo.streetPlaceholder')}
                   />
@@ -336,7 +321,7 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
                     <input
                       type="text"
                       value={editedProfile.address.city}
-                      onChange={(e) => handleInputChange('city', e.target.value, 'address')}
+                      onChange={e => handleInputChange('city', e.target.value, 'address')}
                       className="input input-bordered"
                       placeholder={t('profile:personalInfo.cityPlaceholder')}
                     />
@@ -349,13 +334,15 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
 
                 <div className="form-control">
                   <label className="label">
-                    <span className="label-text font-medium">{t('profile:personalInfo.postalCode')}</span>
+                    <span className="label-text font-medium">
+                      {t('profile:personalInfo.postalCode')}
+                    </span>
                   </label>
                   {isEditing ? (
                     <input
                       type="text"
                       value={editedProfile.address.postalCode}
-                      onChange={(e) => handleInputChange('postalCode', e.target.value, 'address')}
+                      onChange={e => handleInputChange('postalCode', e.target.value, 'address')}
                       className="input input-bordered"
                       placeholder={t('profile:personalInfo.postalCodePlaceholder')}
                     />
@@ -369,12 +356,14 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
 
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">{t('profile:personalInfo.country')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:personalInfo.country')}
+                  </span>
                 </label>
                 {isEditing ? (
                   <select
                     value={editedProfile.address.country}
-                    onChange={(e) => handleInputChange('country', e.target.value, 'address')}
+                    onChange={e => handleInputChange('country', e.target.value, 'address')}
                     className="select select-bordered"
                   >
                     <option value="">{t('profile:personalInfo.selectCountry')}</option>
@@ -404,17 +393,19 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
               <Phone className="h-5 w-5 text-accent" />
               {t('profile:personalInfo.emergencyContact')}
             </h3>
-            
+
             <div className="space-y-4">
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">{t('profile:personalInfo.contactName')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:personalInfo.contactName')}
+                  </span>
                 </label>
                 {isEditing ? (
                   <input
                     type="text"
                     value={editedProfile.emergencyContact.name}
-                    onChange={(e) => handleInputChange('name', e.target.value, 'emergencyContact')}
+                    onChange={e => handleInputChange('name', e.target.value, 'emergencyContact')}
                     className="input input-bordered"
                     placeholder={t('profile:personalInfo.contactNamePlaceholder')}
                   />
@@ -427,13 +418,15 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
 
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">{t('profile:personalInfo.contactPhone')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:personalInfo.contactPhone')}
+                  </span>
                 </label>
                 {isEditing ? (
                   <input
                     type="tel"
                     value={editedProfile.emergencyContact.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value, 'emergencyContact')}
+                    onChange={e => handleInputChange('phone', e.target.value, 'emergencyContact')}
                     className="input input-bordered"
                     placeholder={t('profile:personalInfo.contactPhonePlaceholder')}
                   />
@@ -446,28 +439,35 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
 
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">{t('profile:personalInfo.relationship')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:personalInfo.relationship')}
+                  </span>
                 </label>
                 {isEditing ? (
                   <select
                     value={editedProfile.emergencyContact.relationship}
-                    onChange={(e) => handleInputChange('relationship', e.target.value, 'emergencyContact')}
+                    onChange={e =>
+                      handleInputChange('relationship', e.target.value, 'emergencyContact')
+                    }
                     className="select select-bordered"
                   >
                     <option value="">{t('profile:personalInfo.selectRelationship')}</option>
                     <option value="spouse">{t('profile:personalInfo.relationships.spouse')}</option>
                     <option value="parent">{t('profile:personalInfo.relationships.parent')}</option>
                     <option value="child">{t('profile:personalInfo.relationships.child')}</option>
-                    <option value="sibling">{t('profile:personalInfo.relationships.sibling')}</option>
+                    <option value="sibling">
+                      {t('profile:personalInfo.relationships.sibling')}
+                    </option>
                     <option value="friend">{t('profile:personalInfo.relationships.friend')}</option>
                     <option value="other">{t('profile:personalInfo.relationships.other')}</option>
                   </select>
                 ) : (
                   <div className="p-3 bg-base-100 rounded-lg">
-                    {profile.emergencyContact.relationship 
-                      ? t(`profile:personalInfo.relationships.${profile.emergencyContact.relationship}`)
-                      : t('profile:personalInfo.notProvided')
-                    }
+                    {profile.emergencyContact.relationship
+                      ? t(
+                          `profile:personalInfo.relationships.${profile.emergencyContact.relationship}`
+                        )
+                      : t('profile:personalInfo.notProvided')}
                   </div>
                 )}
               </div>
@@ -482,16 +482,18 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
               <AlertCircle className="h-5 w-5 text-warning" />
               {t('profile:personalInfo.medicalInfo')}
             </h3>
-            
+
             <div className="space-y-4">
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">{t('profile:personalInfo.allergies')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:personalInfo.allergies')}
+                  </span>
                 </label>
                 {isEditing ? (
                   <textarea
                     value={editedProfile.medicalInfo.allergies}
-                    onChange={(e) => handleInputChange('allergies', e.target.value, 'medicalInfo')}
+                    onChange={e => handleInputChange('allergies', e.target.value, 'medicalInfo')}
                     className="textarea textarea-bordered"
                     placeholder={t('profile:personalInfo.allergiesPlaceholder')}
                     rows={2}
@@ -505,12 +507,14 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
 
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">{t('profile:personalInfo.medications')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:personalInfo.medications')}
+                  </span>
                 </label>
                 {isEditing ? (
                   <textarea
                     value={editedProfile.medicalInfo.medications}
-                    onChange={(e) => handleInputChange('medications', e.target.value, 'medicalInfo')}
+                    onChange={e => handleInputChange('medications', e.target.value, 'medicalInfo')}
                     className="textarea textarea-bordered"
                     placeholder={t('profile:personalInfo.medicationsPlaceholder')}
                     rows={2}
@@ -524,12 +528,16 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = () => {
 
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">{t('profile:personalInfo.emergencyNotes')}</span>
+                  <span className="label-text font-medium">
+                    {t('profile:personalInfo.emergencyNotes')}
+                  </span>
                 </label>
                 {isEditing ? (
                   <textarea
                     value={editedProfile.medicalInfo.emergencyNotes}
-                    onChange={(e) => handleInputChange('emergencyNotes', e.target.value, 'medicalInfo')}
+                    onChange={e =>
+                      handleInputChange('emergencyNotes', e.target.value, 'medicalInfo')
+                    }
                     className="textarea textarea-bordered"
                     placeholder={t('profile:personalInfo.emergencyNotesPlaceholder')}
                     rows={3}

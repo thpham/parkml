@@ -31,10 +31,14 @@ export const ROLE_HIERARCHY = {
   clinic_admin: 4,
   professional_caregiver: 3,
   family_caregiver: 2,
-  patient: 1
+  patient: 1,
 };
 
-export const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+export const authenticateToken = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void => {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -127,7 +131,11 @@ export const authorizeRoleLevel = (minimumLevel: number) => {
   };
 };
 
-export const authorizeOrganization = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+export const authorizeOrganization = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void => {
   if (!req.user) {
     const response: ApiResponse = {
       success: false,
@@ -182,7 +190,7 @@ export const authorizePatientAccess = (patientIdParam: string = 'patientId') => 
       if (req.user.role === 'super_admin' || req.user.role === 'clinic_admin') {
         const patient = await prisma.patient.findUnique({
           where: { id: patientId },
-          select: { organizationId: true }
+          select: { organizationId: true },
         });
 
         if (!patient) {
@@ -211,7 +219,7 @@ export const authorizePatientAccess = (patientIdParam: string = 'patientId') => 
       if (req.user.role === 'patient') {
         const patient = await prisma.patient.findUnique({
           where: { id: patientId },
-          select: { userId: true }
+          select: { userId: true },
         });
 
         if (patient && patient.userId === req.user.userId) {
@@ -226,8 +234,8 @@ export const authorizePatientAccess = (patientIdParam: string = 'patientId') => 
           where: {
             patientId: patientId,
             caregiverId: req.user.userId,
-            status: 'active'
-          }
+            status: 'active',
+          },
         });
 
         if (assignment) {
@@ -243,9 +251,9 @@ export const authorizePatientAccess = (patientIdParam: string = 'patientId') => 
           patientId: patientId,
           isActive: true,
           endTime: {
-            gt: new Date()
-          }
-        }
+            gt: new Date(),
+          },
+        },
       });
 
       if (emergencyAccess) {
@@ -255,7 +263,7 @@ export const authorizePatientAccess = (patientIdParam: string = 'patientId') => 
           reason: emergencyAccess.reason,
           accessType: emergencyAccess.accessType,
           patientId: emergencyAccess.patientId,
-          expiresAt: emergencyAccess.endTime || new Date()
+          expiresAt: emergencyAccess.endTime || new Date(),
         };
         next();
         return;
@@ -267,7 +275,6 @@ export const authorizePatientAccess = (patientIdParam: string = 'patientId') => 
       };
       res.status(403).json(response);
       return;
-
     } catch (error) {
       console.error('Error in patient access authorization:', error);
       const response: ApiResponse = {
@@ -290,7 +297,7 @@ export const logUserActivity = (action: string, resource: string) => {
     try {
       // Get resource ID from request params or body
       const resourceId = req.params.id || req.body.id || 'unknown';
-      
+
       // Create audit log entry
       await prisma.auditLog.create({
         data: {
@@ -304,11 +311,11 @@ export const logUserActivity = (action: string, resource: string) => {
             path: req.path,
             params: req.params,
             userAgent: req.get('User-Agent'),
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           }),
           ipAddress: req.ip,
-          userAgent: req.get('User-Agent')
-        }
+          userAgent: req.get('User-Agent'),
+        },
       });
 
       next();
@@ -320,14 +327,20 @@ export const logUserActivity = (action: string, resource: string) => {
   };
 };
 
-export const checkEmergencyAccess = (req: EmergencyAccessRequest, res: Response, next: NextFunction): void => {
+export const checkEmergencyAccess = (
+  req: EmergencyAccessRequest,
+  res: Response,
+  next: NextFunction
+): void => {
   if (req.emergencyAccess) {
     // Add emergency access header to response
     res.set('X-Emergency-Access', 'true');
     res.set('X-Emergency-Reason', req.emergencyAccess.reason);
     res.set('X-Emergency-Expires', req.emergencyAccess.expiresAt.toISOString());
-    
-    console.log(`🚨 Emergency access used: ${req.emergencyAccess.reason} by user ${req.user?.userId}`);
+
+    console.log(
+      `🚨 Emergency access used: ${req.emergencyAccess.reason} by user ${req.user?.userId}`
+    );
   }
   next();
 };
@@ -335,8 +348,17 @@ export const checkEmergencyAccess = (req: EmergencyAccessRequest, res: Response,
 // Role-based middleware shortcuts
 export const requireSuperAdmin = authorizeRole(['super_admin']);
 export const requireClinicAdmin = authorizeRole(['super_admin', 'clinic_admin']);
-export const requireProfessionalCaregiver = authorizeRole(['super_admin', 'clinic_admin', 'professional_caregiver']);
-export const requireAnyCaregiver = authorizeRole(['super_admin', 'clinic_admin', 'professional_caregiver', 'family_caregiver']);
+export const requireProfessionalCaregiver = authorizeRole([
+  'super_admin',
+  'clinic_admin',
+  'professional_caregiver',
+]);
+export const requireAnyCaregiver = authorizeRole([
+  'super_admin',
+  'clinic_admin',
+  'professional_caregiver',
+  'family_caregiver',
+]);
 export const requirePatient = authorizeRole(['patient']);
 
 // Combined middleware for common patterns
@@ -344,5 +366,5 @@ export const requireAuthAndOrg = [authenticateToken, authorizeOrganization];
 export const requirePatientData = (patientIdParam?: string) => [
   authenticateToken,
   authorizePatientAccess(patientIdParam),
-  checkEmergencyAccess
+  checkEmergencyAccess,
 ];

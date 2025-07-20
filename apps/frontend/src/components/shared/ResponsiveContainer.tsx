@@ -39,9 +39,7 @@ export const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
   };
 
   return (
-    <div className={`${sizeClasses[size]} ${paddingClasses[padding]} ${className}`}>
-      {children}
-    </div>
+    <div className={`${sizeClasses[size]} ${paddingClasses[padding]} ${className}`}>{children}</div>
   );
 };
 

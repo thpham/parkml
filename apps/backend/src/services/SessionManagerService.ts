@@ -44,16 +44,17 @@ export class SessionManagerService {
   ): Promise<{ sessionToken: string; sessionId: string }> {
     const sessionToken = this.generateSecureToken();
     const sessionId = crypto.randomUUID();
-    
+
     const expiresAt = new Date(
       Date.now() + (rememberMe ? this.REMEMBER_ME_DURATION : this.SESSION_DURATION)
     );
 
     // Extract device information
-    const deviceFingerprint = sessionData.deviceFingerprint || this.generateDeviceFingerprint(request);
+    const deviceFingerprint =
+      sessionData.deviceFingerprint || this.generateDeviceFingerprint(request);
     const ipAddress = sessionData.ipAddress || this.extractIpAddress(request);
     const userAgent = sessionData.userAgent || request.get('User-Agent') || null;
-    const location = sessionData.location || await this.approximateLocation(ipAddress);
+    const location = sessionData.location || (await this.approximateLocation(ipAddress));
 
     // Clean up old sessions if user has too many
     await this.cleanupOldSessions(sessionData.userId);
@@ -71,8 +72,8 @@ export class SessionManagerService {
         isActive: true,
         expiresAt,
         createdAt: new Date(),
-        lastAccessedAt: new Date()
-      }
+        lastAccessedAt: new Date(),
+      },
     });
 
     // Log session creation
@@ -87,14 +88,14 @@ export class SessionManagerService {
         location,
         loginMethod: sessionData.loginMethod,
         rememberMe,
-        expiresAt: expiresAt.toISOString()
+        expiresAt: expiresAt.toISOString(),
       },
       request
     );
 
     return {
       sessionToken,
-      sessionId: session.id
+      sessionId: session.id,
     };
   }
 
@@ -119,10 +120,10 @@ export class SessionManagerService {
             select: {
               id: true,
               organizationId: true,
-              isActive: true
-            }
-          }
-        }
+              isActive: true,
+            },
+          },
+        },
       });
 
       if (!session || !session.isActive || !session.user.isActive) {
@@ -138,7 +139,7 @@ export class SessionManagerService {
       // Check for suspicious activity (IP change, etc.)
       const currentIp = this.extractIpAddress(request);
       const currentUserAgent = request.get('User-Agent') || null;
-      
+
       if (session.ipAddress !== currentIp || session.userAgent !== currentUserAgent) {
         await this.logSessionEvent(
           session.userId,
@@ -149,19 +150,19 @@ export class SessionManagerService {
             currentIp,
             originalUserAgent: session.userAgent,
             currentUserAgent,
-            riskLevel: 'medium'
+            riskLevel: 'medium',
           },
           request
         );
       }
 
       // Update last accessed time
-      const shouldRefresh = (Date.now() - session.lastAccessedAt.getTime()) > (5 * 60 * 1000); // 5 minutes
-      
+      const shouldRefresh = Date.now() - session.lastAccessedAt.getTime() > 5 * 60 * 1000; // 5 minutes
+
       if (shouldRefresh) {
         await prisma.userSession.update({
           where: { id: session.id },
-          data: { lastAccessedAt: new Date() }
+          data: { lastAccessedAt: new Date() },
         });
       }
 
@@ -170,9 +171,8 @@ export class SessionManagerService {
         userId: session.userId,
         sessionId: session.id,
         organizationId: session.user.organizationId || undefined,
-        shouldRefresh
+        shouldRefresh,
       };
-
     } catch (error) {
       console.error('Session validation error:', error);
       return { isValid: false };
@@ -189,13 +189,13 @@ export class SessionManagerService {
   ): Promise<void> {
     try {
       const session = await prisma.userSession.findUnique({
-        where: { sessionToken }
+        where: { sessionToken },
       });
 
       if (session) {
         await prisma.userSession.update({
           where: { sessionToken },
-          data: { isActive: false }
+          data: { isActive: false },
         });
 
         await this.logSessionEvent(
@@ -221,7 +221,7 @@ export class SessionManagerService {
   ): Promise<boolean> {
     try {
       const session = await prisma.userSession.findUnique({
-        where: { id: sessionId }
+        where: { id: sessionId },
       });
 
       if (!session || !session.isActive) {
@@ -230,7 +230,7 @@ export class SessionManagerService {
 
       await prisma.userSession.update({
         where: { id: sessionId },
-        data: { isActive: false }
+        data: { isActive: false },
       });
 
       await this.logSessionEvent(
@@ -259,7 +259,7 @@ export class SessionManagerService {
     try {
       const whereClause: any = {
         userId,
-        isActive: true
+        isActive: true,
       };
 
       if (exceptSessionToken) {
@@ -268,12 +268,12 @@ export class SessionManagerService {
 
       const sessions = await prisma.userSession.findMany({
         where: whereClause,
-        select: { id: true }
+        select: { id: true },
       });
 
       const terminatedCount = await prisma.userSession.updateMany({
         where: whereClause,
-        data: { isActive: false }
+        data: { isActive: false },
       });
 
       await this.logSessionEvent(
@@ -283,7 +283,7 @@ export class SessionManagerService {
         {
           terminatedCount: terminatedCount.count,
           sessionIds: sessions.map(s => s.id),
-          keepCurrentSession: !!exceptSessionToken
+          keepCurrentSession: !!exceptSessionToken,
         },
         request
       );
@@ -305,9 +305,9 @@ export class SessionManagerService {
     const sessions = await prisma.userSession.findMany({
       where: {
         userId,
-        isActive: true
+        isActive: true,
       },
-      orderBy: { lastAccessedAt: 'desc' }
+      orderBy: { lastAccessedAt: 'desc' },
     });
 
     return sessions.map(session => ({
@@ -320,7 +320,7 @@ export class SessionManagerService {
       isCurrent: session.sessionToken === currentSessionToken,
       createdAt: session.createdAt,
       lastAccessedAt: session.lastAccessedAt,
-      expiresAt: session.expiresAt
+      expiresAt: session.expiresAt,
     }));
   }
 
@@ -331,12 +331,9 @@ export class SessionManagerService {
     try {
       const result = await prisma.userSession.updateMany({
         where: {
-          OR: [
-            { expiresAt: { lt: new Date() } },
-            { isActive: false }
-          ]
+          OR: [{ expiresAt: { lt: new Date() } }, { isActive: false }],
         },
-        data: { isActive: false }
+        data: { isActive: false },
       });
 
       return result.count;
@@ -353,19 +350,19 @@ export class SessionManagerService {
     const activeSessions = await prisma.userSession.findMany({
       where: {
         userId,
-        isActive: true
+        isActive: true,
       },
-      orderBy: { lastAccessedAt: 'desc' }
+      orderBy: { lastAccessedAt: 'desc' },
     });
 
     if (activeSessions.length >= this.MAX_SESSIONS_PER_USER) {
       const sessionsToDeactivate = activeSessions.slice(this.MAX_SESSIONS_PER_USER - 1);
-      
+
       await prisma.userSession.updateMany({
         where: {
-          id: { in: sessionsToDeactivate.map(s => s.id) }
+          id: { in: sessionsToDeactivate.map(s => s.id) },
         },
-        data: { isActive: false }
+        data: { isActive: false },
       });
     }
   }
@@ -384,12 +381,12 @@ export class SessionManagerService {
     const userAgent = request.get('User-Agent') || '';
     const acceptLanguage = request.get('Accept-Language') || '';
     const acceptEncoding = request.get('Accept-Encoding') || '';
-    
+
     const fingerprint = crypto
       .createHash('sha256')
       .update(`${userAgent}:${acceptLanguage}:${acceptEncoding}`)
       .digest('hex');
-    
+
     return fingerprint.substring(0, 32);
   }
 
@@ -397,10 +394,12 @@ export class SessionManagerService {
    * Extract IP address from request
    */
   private static extractIpAddress(request: Request): string {
-    return request.ip || 
-           request.headers['x-forwarded-for']?.toString().split(',')[0] || 
-           request.connection.remoteAddress || 
-           'unknown';
+    return (
+      request.ip ||
+      request.headers['x-forwarded-for']?.toString().split(',')[0] ||
+      request.connection.remoteAddress ||
+      'unknown'
+    );
   }
 
   /**
@@ -409,7 +408,11 @@ export class SessionManagerService {
    */
   private static async approximateLocation(ipAddress: string): Promise<string | null> {
     // Placeholder - in production you'd use a service like MaxMind GeoIP
-    if (ipAddress === 'unknown' || ipAddress.startsWith('127.') || ipAddress.startsWith('192.168.')) {
+    if (
+      ipAddress === 'unknown' ||
+      ipAddress.startsWith('127.') ||
+      ipAddress.startsWith('192.168.')
+    ) {
       return 'Local Network';
     }
     return 'Unknown Location';
@@ -437,8 +440,8 @@ export class SessionManagerService {
           status: 'success',
           riskLevel: details.riskLevel || 'low',
           details: JSON.stringify(details),
-          sessionId
-        }
+          sessionId,
+        },
       });
     } catch (error) {
       console.error('Failed to log session event:', error);
@@ -457,64 +460,60 @@ export class SessionManagerService {
   }> {
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    const [
-      totalActiveSessions,
-      sessionsLast24h,
-      recentSessions,
-      userAgentStats,
-      locationStats
-    ] = await Promise.all([
-      prisma.userSession.count({
-        where: { isActive: true }
-      }),
+    const [totalActiveSessions, sessionsLast24h, recentSessions, userAgentStats, locationStats] =
+      await Promise.all([
+        prisma.userSession.count({
+          where: { isActive: true },
+        }),
 
-      prisma.userSession.count({
-        where: {
-          createdAt: { gte: yesterday }
-        }
-      }),
+        prisma.userSession.count({
+          where: {
+            createdAt: { gte: yesterday },
+          },
+        }),
 
-      prisma.userSession.findMany({
-        where: {
-          isActive: false,
-          createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
-        },
-        select: {
-          createdAt: true,
-          lastAccessedAt: true
-        }
-      }),
+        prisma.userSession.findMany({
+          where: {
+            isActive: false,
+            createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+          },
+          select: {
+            createdAt: true,
+            lastAccessedAt: true,
+          },
+        }),
 
-      prisma.userSession.groupBy({
-        by: ['userAgent'],
-        where: {
-          createdAt: { gte: yesterday },
-          userAgent: { not: null }
-        },
-        _count: { userAgent: true },
-        orderBy: { _count: { userAgent: 'desc' } },
-        take: 5
-      }),
+        prisma.userSession.groupBy({
+          by: ['userAgent'],
+          where: {
+            createdAt: { gte: yesterday },
+            userAgent: { not: null },
+          },
+          _count: { userAgent: true },
+          orderBy: { _count: { userAgent: 'desc' } },
+          take: 5,
+        }),
 
-      prisma.userSession.groupBy({
-        by: ['location'],
-        where: {
-          createdAt: { gte: yesterday },
-          location: { not: null }
-        },
-        _count: { location: true },
-        orderBy: { _count: { location: 'desc' } },
-        take: 5
-      })
-    ]);
+        prisma.userSession.groupBy({
+          by: ['location'],
+          where: {
+            createdAt: { gte: yesterday },
+            location: { not: null },
+          },
+          _count: { location: true },
+          orderBy: { _count: { location: 'desc' } },
+          take: 5,
+        }),
+      ]);
 
     // Calculate average session duration
-    const averageSessionDuration = recentSessions.length > 0
-      ? recentSessions.reduce((acc, session) => {
-          const duration = session.lastAccessedAt.getTime() - session.createdAt.getTime();
-          return acc + duration;
-        }, 0) / recentSessions.length
-      : 0;
+    const averageSessionDuration =
+      recentSessions.length > 0
+        ? recentSessions.reduce((acc, session) => {
+            const duration = session.lastAccessedAt.getTime() - session.createdAt.getTime();
+            return acc + duration;
+          }, 0) / recentSessions.length
+        : 0;
 
     return {
       totalActiveSessions,
@@ -522,12 +521,12 @@ export class SessionManagerService {
       averageSessionDuration: Math.round(averageSessionDuration / (1000 * 60)), // in minutes
       topUserAgents: userAgentStats.map(stat => ({
         userAgent: stat.userAgent || 'Unknown',
-        count: stat._count.userAgent
+        count: stat._count.userAgent,
       })),
       topLocations: locationStats.map(stat => ({
         location: stat.location || 'Unknown',
-        count: stat._count.location
-      }))
+        count: stat._count.location,
+      })),
     };
   }
 }

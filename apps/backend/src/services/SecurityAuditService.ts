@@ -32,24 +32,24 @@ export class SecurityAuditService {
     try {
       // Skip logging if userId is 'unknown' since we have a foreign key constraint
       if (event.userId === 'unknown') {
-        console.log(`Skipping security audit log for unknown user: ${event.action}`);
         return;
       }
       // Extract device and network information
-      const ipAddress = deviceInfo?.ipAddress || 
-                       request.ip || 
-                       request.headers['x-forwarded-for']?.toString().split(',')[0] || 
-                       request.connection.remoteAddress || 
-                       'unknown';
-      
+      const ipAddress =
+        deviceInfo?.ipAddress ||
+        request.ip ||
+        request.headers['x-forwarded-for']?.toString().split(',')[0] ||
+        request.socket?.remoteAddress ||
+        'unknown';
+
       const userAgent = deviceInfo?.userAgent || request.get('User-Agent') || null;
-      
+
       // Get location info (enhanced with better detection)
       const location = deviceInfo?.location || this.getLocationFromIP(ipAddress);
-      
+
       // Determine risk level based on event context
       const riskLevel = event.riskLevel || this.calculateRiskLevel(event, request);
-      
+
       // Enhanced details with context
       const enhancedDetails = {
         ...event.details,
@@ -60,12 +60,12 @@ export class SecurityAuditService {
         ...(event.action === 'login' && {
           loginMethod: event.details?.loginMethod || 'password',
           twoFactorUsed: event.details?.twoFactorUsed || false,
-          passkeyUsed: event.details?.passkeyUsed || false
+          passkeyUsed: event.details?.passkeyUsed || false,
         }),
         ...(event.status === 'failed' && {
           failureReason: event.details?.failureReason || 'unknown',
-          attemptCount: event.details?.attemptCount || 1
-        })
+          attemptCount: event.details?.attemptCount || 1,
+        }),
       };
 
       // Create audit log entry
@@ -84,14 +84,13 @@ export class SecurityAuditService {
           riskLevel,
           details: JSON.stringify(enhancedDetails),
           sessionId: event.sessionId,
-        }
+        },
       });
 
       // Check for suspicious patterns and alert if necessary
       if (riskLevel === 'high' || riskLevel === 'critical') {
         await this.handleHighRiskEvent(event, ipAddress, userAgent);
       }
-
     } catch (error) {
       console.error('Failed to log security event:', error);
       // Don't throw - security logging should not break the main flow
@@ -115,32 +114,39 @@ export class SecurityAuditService {
    * Calculate risk level based on event context and patterns
    */
   private static calculateRiskLevel(
-    event: SecurityEvent, 
+    event: SecurityEvent,
     request: Request
   ): 'low' | 'medium' | 'high' | 'critical' {
     // const ipAddress = request.ip || 'unknown'; // Available if needed for IP-based risk calculation
     const userAgent = request.get('User-Agent') || '';
 
     // Critical risk events
-    if (event.action === 'emergency_access' || 
-        event.action === 'admin_override' ||
-        event.status === 'suspicious') {
+    if (
+      event.action === 'emergency_access' ||
+      event.action === 'admin_override' ||
+      event.status === 'suspicious'
+    ) {
       return 'critical';
     }
 
     // High risk events
-    if (event.action === 'password_change' && event.status === 'failed' ||
-        event.action === 'failed_login' ||
-        event.action === '2fa_disabled' ||
-        userAgent.includes('bot') || userAgent.includes('crawler')) {
+    if (
+      (event.action === 'password_change' && event.status === 'failed') ||
+      event.action === 'failed_login' ||
+      event.action === '2fa_disabled' ||
+      userAgent.includes('bot') ||
+      userAgent.includes('crawler')
+    ) {
       return 'high';
     }
 
     // Medium risk events
-    if (event.action === 'login' && event.details?.fromNewDevice ||
-        event.action === 'passkey_added' ||
-        event.action === '2fa_enabled' ||
-        event.action === 'password_change') {
+    if (
+      (event.action === 'login' && event.details?.fromNewDevice) ||
+      event.action === 'passkey_added' ||
+      event.action === '2fa_enabled' ||
+      event.action === 'password_change'
+    ) {
       return 'medium';
     }
 
@@ -171,7 +177,6 @@ export class SecurityAuditService {
       if (event.riskLevel === 'critical') {
         await this.notifyAdminsOfCriticalEvent(event, ipAddress);
       }
-
     } catch (error) {
       console.error('Failed to handle high-risk event:', error);
     }
@@ -180,18 +185,15 @@ export class SecurityAuditService {
   /**
    * Check for failed login patterns that might indicate brute force
    */
-  private static async checkFailedLoginPatterns(
-    userId: string,
-    ipAddress: string
-  ): Promise<void> {
+  private static async checkFailedLoginPatterns(userId: string, ipAddress: string): Promise<void> {
     const recentFailures = await prisma.securityAuditLog.count({
       where: {
         userId,
         action: 'failed_login',
         timestamp: {
-          gte: new Date(Date.now() - 15 * 60 * 1000) // Last 15 minutes
-        }
-      }
+          gte: new Date(Date.now() - 15 * 60 * 1000), // Last 15 minutes
+        },
+      },
     });
 
     const ipFailures = await prisma.securityAuditLog.count({
@@ -199,9 +201,9 @@ export class SecurityAuditService {
         ipAddress,
         action: 'failed_login',
         timestamp: {
-          gte: new Date(Date.now() - 15 * 60 * 1000) // Last 15 minutes
-        }
-      }
+          gte: new Date(Date.now() - 15 * 60 * 1000), // Last 15 minutes
+        },
+      },
     });
 
     // If more than 5 failures in 15 minutes, log as suspicious
@@ -217,9 +219,9 @@ export class SecurityAuditService {
           details: JSON.stringify({
             userFailures: recentFailures,
             ipFailures,
-            detectionTime: new Date().toISOString()
-          })
-        }
+            detectionTime: new Date().toISOString(),
+          }),
+        },
       });
     }
   }
@@ -240,9 +242,9 @@ export class SecurityAuditService {
         action: 'login',
         status: 'success',
         timestamp: {
-          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
-        }
-      }
+          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+        },
+      },
     });
 
     // Check if this is a new user agent
@@ -253,9 +255,9 @@ export class SecurityAuditService {
         action: 'login',
         status: 'success',
         timestamp: {
-          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
-        }
-      }
+          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+        },
+      },
     });
 
     if (existingIpSessions === 0 || existingUASessions === 0) {
@@ -271,9 +273,9 @@ export class SecurityAuditService {
           details: JSON.stringify({
             newIp: existingIpSessions === 0,
             newUserAgent: existingUASessions === 0,
-            detectionTime: new Date().toISOString()
-          })
-        }
+            detectionTime: new Date().toISOString(),
+          }),
+        },
       });
     }
   }
@@ -298,9 +300,9 @@ export class SecurityAuditService {
         details: JSON.stringify({
           originalEvent: event,
           requiresAdminReview: true,
-          notificationTime: new Date().toISOString()
-        })
-      }
+          notificationTime: new Date().toISOString(),
+        }),
+      },
     });
   }
 
@@ -319,7 +321,7 @@ export class SecurityAuditService {
     const [totalEvents, recentLogins, failedAttempts, deviceData, riskData] = await Promise.all([
       // Total events
       prisma.securityAuditLog.count({
-        where: { userId }
+        where: { userId },
       }),
 
       // Recent successful logins
@@ -328,8 +330,8 @@ export class SecurityAuditService {
           userId,
           action: 'login',
           status: 'success',
-          timestamp: { gte: thirtyDaysAgo }
-        }
+          timestamp: { gte: thirtyDaysAgo },
+        },
       }),
 
       // Failed attempts
@@ -337,8 +339,8 @@ export class SecurityAuditService {
         where: {
           userId,
           action: 'failed_login',
-          timestamp: { gte: thirtyDaysAgo }
-        }
+          timestamp: { gte: thirtyDaysAgo },
+        },
       }),
 
       // Unique devices
@@ -347,13 +349,13 @@ export class SecurityAuditService {
           userId,
           action: 'login',
           status: 'success',
-          timestamp: { gte: thirtyDaysAgo }
+          timestamp: { gte: thirtyDaysAgo },
         },
         select: {
           ipAddress: true,
-          userAgent: true
+          userAgent: true,
         },
-        distinct: ['ipAddress', 'userAgent']
+        distinct: ['ipAddress', 'userAgent'],
       }),
 
       // Risk level distribution
@@ -361,23 +363,26 @@ export class SecurityAuditService {
         by: ['riskLevel'],
         where: {
           userId,
-          timestamp: { gte: thirtyDaysAgo }
+          timestamp: { gte: thirtyDaysAgo },
         },
-        _count: { riskLevel: true }
-      })
+        _count: { riskLevel: true },
+      }),
     ]);
 
-    const riskDistribution = riskData.reduce((acc, item) => {
-      acc[item.riskLevel] = item._count.riskLevel;
-      return acc;
-    }, {} as Record<string, number>);
+    const riskDistribution = riskData.reduce(
+      (acc, item) => {
+        acc[item.riskLevel] = item._count.riskLevel;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
 
     return {
       totalEvents,
       recentLogins,
       failedAttempts,
       deviceCount: deviceData.length,
-      riskDistribution
+      riskDistribution,
     };
   }
 
@@ -401,25 +406,25 @@ export class SecurityAuditService {
       prisma.securityAuditLog.count({
         where: {
           organizationId,
-          timestamp: { gte: sevenDaysAgo }
-        }
+          timestamp: { gte: sevenDaysAgo },
+        },
       }),
 
       prisma.securityAuditLog.count({
         where: {
           organizationId,
           riskLevel: 'critical',
-          timestamp: { gte: sevenDaysAgo }
-        }
+          timestamp: { gte: sevenDaysAgo },
+        },
       }),
 
       prisma.securityAuditLog.count({
         where: {
           organizationId,
           status: 'suspicious',
-          timestamp: { gte: sevenDaysAgo }
-        }
-      })
+          timestamp: { gte: sevenDaysAgo },
+        },
+      }),
     ]);
 
     // Get user activity and risk scores
@@ -427,18 +432,18 @@ export class SecurityAuditService {
       by: ['userId'],
       where: {
         organizationId,
-        timestamp: { gte: sevenDaysAgo }
+        timestamp: { gte: sevenDaysAgo },
       },
       _count: { riskLevel: true },
-      _max: { timestamp: true }
+      _max: { timestamp: true },
     });
 
     // Calculate user risk scores and get user names
     const userStats = await Promise.all(
-      userActivities.map(async (activity) => {
+      userActivities.map(async activity => {
         const user = await prisma.user.findUnique({
           where: { id: activity.userId },
-          select: { name: true }
+          select: { name: true },
         });
 
         const highRiskEvents = await prisma.securityAuditLog.count({
@@ -446,8 +451,8 @@ export class SecurityAuditService {
             userId: activity.userId,
             organizationId,
             riskLevel: { in: ['high', 'critical'] },
-            timestamp: { gte: sevenDaysAgo }
-          }
+            timestamp: { gte: sevenDaysAgo },
+          },
         });
 
         const riskScore = Math.min(100, (highRiskEvents / activity._count.riskLevel) * 100);
@@ -456,7 +461,7 @@ export class SecurityAuditService {
           userId: activity.userId,
           userName: user?.name || 'Unknown User',
           riskScore: Math.round(riskScore),
-          lastActivity: activity._max.timestamp || new Date()
+          lastActivity: activity._max.timestamp || new Date(),
         };
       })
     );
@@ -465,7 +470,7 @@ export class SecurityAuditService {
       totalEvents,
       criticalEvents,
       suspiciousActivities,
-      userStats: userStats.sort((a, b) => b.riskScore - a.riskScore)
+      userStats: userStats.sort((a, b) => b.riskScore - a.riskScore),
     };
   }
 }

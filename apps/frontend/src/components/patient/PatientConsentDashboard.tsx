@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import { CaregiverAssignment, ApiResponse, User } from '@parkml/shared';
-import { 
-  UserCheck, 
-  UserX, 
-  Clock, 
+import {
+  UserCheck,
+  UserX,
+  Clock,
   AlertTriangle,
   Shield,
   Calendar,
@@ -14,7 +14,7 @@ import {
   CheckCircle,
   XCircle,
   Eye,
-  Info
+  Info,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -39,7 +39,7 @@ const PatientConsentDashboard: React.FC = () => {
     totalAssignments: 0,
     pendingConsent: 0,
     activeAssignments: 0,
-    declinedAssignments: 0
+    declinedAssignments: 0,
   });
   const [loading, setLoading] = useState(true);
   const [showDetails, setShowDetails] = useState<string | null>(null);
@@ -55,7 +55,7 @@ const PatientConsentDashboard: React.FC = () => {
     try {
       const response = await fetch('/api/assignments', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -78,7 +78,7 @@ const PatientConsentDashboard: React.FC = () => {
       setLoading(true);
       const response = await fetch('/api/consent/pending', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -105,18 +105,22 @@ const PatientConsentDashboard: React.FC = () => {
       totalAssignments: assignmentData.length,
       pendingConsent: pendingAssignments.length,
       activeAssignments: active,
-      declinedAssignments: declined
+      declinedAssignments: declined,
     });
   };
 
-  const handleConsentResponse = async (assignmentId: string, action: 'approve' | 'decline', permissions?: any) => {
+  const handleConsentResponse = async (
+    assignmentId: string,
+    action: 'approve' | 'decline',
+    permissions?: any
+  ) => {
     try {
       const endpoint = action === 'approve' ? 'approve' : 'decline';
       const response = await fetch(`/api/consent/${endpoint}/${assignmentId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(permissions ? { permissions } : {}),
       });
@@ -124,9 +128,14 @@ const PatientConsentDashboard: React.FC = () => {
       const data: ApiResponse = await response.json();
 
       if (data.success) {
-        toast.success(t('consent.success.assignmentActionSuccess', { 
-          status: action === 'approve' ? t('consent.status.approvedStatus') : t('consent.status.declinedStatus') 
-        }));
+        toast.success(
+          t('consent.success.assignmentActionSuccess', {
+            status:
+              action === 'approve'
+                ? t('consent.status.approvedStatus')
+                : t('consent.status.declinedStatus'),
+          })
+        );
         fetchAssignments();
         fetchPendingConsent();
         setShowDetails(null);
@@ -140,7 +149,9 @@ const PatientConsentDashboard: React.FC = () => {
   };
 
   const formatCaregiverType = (type: string) => {
-    return type === 'professional' ? t('types.professional', { ns: 'caregiver' }) : t('types.family', { ns: 'caregiver' });
+    return type === 'professional'
+      ? t('types.professional', { ns: 'caregiver' })
+      : t('types.family', { ns: 'caregiver' });
   };
 
   const getStatusColor = (status: string, consentGiven: boolean) => {
@@ -185,9 +196,7 @@ const PatientConsentDashboard: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{t('consent.title')}</h1>
-            <p className="text-gray-600">
-              {t('consent.subtitle')}
-            </p>
+            <p className="text-gray-600">{t('consent.subtitle')}</p>
           </div>
           <div className="flex items-center space-x-2">
             <Shield className="h-6 w-6 text-blue-500" />
@@ -209,9 +218,7 @@ const PatientConsentDashboard: React.FC = () => {
                   <dt className="text-sm font-medium text-gray-500 truncate">
                     {t('consent.stats.totalAssignments')}
                   </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.totalAssignments}
-                  </dd>
+                  <dd className="text-lg font-medium text-gray-900">{stats.totalAssignments}</dd>
                 </dl>
               </div>
             </div>
@@ -229,9 +236,7 @@ const PatientConsentDashboard: React.FC = () => {
                   <dt className="text-sm font-medium text-gray-500 truncate">
                     {t('consent.stats.pendingConsent')}
                   </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.pendingConsent}
-                  </dd>
+                  <dd className="text-lg font-medium text-gray-900">{stats.pendingConsent}</dd>
                 </dl>
               </div>
             </div>
@@ -249,9 +254,7 @@ const PatientConsentDashboard: React.FC = () => {
                   <dt className="text-sm font-medium text-gray-500 truncate">
                     {t('consent.stats.approvedCaregivers')}
                   </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.activeAssignments}
-                  </dd>
+                  <dd className="text-lg font-medium text-gray-900">{stats.activeAssignments}</dd>
                 </dl>
               </div>
             </div>
@@ -269,9 +272,7 @@ const PatientConsentDashboard: React.FC = () => {
                   <dt className="text-sm font-medium text-gray-500 truncate">
                     {t('consent.stats.declined')}
                   </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.declinedAssignments}
-                  </dd>
+                  <dd className="text-lg font-medium text-gray-900">{stats.declinedAssignments}</dd>
                 </dl>
               </div>
             </div>
@@ -289,14 +290,12 @@ const PatientConsentDashboard: React.FC = () => {
                 {t('consent.requests.pendingCount', { count: pendingAssignments.length })}
               </h2>
             </div>
-            <p className="text-sm text-gray-600 mt-1">
-              {t('consent.requests.pendingSubtitle')}
-            </p>
+            <p className="text-sm text-gray-600 mt-1">{t('consent.requests.pendingSubtitle')}</p>
           </div>
-          
+
           <div className="overflow-hidden">
             <ul className="divide-y divide-gray-200">
-              {pendingAssignments.map((assignment) => (
+              {pendingAssignments.map(assignment => (
                 <li key={assignment.id} className="px-6 py-4 bg-yellow-50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
@@ -317,7 +316,8 @@ const PatientConsentDashboard: React.FC = () => {
                         </div>
                         <div className="flex items-center text-xs text-gray-400 mt-1">
                           <Calendar className="h-3 w-3 mr-1" />
-                          {t('consent.labels.requestedLabel')} {new Date(assignment.createdAt).toLocaleDateString()}
+                          {t('consent.labels.requestedLabel')}{' '}
+                          {new Date(assignment.createdAt).toLocaleDateString()}
                           {assignment.assignedByUser && (
                             <span className="ml-3">
                               {t('consent.labels.byLabel')} {assignment.assignedByUser.name}
@@ -369,7 +369,7 @@ const PatientConsentDashboard: React.FC = () => {
             {t('consent.approved.count', { count: activeAssignments.length })}
           </h2>
         </div>
-        
+
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -377,15 +377,15 @@ const PatientConsentDashboard: React.FC = () => {
         ) : activeAssignments.length === 0 ? (
           <div className="p-6 text-center text-gray-500">
             <Heart className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">{t('consent.approved.noApprovedTitle')}</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {t('consent.approved.noApprovedMessage')}
-            </p>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">
+              {t('consent.approved.noApprovedTitle')}
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">{t('consent.approved.noApprovedMessage')}</p>
           </div>
         ) : (
           <div className="overflow-hidden">
             <ul className="divide-y divide-gray-200">
-              {activeAssignments.map((assignment) => (
+              {activeAssignments.map(assignment => (
                 <li key={assignment.id} className="px-6 py-4 hover:bg-gray-50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
@@ -406,29 +406,39 @@ const PatientConsentDashboard: React.FC = () => {
                         </div>
                         <div className="flex items-center text-xs text-gray-400 mt-1">
                           <Calendar className="h-3 w-3 mr-1" />
-                          {t('consent.labels.approvedLabel')} {assignment.consentDate ? new Date(assignment.consentDate).toLocaleDateString() : t('common.notAvailable')}
+                          {t('consent.labels.approvedLabel')}{' '}
+                          {assignment.consentDate
+                            ? new Date(assignment.consentDate).toLocaleDateString()
+                            : t('common.notAvailable')}
                           {assignment.startDate && (
                             <span className="ml-3">
-                              {t('consent.labels.startedLabel')} {new Date(assignment.startDate).toLocaleDateString()}
+                              {t('consent.labels.startedLabel')}{' '}
+                              {new Date(assignment.startDate).toLocaleDateString()}
                             </span>
                           )}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-4">
-                      <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(assignment.status, assignment.consentGiven)}`}>
+                      <span
+                        className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(assignment.status, assignment.consentGiven)}`}
+                      >
                         {getStatusIcon(assignment.status, assignment.consentGiven)}
-                        <span className="ml-1">{getStatusText(assignment.status, assignment.consentGiven)}</span>
+                        <span className="ml-1">
+                          {getStatusText(assignment.status, assignment.consentGiven)}
+                        </span>
                       </span>
                       <button
-                        onClick={() => {/* TODO: Implement revoke functionality */}}
+                        onClick={() => {
+                          /* TODO: Implement revoke functionality */
+                        }}
                         className="text-red-600 hover:text-red-900 text-xs"
                       >
                         {t('consent.actions.revokeConsentButton')}
                       </button>
                     </div>
                   </div>
-                  
+
                   {assignment.notes && (
                     <div className="mt-2 ml-14 text-sm text-gray-600">
                       <strong>{t('consent.labels.notes')}</strong> {assignment.notes}
@@ -459,53 +469,71 @@ const PatientConsentDashboard: React.FC = () => {
                 </button>
               </div>
             </div>
-            
+
             {(() => {
               const assignment = pendingAssignments.find(a => a.id === showDetails);
               if (!assignment) return null;
-              
+
               return (
                 <div className="px-6 py-4">
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">{t('consent.labels.caregiverNameLabel')}</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          {t('consent.labels.caregiverNameLabel')}
+                        </label>
                         <p className="text-sm text-gray-900">{assignment.caregiver.name}</p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">{t('consent.labels.caregiverTypeLabel')}</label>
-                        <p className="text-sm text-gray-900">{formatCaregiverType(assignment.caregiverType)}</p>
+                        <label className="block text-sm font-medium text-gray-700">
+                          {t('consent.labels.caregiverTypeLabel')}
+                        </label>
+                        <p className="text-sm text-gray-900">
+                          {formatCaregiverType(assignment.caregiverType)}
+                        </p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">{t('form.email', { ns: 'common' })}</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          {t('form.email', { ns: 'common' })}
+                        </label>
                         <p className="text-sm text-gray-900">{assignment.caregiver.email}</p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">{t('consent.labels.assignedByLabel')}</label>
-                        <p className="text-sm text-gray-900">{assignment.assignedByUser?.name || t('common.system')}</p>
+                        <label className="block text-sm font-medium text-gray-700">
+                          {t('consent.labels.assignedByLabel')}
+                        </label>
+                        <p className="text-sm text-gray-900">
+                          {assignment.assignedByUser?.name || t('common.system')}
+                        </p>
                       </div>
                     </div>
-                    
+
                     {assignment.notes && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">{t('form.notes', { ns: 'common' })}</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          {t('form.notes', { ns: 'common' })}
+                        </label>
                         <p className="text-sm text-gray-900">{assignment.notes}</p>
                       </div>
                     )}
-                    
+
                     <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
                       <div className="flex">
                         <Info className="h-5 w-5 text-blue-400 mr-2" />
                         <div className="text-sm text-blue-700">
-                          <p><strong>{t('consent.modal.whatThisMeans')}</strong></p>
+                          <p>
+                            <strong>{t('consent.modal.whatThisMeans')}</strong>
+                          </p>
                           <p className="mt-1">
-                            {t('consent.modal.consentMessage1')} {assignment.caregiver.name} 
-                            {t('consent.modal.consentMessage2')} {formatCaregiverType(assignment.caregiverType).toLowerCase()} {t('consent.modal.consentMessage3')}
+                            {t('consent.modal.consentMessage1')} {assignment.caregiver.name}
+                            {t('consent.modal.consentMessage2')}{' '}
+                            {formatCaregiverType(assignment.caregiverType).toLowerCase()}{' '}
+                            {t('consent.modal.consentMessage3')}
                           </p>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex justify-end space-x-3 pt-4">
                       <button
                         onClick={() => setShowDetails(null)}

@@ -3,10 +3,10 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { authenticator } from '@otplib/preset-default';
 // WebAuthn imports for passkey login
-import { 
+import {
   generateAuthenticationOptions,
   verifyAuthenticationResponse,
-  type AuthenticatorTransportFuture
+  type AuthenticatorTransportFuture,
 } from '@simplewebauthn/server';
 import { prisma } from '../database/prisma-client';
 import { ApiResponse } from '@parkml/shared';
@@ -19,17 +19,22 @@ import { SessionManagerService } from '../services/SessionManagerService';
 const challengeStore = new Map<string, { challenge: string; userId: string; expiresAt: number }>();
 
 // Clean up expired challenges every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of challengeStore.entries()) {
-    if (value.expiresAt < now) {
-      challengeStore.delete(key);
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [key, value] of challengeStore.entries()) {
+      if (value.expiresAt < now) {
+        challengeStore.delete(key);
+      }
     }
-  }
-}, 5 * 60 * 1000);
+  },
+  5 * 60 * 1000
+);
 
 // Password strength validation function
-const validatePasswordStrength = (password: string): { isValid: boolean; strength: string; errors: string[] } => {
+const validatePasswordStrength = (
+  password: string
+): { isValid: boolean; strength: string; errors: string[] } => {
   const errors: string[] = [];
   let score = 0;
 
@@ -87,7 +92,7 @@ const validatePasswordStrength = (password: string): { isValid: boolean; strengt
   return {
     isValid: errors.length === 0 && score >= 3,
     strength,
-    errors
+    errors,
   };
 };
 
@@ -108,7 +113,13 @@ router.post('/register', async (req, res) => {
     }
 
     // Validate role
-    const validRoles = ['super_admin', 'clinic_admin', 'professional_caregiver', 'family_caregiver', 'patient'];
+    const validRoles = [
+      'super_admin',
+      'clinic_admin',
+      'professional_caregiver',
+      'family_caregiver',
+      'patient',
+    ];
     if (!validRoles.includes(role)) {
       const response: ApiResponse = {
         success: false,
@@ -184,7 +195,7 @@ router.post('/register', async (req, res) => {
       // Get organization from invitation sender
       const invitationSender = await prisma.user.findUnique({
         where: { id: invitation.invitedBy },
-        select: { organizationId: true }
+        select: { organizationId: true },
       });
       finalOrganizationId = invitationSender?.organizationId || 'default_org';
     } else if (!organizationId) {
@@ -229,9 +240,19 @@ router.post('/register', async (req, res) => {
             assignedBy: invitation.invitedBy,
             status: invitation.caregiverType === 'family' ? 'active' : 'pending', // Family caregivers auto-approved
             permissions: JSON.stringify(
-              invitation.caregiverType === 'family' 
-                ? { view_symptoms: true, edit_symptoms: true, view_reports: true, receive_notifications: true }
-                : { view_all_symptoms: true, edit_symptoms: true, generate_reports: true, set_reminders: true }
+              invitation.caregiverType === 'family'
+                ? {
+                    view_symptoms: true,
+                    edit_symptoms: true,
+                    view_reports: true,
+                    receive_notifications: true,
+                  }
+                : {
+                    view_all_symptoms: true,
+                    edit_symptoms: true,
+                    generate_reports: true,
+                    set_reminders: true,
+                  }
             ),
             startDate: new Date(),
             notes: `Created from invitation: ${invitation.message || 'No message'}`,
@@ -242,12 +263,12 @@ router.post('/register', async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email, 
+      {
+        userId: user.id,
+        email: user.email,
         role: user.role,
         organizationId: user.organizationId,
-        isActive: user.isActive
+        isActive: user.isActive,
       },
       process.env.JWT_SECRET || 'default_secret',
       { expiresIn: '24h' }
@@ -302,8 +323,8 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
         ipAddress: req.ip || 'unknown',
         userAgent: req.get('User-Agent') || null,
         success: false, // Will update if successful
-        failureReason: null
-      }
+        failureReason: null,
+      },
     });
 
     // Find user with 2FA information
@@ -314,23 +335,23 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
           select: {
             id: true,
             name: true,
-            isActive: true
-          }
+            isActive: true,
+          },
         },
-        twoFactorAuth: true
-      }
+        twoFactorAuth: true,
+      },
     });
 
     if (!user) {
       // Update login attempt with failure reason (no security audit for unknown users)
       await prisma.loginAttempt.updateMany({
-        where: { 
+        where: {
           email,
           ipAddress: req.ip || 'unknown',
           success: false,
-          failureReason: null
+          failureReason: null,
         },
-        data: { failureReason: 'invalid_email' }
+        data: { failureReason: 'invalid_email' },
       });
 
       const response: ApiResponse = {
@@ -344,24 +365,27 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
     if (!user.isActive) {
       await Promise.all([
         prisma.loginAttempt.updateMany({
-          where: { 
+          where: {
             email,
             ipAddress: req.ip || 'unknown',
             success: false,
-            failureReason: null
+            failureReason: null,
           },
-          data: { failureReason: 'account_locked' }
+          data: { failureReason: 'account_locked' },
         }),
-        SecurityAuditService.logSecurityEvent({
-          userId: user.id,
-          action: 'failed_login',
-          status: 'failed',
-          riskLevel: 'high',
-          details: {
-            email,
-            failureReason: 'account_locked'
-          }
-        }, req)
+        SecurityAuditService.logSecurityEvent(
+          {
+            userId: user.id,
+            action: 'failed_login',
+            status: 'failed',
+            riskLevel: 'high',
+            details: {
+              email,
+              failureReason: 'account_locked',
+            },
+          },
+          req
+        ),
       ]);
 
       const response: ApiResponse = {
@@ -386,25 +410,28 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
     if (!isValidPassword) {
       await Promise.all([
         prisma.loginAttempt.updateMany({
-          where: { 
+          where: {
             email,
             ipAddress: req.ip || 'unknown',
             success: false,
-            failureReason: null
+            failureReason: null,
           },
-          data: { failureReason: 'invalid_password' }
+          data: { failureReason: 'invalid_password' },
         }),
-        SecurityAuditService.logSecurityEvent({
-          userId: user.id,
-          action: 'failed_login',
-          status: 'failed',
-          riskLevel: 'medium',
-          details: {
-            email,
-            failureReason: 'invalid_password',
-            loginMethod: 'password'
-          }
-        }, req)
+        SecurityAuditService.logSecurityEvent(
+          {
+            userId: user.id,
+            action: 'failed_login',
+            status: 'failed',
+            riskLevel: 'medium',
+            details: {
+              email,
+              failureReason: 'invalid_password',
+              loginMethod: 'password',
+            },
+          },
+          req
+        ),
       ]);
 
       const response: ApiResponse = {
@@ -423,8 +450,8 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
           error: 'Two-factor authentication required',
           data: {
             requiresTwoFactor: true,
-            userId: user.id // Temporary identifier for 2FA step
-          }
+            userId: user.id, // Temporary identifier for 2FA step
+          },
         };
         return res.status(200).json(response); // 200 because it's expected flow
       }
@@ -436,27 +463,28 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
         // Verify TOTP token with time window tolerance
         const tempAuth = authenticator.clone();
         tempAuth.options = { ...tempAuth.options, window: 2 };
-        isValid2FA = tempAuth.verify({ 
-          token: twoFactorCode, 
-          secret: user.twoFactorAuth.secret 
+        isValid2FA = tempAuth.verify({
+          token: twoFactorCode,
+          secret: user.twoFactorAuth.secret,
         });
       } else if (backupCode) {
         // Verify backup code
         const backupCodes = JSON.parse(user.twoFactorAuth.backupCodes || '[]');
         const usedCodes = JSON.parse(user.twoFactorAuth.recoveryCodesUsed || '[]');
-        
-        isValid2FA = backupCodes.includes(backupCode.toUpperCase()) && 
-                     !usedCodes.includes(backupCode.toUpperCase());
-        
+
+        isValid2FA =
+          backupCodes.includes(backupCode.toUpperCase()) &&
+          !usedCodes.includes(backupCode.toUpperCase());
+
         if (isValid2FA) {
           // Mark backup code as used
           usedCodes.push(backupCode.toUpperCase());
           await prisma.twoFactorAuth.update({
             where: { userId: user.id },
-            data: { 
+            data: {
               recoveryCodesUsed: JSON.stringify(usedCodes),
-              lastUsedAt: new Date()
-            }
+              lastUsedAt: new Date(),
+            },
           });
         }
       }
@@ -466,29 +494,32 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
         await Promise.all([
           prisma.twoFactorAuth.update({
             where: { userId: user.id },
-            data: { failedAttempts: { increment: 1 } }
+            data: { failedAttempts: { increment: 1 } },
           }),
           prisma.loginAttempt.updateMany({
-            where: { 
+            where: {
               email,
               ipAddress: req.ip || 'unknown',
               success: false,
-              failureReason: null
+              failureReason: null,
             },
-            data: { failureReason: 'invalid_2fa' }
+            data: { failureReason: 'invalid_2fa' },
           }),
-          SecurityAuditService.logSecurityEvent({
-            userId: user.id,
-            action: 'failed_login',
-            status: 'failed',
-            riskLevel: 'high',
-            details: {
-              email,
-              failureReason: 'invalid_2fa',
-              loginMethod: twoFactorCode ? '2fa_totp' : 'backup_code',
-              twoFactorUsed: true
-            }
-          }, req)
+          SecurityAuditService.logSecurityEvent(
+            {
+              userId: user.id,
+              action: 'failed_login',
+              status: 'failed',
+              riskLevel: 'high',
+              details: {
+                email,
+                failureReason: 'invalid_2fa',
+                loginMethod: twoFactorCode ? '2fa_totp' : 'backup_code',
+                twoFactorUsed: true,
+              },
+            },
+            req
+          ),
         ]);
 
         const response: ApiResponse = {
@@ -502,7 +533,7 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
       if (twoFactorCode) {
         await prisma.twoFactorAuth.update({
           where: { userId: user.id },
-          data: { lastUsedAt: new Date() }
+          data: { lastUsedAt: new Date() },
         });
       }
     }
@@ -511,9 +542,12 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
     const sessionData = {
       userId: user.id,
       organizationId: user.organizationId || undefined,
-      loginMethod: (user.twoFactorAuth?.isEnabled ? 
-        (twoFactorCode ? '2fa_totp' : 'backup_code') : 'password') as 'password' | '2fa_totp' | 'backup_code',
-      twoFactorVerified: !!user.twoFactorAuth?.isEnabled
+      loginMethod: (user.twoFactorAuth?.isEnabled
+        ? twoFactorCode
+          ? '2fa_totp'
+          : 'backup_code'
+        : 'password') as 'password' | '2fa_totp' | 'backup_code',
+      twoFactorVerified: !!user.twoFactorAuth?.isEnabled,
     };
 
     const { sessionToken, sessionId } = await SessionManagerService.createSession(
@@ -523,33 +557,36 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
     );
 
     // Log comprehensive security event
-    await SecurityAuditService.logSecurityEvent({
-      userId: user.id,
-      organizationId: user.organizationId || undefined,
-      action: 'login',
-      resourceType: 'session',
-      resourceId: sessionId,
-      status: 'success',
-      riskLevel: 'low',
-      details: {
-        loginMethod: sessionData.loginMethod,
-        twoFactorUsed: !!user.twoFactorAuth?.isEnabled,
+    await SecurityAuditService.logSecurityEvent(
+      {
+        userId: user.id,
+        organizationId: user.organizationId || undefined,
+        action: 'login',
+        resourceType: 'session',
+        resourceId: sessionId,
+        status: 'success',
+        riskLevel: 'low',
+        details: {
+          loginMethod: sessionData.loginMethod,
+          twoFactorUsed: !!user.twoFactorAuth?.isEnabled,
+          sessionId,
+          userAgent: req.get('User-Agent'),
+          timestamp: new Date().toISOString(),
+        },
         sessionId,
-        userAgent: req.get('User-Agent'),
-        timestamp: new Date().toISOString()
       },
-      sessionId
-    }, req);
+      req
+    );
 
     // Update successful login attempt
     await prisma.loginAttempt.updateMany({
-      where: { 
+      where: {
         email,
         ipAddress: req.ip || 'unknown',
         success: false,
-        failureReason: null
+        failureReason: null,
       },
-      data: { success: true }
+      data: { success: true },
     });
 
     // Update last login time
@@ -560,14 +597,14 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
 
     // Generate JWT token with session information
     const token = jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email, 
+      {
+        userId: user.id,
+        email: user.email,
         role: user.role,
         organizationId: user.organizationId,
         isActive: user.isActive,
         sessionId,
-        sessionToken
+        sessionToken,
       },
       process.env.JWT_SECRET || 'default_secret',
       { expiresIn: '24h' }
@@ -587,29 +624,32 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
           lastLoginAt: user.lastLoginAt,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
-          twoFactorEnabled: user.twoFactorAuth?.isEnabled || false
+          twoFactorEnabled: user.twoFactorAuth?.isEnabled || false,
         },
         token,
         sessionId,
-        loginMethod: user.twoFactorAuth?.isEnabled ? 
-          (twoFactorCode ? '2fa_totp' : 'backup_code') : 'password'
+        loginMethod: user.twoFactorAuth?.isEnabled
+          ? twoFactorCode
+            ? '2fa_totp'
+            : 'backup_code'
+          : 'password',
       },
     };
 
     res.json(response);
   } catch (error) {
     console.error('Login error:', error);
-    
+
     // Log failed login attempt due to server error
     if (req.body.email) {
       await prisma.loginAttempt.updateMany({
-        where: { 
+        where: {
           email: req.body.email,
           ipAddress: req.ip || 'unknown',
           success: false,
-          failureReason: null
+          failureReason: null,
         },
-        data: { failureReason: 'server_error' }
+        data: { failureReason: 'server_error' },
       });
     }
 
@@ -645,10 +685,10 @@ router.post('/login/passkey/begin', async (req, res) => {
             credentialId: true,
             publicKey: true,
             counter: true,
-            transports: true
-          }
-        }
-      }
+            transports: true,
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -678,7 +718,7 @@ router.post('/login/passkey/begin', async (req, res) => {
     // Generate authentication options
     const allowCredentials = user.passkeys.map(passkey => ({
       id: passkey.credentialId,
-      transports: (JSON.parse(passkey.transports || '[]') as AuthenticatorTransportFuture[])
+      transports: JSON.parse(passkey.transports || '[]') as AuthenticatorTransportFuture[],
     }));
 
     const options = await generateAuthenticationOptions({
@@ -692,16 +732,16 @@ router.post('/login/passkey/begin', async (req, res) => {
     challengeStore.set(challengeKey, {
       challenge: options.challenge,
       userId: user.id,
-      expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes
+      expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
     });
 
     const response: ApiResponse = {
       success: true,
-      data: { 
+      data: {
         options,
         challengeKey,
-        userId: user.id // Temporary identifier for verification step
-      }
+        userId: user.id, // Temporary identifier for verification step
+      },
     };
 
     res.json(response);
@@ -730,8 +770,12 @@ router.post('/login/passkey/complete', logUserActivity('LOGIN', 'user'), async (
 
     // Get stored challenge
     const storedChallenge = challengeStore.get(challengeKey);
-    
-    if (!storedChallenge || storedChallenge.expiresAt < Date.now() || storedChallenge.userId !== userId) {
+
+    if (
+      !storedChallenge ||
+      storedChallenge.expiresAt < Date.now() ||
+      storedChallenge.userId !== userId
+    ) {
       const response: ApiResponse = {
         success: false,
         error: 'Authentication challenge not found or expired',
@@ -747,17 +791,17 @@ router.post('/login/passkey/complete', logUserActivity('LOGIN', 'user'), async (
           select: {
             id: true,
             name: true,
-            isActive: true
-          }
+            isActive: true,
+          },
         },
         passkeys: {
-          where: { 
+          where: {
             credentialId: authenticationResponse.id,
-            isActive: true 
-          }
+            isActive: true,
+          },
         },
-        twoFactorAuth: true
-      }
+        twoFactorAuth: true,
+      },
     });
 
     if (!user) {
@@ -784,7 +828,6 @@ router.post('/login/passkey/complete', logUserActivity('LOGIN', 'user'), async (
       return res.status(403).json(response);
     }
 
-
     const passkey = user.passkeys[0];
     if (!passkey) {
       const response: ApiResponse = {
@@ -803,9 +846,9 @@ router.post('/login/passkey/complete', logUserActivity('LOGIN', 'user'), async (
       credential: {
         id: passkey.credentialId,
         publicKey: Buffer.from(passkey.publicKey, 'base64'),
-        counter: passkey.counter
+        counter: passkey.counter,
       },
-      requireUserVerification: false
+      requireUserVerification: false,
     });
 
     if (!verification.verified) {
@@ -816,8 +859,8 @@ router.post('/login/passkey/complete', logUserActivity('LOGIN', 'user'), async (
           ipAddress: req.ip || 'unknown',
           userAgent: req.get('User-Agent') || null,
           success: false,
-          failureReason: 'invalid_passkey'
-        }
+          failureReason: 'invalid_passkey',
+        },
       });
 
       const response: ApiResponse = {
@@ -832,8 +875,8 @@ router.post('/login/passkey/complete', logUserActivity('LOGIN', 'user'), async (
       where: { id: passkey.id },
       data: {
         counter: verification.authenticationInfo.newCounter,
-        lastUsedAt: new Date()
-      }
+        lastUsedAt: new Date(),
+      },
     });
 
     // Clean up used challenge
@@ -844,34 +887,34 @@ router.post('/login/passkey/complete', logUserActivity('LOGIN', 'user'), async (
       userId: user.id,
       organizationId: user.organizationId || undefined,
       loginMethod: 'passkey' as const,
-      twoFactorVerified: false // Passkey is considered strong authentication
+      twoFactorVerified: false, // Passkey is considered strong authentication
     };
 
-    const { sessionToken: passkeySessionToken, sessionId: passkeySessionId } = await SessionManagerService.createSession(
-      passkeySessionData,
-      req,
-      false
-    );
+    const { sessionToken: passkeySessionToken, sessionId: passkeySessionId } =
+      await SessionManagerService.createSession(passkeySessionData, req, false);
 
     // Log comprehensive security event
-    await SecurityAuditService.logSecurityEvent({
-      userId: user.id,
-      organizationId: user.organizationId || undefined,
-      action: 'login',
-      resourceType: 'session',
-      resourceId: passkeySessionId,
-      status: 'success',
-      riskLevel: 'low',
-      details: {
-        loginMethod: 'passkey',
-        passkeyId: passkey.id,
-        deviceName: passkey.deviceName,
-        passkeyUsed: true,
+    await SecurityAuditService.logSecurityEvent(
+      {
+        userId: user.id,
+        organizationId: user.organizationId || undefined,
+        action: 'login',
+        resourceType: 'session',
+        resourceId: passkeySessionId,
+        status: 'success',
+        riskLevel: 'low',
+        details: {
+          loginMethod: 'passkey',
+          passkeyId: passkey.id,
+          deviceName: passkey.deviceName,
+          passkeyUsed: true,
+          sessionId: passkeySessionId,
+          timestamp: new Date().toISOString(),
+        },
         sessionId: passkeySessionId,
-        timestamp: new Date().toISOString()
       },
-      sessionId: passkeySessionId
-    }, req);
+      req
+    );
 
     // Log successful login attempt
     await prisma.loginAttempt.create({
@@ -879,8 +922,8 @@ router.post('/login/passkey/complete', logUserActivity('LOGIN', 'user'), async (
         email: user.email,
         ipAddress: req.ip || 'unknown',
         userAgent: req.get('User-Agent') || null,
-        success: true
-      }
+        success: true,
+      },
     });
 
     // Update last login time
@@ -891,14 +934,14 @@ router.post('/login/passkey/complete', logUserActivity('LOGIN', 'user'), async (
 
     // Generate JWT token with session information
     const token = jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email, 
+      {
+        userId: user.id,
+        email: user.email,
         role: user.role,
         organizationId: user.organizationId,
         isActive: user.isActive,
         sessionId: passkeySessionId,
-        sessionToken: passkeySessionToken
+        sessionToken: passkeySessionToken,
       },
       process.env.JWT_SECRET || 'default_secret',
       { expiresIn: '24h' }
@@ -918,11 +961,11 @@ router.post('/login/passkey/complete', logUserActivity('LOGIN', 'user'), async (
           lastLoginAt: user.lastLoginAt,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
-          twoFactorEnabled: user.twoFactorAuth?.isEnabled || false
+          twoFactorEnabled: user.twoFactorAuth?.isEnabled || false,
         },
         token,
         sessionId: passkeySessionId,
-        loginMethod: 'passkey'
+        loginMethod: 'passkey',
       },
     };
 
@@ -934,9 +977,9 @@ router.post('/login/passkey/complete', logUserActivity('LOGIN', 'user'), async (
     if (req.body.userId) {
       const user = await prisma.user.findUnique({
         where: { id: req.body.userId },
-        select: { email: true }
+        select: { email: true },
       });
-      
+
       if (user) {
         await prisma.loginAttempt.create({
           data: {
@@ -944,8 +987,8 @@ router.post('/login/passkey/complete', logUserActivity('LOGIN', 'user'), async (
             ipAddress: req.ip || 'unknown',
             userAgent: req.get('User-Agent') || null,
             success: false,
-            failureReason: 'server_error'
-          }
+            failureReason: 'server_error',
+          },
         });
       }
     }
@@ -976,8 +1019,8 @@ router.get('/profile', authenticateToken, async (req: AuthenticatedRequest, res)
           select: {
             id: true,
             name: true,
-            isActive: true
-          }
+            isActive: true,
+          },
         },
         patient: {
           select: {
@@ -986,15 +1029,15 @@ router.get('/profile', authenticateToken, async (req: AuthenticatedRequest, res)
             dateOfBirth: true,
             diagnosisDate: true,
             emergencyContact: true,
-            privacySettings: true
-          }
+            privacySettings: true,
+          },
         },
         twoFactorAuth: {
           select: {
             isEnabled: true,
             setupCompletedAt: true,
-            lastUsedAt: true
-          }
+            lastUsedAt: true,
+          },
         },
         passkeys: {
           select: {
@@ -1003,12 +1046,12 @@ router.get('/profile', authenticateToken, async (req: AuthenticatedRequest, res)
             deviceType: true,
             createdAt: true,
             lastUsedAt: true,
-            isActive: true
-          }
+            isActive: true,
+          },
         },
         userPreferences: true,
-        userNotificationSettings: true
-      }
+        userNotificationSettings: true,
+      },
     });
 
     if (!user) {
@@ -1039,17 +1082,17 @@ router.get('/profile', authenticateToken, async (req: AuthenticatedRequest, res)
         street: user.addressStreet,
         city: user.addressCity,
         postalCode: user.addressPostalCode,
-        country: user.addressCountry
+        country: user.addressCountry,
       },
       emergencyContact: {
         name: user.emergencyContactName,
         phone: user.emergencyContactPhone,
-        relationship: user.emergencyContactRelationship
+        relationship: user.emergencyContactRelationship,
       },
       medicalInfo: {
         allergies: user.medicalAllergies,
         medications: user.medicalMedications,
-        emergencyNotes: user.medicalEmergencyNotes
+        emergencyNotes: user.medicalEmergencyNotes,
       },
       // Security Information
       securityScore: user.securityScore,
@@ -1058,7 +1101,7 @@ router.get('/profile', authenticateToken, async (req: AuthenticatedRequest, res)
       passkeyCount: user.passkeys?.filter(p => p.isActive).length || 0,
       // Settings
       preferences: user.userPreferences,
-      notificationSettings: user.userNotificationSettings
+      notificationSettings: user.userNotificationSettings,
     };
 
     const response: ApiResponse = {
@@ -1078,331 +1121,344 @@ router.get('/profile', authenticateToken, async (req: AuthenticatedRequest, res)
 });
 
 // Update user profile
-router.put('/profile', authenticateToken, logUserActivity('UPDATE', 'user'), async (req: AuthenticatedRequest, res) => {
-  try {
-    if (!req.user) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'User not authenticated',
-      };
-      return res.status(401).json(response);
-    }
+router.put(
+  '/profile',
+  authenticateToken,
+  logUserActivity('UPDATE', 'user'),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'User not authenticated',
+        };
+        return res.status(401).json(response);
+      }
 
-    const { 
-      name, 
-      email, 
-      phone, 
-      dateOfBirth,
-      address,
-      emergencyContact,
-      medicalInfo 
-    } = req.body;
+      const { name, email, phone, dateOfBirth, address, emergencyContact, medicalInfo } = req.body;
 
-    // Validate that at least one field is being updated
-    const hasUpdates = name || email || phone || dateOfBirth || address || emergencyContact || medicalInfo;
-    if (!hasUpdates) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'No fields to update',
-      };
-      return res.status(400).json(response);
-    }
+      // Validate that at least one field is being updated
+      const hasUpdates =
+        name || email || phone || dateOfBirth || address || emergencyContact || medicalInfo;
+      if (!hasUpdates) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'No fields to update',
+        };
+        return res.status(400).json(response);
+      }
 
-    // Check if new email is already taken
-    if (email && email !== req.user.email) {
-      const existingUser = await prisma.user.findUnique({
-        where: { email },
+      // Check if new email is already taken
+      if (email && email !== req.user.email) {
+        const existingUser = await prisma.user.findUnique({
+          where: { email },
+        });
+
+        if (existingUser) {
+          const response: ApiResponse = {
+            success: false,
+            error: 'Email already in use',
+          };
+          return res.status(400).json(response);
+        }
+      }
+
+      // Validate date of birth if provided
+      if (dateOfBirth) {
+        const dob = new Date(dateOfBirth);
+        if (isNaN(dob.getTime()) || dob > new Date()) {
+          const response: ApiResponse = {
+            success: false,
+            error: 'Invalid date of birth',
+          };
+          return res.status(400).json(response);
+        }
+      }
+
+      // Update user with all new fields
+      const updatedUser = await prisma.user.update({
+        where: { id: req.user.userId },
+        data: {
+          ...(name && { name }),
+          ...(email && { email }),
+          ...(phone && { phone }),
+          ...(dateOfBirth && { dateOfBirth: new Date(dateOfBirth) }),
+          // Address fields
+          ...(address?.street !== undefined && { addressStreet: address.street }),
+          ...(address?.city !== undefined && { addressCity: address.city }),
+          ...(address?.postalCode !== undefined && { addressPostalCode: address.postalCode }),
+          ...(address?.country !== undefined && { addressCountry: address.country }),
+          // Emergency contact fields
+          ...(emergencyContact?.name !== undefined && {
+            emergencyContactName: emergencyContact.name,
+          }),
+          ...(emergencyContact?.phone !== undefined && {
+            emergencyContactPhone: emergencyContact.phone,
+          }),
+          ...(emergencyContact?.relationship !== undefined && {
+            emergencyContactRelationship: emergencyContact.relationship,
+          }),
+          // Medical information fields
+          ...(medicalInfo?.allergies !== undefined && { medicalAllergies: medicalInfo.allergies }),
+          ...(medicalInfo?.medications !== undefined && {
+            medicalMedications: medicalInfo.medications,
+          }),
+          ...(medicalInfo?.emergencyNotes !== undefined && {
+            medicalEmergencyNotes: medicalInfo.emergencyNotes,
+          }),
+        },
+        include: {
+          organization: {
+            select: {
+              id: true,
+              name: true,
+              isActive: true,
+            },
+          },
+          twoFactorAuth: {
+            select: {
+              isEnabled: true,
+              setupCompletedAt: true,
+            },
+          },
+          passkeys: {
+            select: {
+              id: true,
+              deviceName: true,
+              deviceType: true,
+              createdAt: true,
+              lastUsedAt: true,
+              isActive: true,
+            },
+          },
+        },
       });
 
-      if (existingUser) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Email already in use',
-        };
-        return res.status(400).json(response);
-      }
-    }
-
-    // Validate date of birth if provided
-    if (dateOfBirth) {
-      const dob = new Date(dateOfBirth);
-      if (isNaN(dob.getTime()) || dob > new Date()) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid date of birth',
-        };
-        return res.status(400).json(response);
-      }
-    }
-
-    // Update user with all new fields
-    const updatedUser = await prisma.user.update({
-      where: { id: req.user.userId },
-      data: {
-        ...(name && { name }),
-        ...(email && { email }),
-        ...(phone && { phone }),
-        ...(dateOfBirth && { dateOfBirth: new Date(dateOfBirth) }),
-        // Address fields
-        ...(address?.street !== undefined && { addressStreet: address.street }),
-        ...(address?.city !== undefined && { addressCity: address.city }),
-        ...(address?.postalCode !== undefined && { addressPostalCode: address.postalCode }),
-        ...(address?.country !== undefined && { addressCountry: address.country }),
-        // Emergency contact fields
-        ...(emergencyContact?.name !== undefined && { emergencyContactName: emergencyContact.name }),
-        ...(emergencyContact?.phone !== undefined && { emergencyContactPhone: emergencyContact.phone }),
-        ...(emergencyContact?.relationship !== undefined && { emergencyContactRelationship: emergencyContact.relationship }),
-        // Medical information fields
-        ...(medicalInfo?.allergies !== undefined && { medicalAllergies: medicalInfo.allergies }),
-        ...(medicalInfo?.medications !== undefined && { medicalMedications: medicalInfo.medications }),
-        ...(medicalInfo?.emergencyNotes !== undefined && { medicalEmergencyNotes: medicalInfo.emergencyNotes }),
-      },
-      include: {
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            isActive: true
-          }
+      // Build response profile
+      const profile = {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        role: updatedUser.role,
+        organizationId: updatedUser.organizationId,
+        organization: updatedUser.organization,
+        isActive: updatedUser.isActive,
+        lastLoginAt: updatedUser.lastLoginAt,
+        createdAt: updatedUser.createdAt,
+        updatedAt: updatedUser.updatedAt,
+        // Personal Information
+        phone: updatedUser.phone,
+        dateOfBirth: updatedUser.dateOfBirth,
+        address: {
+          street: updatedUser.addressStreet,
+          city: updatedUser.addressCity,
+          postalCode: updatedUser.addressPostalCode,
+          country: updatedUser.addressCountry,
         },
-        twoFactorAuth: {
-          select: {
-            isEnabled: true,
-            setupCompletedAt: true
-          }
+        emergencyContact: {
+          name: updatedUser.emergencyContactName,
+          phone: updatedUser.emergencyContactPhone,
+          relationship: updatedUser.emergencyContactRelationship,
         },
-        passkeys: {
-          select: {
-            id: true,
-            deviceName: true,
-            deviceType: true,
-            createdAt: true,
-            lastUsedAt: true,
-            isActive: true
-          }
-        }
-      }
-    });
+        medicalInfo: {
+          allergies: updatedUser.medicalAllergies,
+          medications: updatedUser.medicalMedications,
+          emergencyNotes: updatedUser.medicalEmergencyNotes,
+        },
+        // Security Information
+        securityScore: updatedUser.securityScore,
+        passwordChangedAt: updatedUser.passwordChangedAt,
+        twoFactorEnabled: updatedUser.twoFactorAuth?.isEnabled || false,
+        passkeyCount: updatedUser.passkeys?.filter(p => p.isActive).length || 0,
+      };
 
-    // Build response profile
-    const profile = {
-      id: updatedUser.id,
-      email: updatedUser.email,
-      name: updatedUser.name,
-      role: updatedUser.role,
-      organizationId: updatedUser.organizationId,
-      organization: updatedUser.organization,
-      isActive: updatedUser.isActive,
-      lastLoginAt: updatedUser.lastLoginAt,
-      createdAt: updatedUser.createdAt,
-      updatedAt: updatedUser.updatedAt,
-      // Personal Information
-      phone: updatedUser.phone,
-      dateOfBirth: updatedUser.dateOfBirth,
-      address: {
-        street: updatedUser.addressStreet,
-        city: updatedUser.addressCity,
-        postalCode: updatedUser.addressPostalCode,
-        country: updatedUser.addressCountry
-      },
-      emergencyContact: {
-        name: updatedUser.emergencyContactName,
-        phone: updatedUser.emergencyContactPhone,
-        relationship: updatedUser.emergencyContactRelationship
-      },
-      medicalInfo: {
-        allergies: updatedUser.medicalAllergies,
-        medications: updatedUser.medicalMedications,
-        emergencyNotes: updatedUser.medicalEmergencyNotes
-      },
-      // Security Information
-      securityScore: updatedUser.securityScore,
-      passwordChangedAt: updatedUser.passwordChangedAt,
-      twoFactorEnabled: updatedUser.twoFactorAuth?.isEnabled || false,
-      passkeyCount: updatedUser.passkeys?.filter(p => p.isActive).length || 0
-    };
+      const response: ApiResponse = {
+        success: true,
+        data: { user: profile },
+      };
 
-    const response: ApiResponse = {
-      success: true,
-      data: { user: profile },
-    };
-
-    res.json(response);
-  } catch (error) {
-    console.error('Profile update error:', error);
-    const response: ApiResponse = {
-      success: false,
-      error: 'Internal server error',
-    };
-    res.status(500).json(response);
+      res.json(response);
+    } catch (error) {
+      console.error('Profile update error:', error);
+      const response: ApiResponse = {
+        success: false,
+        error: 'Internal server error',
+      };
+      res.status(500).json(response);
+    }
   }
-});
+);
 
 // Change password
-router.put('/password', authenticateToken, logUserActivity('UPDATE', 'user'), async (req: AuthenticatedRequest, res) => {
-  try {
-    if (!req.user) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'User not authenticated',
-      };
-      return res.status(401).json(response);
-    }
-
-    const { currentPassword, newPassword } = req.body;
-
-    // Validate input
-    if (!currentPassword || !newPassword) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'Current password and new password are required',
-      };
-      return res.status(400).json(response);
-    }
-
-    // Validate new password strength
-    const passwordValidation = validatePasswordStrength(newPassword);
-    if (!passwordValidation.isValid) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'Password does not meet security requirements',
-        data: {
-          errors: passwordValidation.errors,
-          strength: passwordValidation.strength
-        }
-      };
-      return res.status(400).json(response);
-    }
-
-    // Get current user with password history
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.userId },
-      include: {
-        passwordHistory: {
-          orderBy: { createdAt: 'desc' },
-          take: 5 // Check last 5 passwords
-        }
-      }
-    });
-
-    if (!user) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'User not found',
-      };
-      return res.status(404).json(response);
-    }
-
-    // Verify current password
-    const isValidPassword = await bcrypt.compare(currentPassword, user.passwordHash);
-
-    if (!isValidPassword) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'Current password is incorrect',
-      };
-      return res.status(401).json(response);
-    }
-
-    // Check if new password matches current password
-    const isSamePassword = await bcrypt.compare(newPassword, user.passwordHash);
-    if (isSamePassword) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'New password must be different from current password',
-      };
-      return res.status(400).json(response);
-    }
-
-    // Check password history to prevent reuse
-    for (const historicalPassword of user.passwordHistory) {
-      const isReused = await bcrypt.compare(newPassword, historicalPassword.passwordHash);
-      if (isReused) {
+router.put(
+  '/password',
+  authenticateToken,
+  logUserActivity('UPDATE', 'user'),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
         const response: ApiResponse = {
           success: false,
-          error: 'Password has been used recently. Please choose a different password.',
+          error: 'User not authenticated',
+        };
+        return res.status(401).json(response);
+      }
+
+      const { currentPassword, newPassword } = req.body;
+
+      // Validate input
+      if (!currentPassword || !newPassword) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Current password and new password are required',
         };
         return res.status(400).json(response);
       }
-    }
 
-    // Hash new password
-    const saltRounds = 12;
-    const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
+      // Validate new password strength
+      const passwordValidation = validatePasswordStrength(newPassword);
+      if (!passwordValidation.isValid) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Password does not meet security requirements',
+          data: {
+            errors: passwordValidation.errors,
+            strength: passwordValidation.strength,
+          },
+        };
+        return res.status(400).json(response);
+      }
 
-    // Calculate new security score based on password strength
-    let securityScore = user.securityScore || 65;
-    if (passwordValidation.strength === 'strong') {
-      securityScore = Math.min(100, securityScore + 10);
-    } else if (passwordValidation.strength === 'medium') {
-      securityScore = Math.min(100, securityScore + 5);
-    }
-
-    // Update password and security info
-    await prisma.$transaction([
-      // Save current password to history
-      prisma.passwordHistory.create({
-        data: {
-          userId: req.user.userId,
-          passwordHash: user.passwordHash
-        }
-      }),
-      // Update user password and security info
-      prisma.user.update({
+      // Get current user with password history
+      const user = await prisma.user.findUnique({
         where: { id: req.user.userId },
-        data: { 
-          passwordHash: newPasswordHash,
-          passwordChangedAt: new Date(),
-          securityScore: securityScore
+        include: {
+          passwordHistory: {
+            orderBy: { createdAt: 'desc' },
+            take: 5, // Check last 5 passwords
+          },
         },
-      }),
-      // Log security audit
-      prisma.securityAuditLog.create({
+      });
+
+      if (!user) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'User not found',
+        };
+        return res.status(404).json(response);
+      }
+
+      // Verify current password
+      const isValidPassword = await bcrypt.compare(currentPassword, user.passwordHash);
+
+      if (!isValidPassword) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Current password is incorrect',
+        };
+        return res.status(401).json(response);
+      }
+
+      // Check if new password matches current password
+      const isSamePassword = await bcrypt.compare(newPassword, user.passwordHash);
+      if (isSamePassword) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'New password must be different from current password',
+        };
+        return res.status(400).json(response);
+      }
+
+      // Check password history to prevent reuse
+      for (const historicalPassword of user.passwordHistory) {
+        const isReused = await bcrypt.compare(newPassword, historicalPassword.passwordHash);
+        if (isReused) {
+          const response: ApiResponse = {
+            success: false,
+            error: 'Password has been used recently. Please choose a different password.',
+          };
+          return res.status(400).json(response);
+        }
+      }
+
+      // Hash new password
+      const saltRounds = 12;
+      const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
+
+      // Calculate new security score based on password strength
+      let securityScore = user.securityScore || 65;
+      if (passwordValidation.strength === 'strong') {
+        securityScore = Math.min(100, securityScore + 10);
+      } else if (passwordValidation.strength === 'medium') {
+        securityScore = Math.min(100, securityScore + 5);
+      }
+
+      // Update password and security info
+      await prisma.$transaction([
+        // Save current password to history
+        prisma.passwordHistory.create({
+          data: {
+            userId: req.user.userId,
+            passwordHash: user.passwordHash,
+          },
+        }),
+        // Update user password and security info
+        prisma.user.update({
+          where: { id: req.user.userId },
+          data: {
+            passwordHash: newPasswordHash,
+            passwordChangedAt: new Date(),
+            securityScore: securityScore,
+          },
+        }),
+        // Log security audit
+        prisma.securityAuditLog.create({
+          data: {
+            userId: req.user.userId,
+            action: 'password_change',
+            resourceType: 'password',
+            resourceId: req.user.userId,
+            ipAddress: req.ip,
+            userAgent: req.get('User-Agent') || 'Unknown',
+            status: 'success',
+            riskLevel: 'low',
+            details: JSON.stringify({
+              passwordStrength: passwordValidation.strength,
+              securityScoreChange: securityScore - (user.securityScore || 65),
+            }),
+          },
+        }),
+        // Clean up old password history (keep only last 5)
+        prisma.passwordHistory.deleteMany({
+          where: {
+            userId: req.user.userId,
+            id: {
+              notIn: user.passwordHistory.slice(0, 4).map(p => p.id),
+            },
+          },
+        }),
+      ]);
+
+      const response: ApiResponse = {
+        success: true,
         data: {
-          userId: req.user.userId,
-          action: 'password_change',
-          resourceType: 'password',
-          resourceId: req.user.userId,
-          ipAddress: req.ip,
-          userAgent: req.get('User-Agent') || 'Unknown',
-          status: 'success',
-          riskLevel: 'low',
-          details: JSON.stringify({
-            passwordStrength: passwordValidation.strength,
-            securityScoreChange: securityScore - (user.securityScore || 65)
-          })
-        }
-      }),
-      // Clean up old password history (keep only last 5)
-      prisma.passwordHistory.deleteMany({
-        where: {
-          userId: req.user.userId,
-          id: {
-            notIn: user.passwordHistory.slice(0, 4).map(p => p.id)
-          }
-        }
-      })
-    ]);
+          message: 'Password updated successfully',
+          passwordStrength: passwordValidation.strength,
+          securityScore: securityScore,
+        },
+      };
 
-    const response: ApiResponse = {
-      success: true,
-      data: {
-        message: 'Password updated successfully',
-        passwordStrength: passwordValidation.strength,
-        securityScore: securityScore
-      },
-    };
-
-    res.json(response);
-  } catch (error) {
-    console.error('Password change error:', error);
-    const response: ApiResponse = {
-      success: false,
-      error: 'Internal server error',
-    };
-    res.status(500).json(response);
+      res.json(response);
+    } catch (error) {
+      console.error('Password change error:', error);
+      const response: ApiResponse = {
+        success: false,
+        error: 'Internal server error',
+      };
+      res.status(500).json(response);
+    }
   }
-});
+);
 
 // =====================================
 // Security Features Redirects
@@ -1414,7 +1470,7 @@ router.post('/2fa/setup', (_req, res) => {
   res.status(301).json({
     success: false,
     error: 'This endpoint has moved. Please use /api/security/2fa/setup',
-    redirectTo: '/api/security/2fa/setup'
+    redirectTo: '/api/security/2fa/setup',
   });
 });
 
@@ -1423,7 +1479,7 @@ router.post('/2fa/verify', (_req, res) => {
   res.status(301).json({
     success: false,
     error: 'This endpoint has moved. Please use /api/security/2fa/verify',
-    redirectTo: '/api/security/2fa/verify'
+    redirectTo: '/api/security/2fa/verify',
   });
 });
 
@@ -1432,7 +1488,7 @@ router.post('/2fa/disable', (_req, res) => {
   res.status(301).json({
     success: false,
     error: 'This endpoint has moved. Please use /api/security/2fa/disable',
-    redirectTo: '/api/security/2fa/disable'
+    redirectTo: '/api/security/2fa/disable',
   });
 });
 
@@ -1441,7 +1497,7 @@ router.get('/passkey/list', (_req, res) => {
   res.status(301).json({
     success: false,
     error: 'This endpoint has moved. Please use /api/security/passkeys',
-    redirectTo: '/api/security/passkeys'
+    redirectTo: '/api/security/passkeys',
   });
 });
 
@@ -1450,7 +1506,7 @@ router.get('/passkey/register/begin', (_req, res) => {
   res.status(301).json({
     success: false,
     error: 'This endpoint has moved. Please use /api/security/passkeys/register/begin',
-    redirectTo: '/api/security/passkeys/register/begin'
+    redirectTo: '/api/security/passkeys/register/begin',
   });
 });
 
@@ -1459,62 +1515,67 @@ router.post('/passkey/register/complete', (_req, res) => {
   res.status(301).json({
     success: false,
     error: 'This endpoint has moved. Please use /api/security/passkeys/register/complete',
-    redirectTo: '/api/security/passkeys/register/complete'
+    redirectTo: '/api/security/passkeys/register/complete',
   });
 });
 
 // Logout endpoint using same auth as other endpoints
-router.post('/logout', authenticateToken, logUserActivity('LOGOUT', 'user'), async (req: AuthenticatedRequest, res) => {
-  try {
-    if (!req.user) {
+router.post(
+  '/logout',
+  authenticateToken,
+  logUserActivity('LOGOUT', 'user'),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'User not authenticated',
+        };
+        return res.status(401).json(response);
+      }
+
+      // Log security audit event
+      await prisma.securityAuditLog.create({
+        data: {
+          userId: req.user.userId,
+          action: 'logout',
+          resourceType: 'session',
+          ipAddress: req.ip,
+          userAgent: req.get('User-Agent') || 'Unknown',
+          status: 'success',
+          riskLevel: 'low',
+          details: JSON.stringify({
+            logoutMethod: 'user_initiated',
+            timestamp: new Date().toISOString(),
+          }),
+        },
+      });
+
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          message: 'Logged out successfully',
+        },
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error('Logout error:', error);
       const response: ApiResponse = {
         success: false,
-        error: 'User not authenticated',
+        error: 'Internal server error',
       };
-      return res.status(401).json(response);
+      res.status(500).json(response);
     }
-
-    // Log security audit event
-    await prisma.securityAuditLog.create({
-      data: {
-        userId: req.user.userId,
-        action: 'logout',
-        resourceType: 'session',
-        ipAddress: req.ip,
-        userAgent: req.get('User-Agent') || 'Unknown',
-        status: 'success',
-        riskLevel: 'low',
-        details: JSON.stringify({
-          logoutMethod: 'user_initiated',
-          timestamp: new Date().toISOString()
-        })
-      }
-    });
-
-    const response: ApiResponse = {
-      success: true,
-      data: {
-        message: 'Logged out successfully'
-      },
-    };
-
-    res.json(response);
-  } catch (error) {
-    console.error('Logout error:', error);
-    const response: ApiResponse = {
-      success: false,
-      error: 'Internal server error',
-    };
-    res.status(500).json(response);
   }
-});
+);
 
 // Audit Logs
 router.get('/audit-logs', (_req, res) => {
   res.status(301).json({
     success: false,
     error: 'This endpoint has moved. Please use /api/security/audit-logs',
-    redirectTo: '/api/security/audit-logs'
+    redirectTo: '/api/security/audit-logs',
   });
 });
 

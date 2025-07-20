@@ -22,26 +22,26 @@ const ProfilePage: React.FC<ProfilePageProps> = () => {
       id: 'personal',
       title: t('profile:tabs.personalInfo'),
       icon: User,
-      description: t('profile:tabs.personalInfoDesc')
+      description: t('profile:tabs.personalInfoDesc'),
     },
     {
       id: 'security',
       title: t('profile:tabs.security'),
       icon: Shield,
-      description: t('profile:tabs.securityDesc')
+      description: t('profile:tabs.securityDesc'),
     },
     {
       id: 'preferences',
       title: t('profile:tabs.preferences'),
       icon: Settings,
-      description: t('profile:tabs.preferencesDesc')
+      description: t('profile:tabs.preferencesDesc'),
     },
     {
       id: 'notifications',
       title: t('profile:tabs.notifications'),
       icon: Bell,
-      description: t('profile:tabs.notificationsDesc')
-    }
+      description: t('profile:tabs.notificationsDesc'),
+    },
   ];
 
   const renderTabContent = () => {
@@ -111,9 +111,9 @@ const ProfilePage: React.FC<ProfilePageProps> = () => {
                   </div>
                 </div>
               </div>
-              
+
               <nav className="p-2">
-                {tabs.map((tab) => {
+                {tabs.map(tab => {
                   const Icon = tab.icon;
                   return (
                     <button
@@ -128,9 +128,13 @@ const ProfilePage: React.FC<ProfilePageProps> = () => {
                       <Icon className="h-4 w-4 flex-shrink-0" />
                       <div className="flex-1">
                         <div className="font-medium text-sm">{tab.title}</div>
-                        <div className={`text-xs mt-0.5 ${
-                          activeTab === tab.id ? 'text-primary-content/80' : 'text-base-content/60'
-                        }`}>
+                        <div
+                          className={`text-xs mt-0.5 ${
+                            activeTab === tab.id
+                              ? 'text-primary-content/80'
+                              : 'text-base-content/60'
+                          }`}
+                        >
                           {tab.description}
                         </div>
                       </div>
@@ -145,7 +149,7 @@ const ProfilePage: React.FC<ProfilePageProps> = () => {
         {/* Mobile Tab Navigation */}
         <div className="lg:hidden col-span-1">
           <div className="tabs tabs-boxed grid grid-cols-2 gap-1 mb-6">
-            {tabs.map((tab) => {
+            {tabs.map(tab => {
               const Icon = tab.icon;
               return (
                 <button
@@ -166,9 +170,7 @@ const ProfilePage: React.FC<ProfilePageProps> = () => {
         {/* Main Content */}
         <div className="lg:col-span-3">
           <div className="card bg-base-100 shadow-lg">
-            <div className="card-body p-4 sm:p-6">
-              {renderTabContent()}
-            </div>
+            <div className="card-body p-4 sm:p-6">{renderTabContent()}</div>
           </div>
         </div>
       </div>

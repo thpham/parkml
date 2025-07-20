@@ -238,7 +238,7 @@
     "stats": {
       "totalUsers": "Total Utilisateurs",
       "totalPatients": "Total Patients",
-      "organizations": "Organisations", 
+      "organizations": "Organisations",
       "activeAssignments": "Affectations Actives",
       "total": "Total",
       "active": "Actif",
@@ -246,7 +246,7 @@
     },
     "accessTypes": {
       "medicalEmergency": "Urgence Médicale",
-      "technicalSupport": "Support Technique", 
+      "technicalSupport": "Support Technique",
       "dataRecovery": "Récupération de Données",
       "auditInvestigation": "Enquête d'Audit"
     },
@@ -267,7 +267,7 @@
     "createButton": "Créer une Affectation",
     "searchPlaceholder": "Rechercher par nom de patient ou d'aidant...",
     "searchLabel": "Rechercher des affectations",
-    "filterByStatus": "Filtrer par statut", 
+    "filterByStatus": "Filtrer par statut",
     "filterByType": "Filtrer par type d'aidant",
     "allStatus": "Tous les Statuts",
     "allTypes": "Tous les Types",

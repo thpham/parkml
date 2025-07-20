@@ -15,27 +15,27 @@ export class EmergencyAccessCleanupService {
   }> {
     try {
       const now = new Date();
-      
+
       // Get all emergency access records
       const totalRecords = await prisma.emergencyAccess.count();
-      
+
       // Get currently active records
       const activeRecords = await prisma.emergencyAccess.count({
         where: {
           isActive: true,
           endTime: {
-            gt: now
-          }
-        }
+            gt: now,
+          },
+        },
       });
-      
+
       // Find and update expired records
       const expiredRecords = await prisma.emergencyAccess.findMany({
         where: {
           isActive: true,
           endTime: {
-            lte: now
-          }
+            lte: now,
+          },
         },
         select: {
           id: true,
@@ -46,25 +46,25 @@ export class EmergencyAccessCleanupService {
           endTime: true,
           user: {
             select: {
-              organizationId: true
-            }
-          }
-        }
+              organizationId: true,
+            },
+          },
+        },
       });
-      
+
       // Update expired records to inactive
       if (expiredRecords.length > 0) {
         await prisma.emergencyAccess.updateMany({
           where: {
             id: {
-              in: expiredRecords.map(record => record.id)
-            }
+              in: expiredRecords.map(record => record.id),
+            },
           },
           data: {
-            isActive: false
-          }
+            isActive: false,
+          },
         });
-        
+
         // Create audit log entries for expired access
         const auditLogEntries = expiredRecords.map((record: any) => ({
           userId: record.userId,
@@ -78,31 +78,32 @@ export class EmergencyAccessCleanupService {
             patientId: record.patientId,
             originalEndTime: record.endTime?.toISOString(),
             expiredAt: now.toISOString(),
-            autoExpired: true
+            autoExpired: true,
           }),
           ipAddress: 'system',
-          userAgent: 'emergency-access-cleanup-service'
+          userAgent: 'emergency-access-cleanup-service',
         }));
-        
+
         await prisma.auditLog.createMany({
-          data: auditLogEntries
+          data: auditLogEntries,
         });
-        
-        console.log(`🧹 Emergency access cleanup: ${expiredRecords.length} expired records cleaned up`);
+
+        console.log(
+          `🧹 Emergency access cleanup: ${expiredRecords.length} expired records cleaned up`
+        );
       }
-      
+
       return {
         cleaned: expiredRecords.length,
         active: activeRecords,
-        total: totalRecords
+        total: totalRecords,
       };
-      
     } catch (error) {
       console.error('Error in emergency access cleanup:', error);
       throw error;
     }
   }
-  
+
   /**
    * Get emergency access statistics
    */
@@ -119,20 +120,20 @@ export class EmergencyAccessCleanupService {
   }> {
     try {
       const now = new Date();
-      
+
       // Get total count
       const total = await prisma.emergencyAccess.count();
-      
+
       // Get active count
       const active = await prisma.emergencyAccess.count({
         where: {
           isActive: true,
           endTime: {
-            gt: now
-          }
-        }
+            gt: now,
+          },
+        },
       });
-      
+
       // Get expired count
       const expired = await prisma.emergencyAccess.count({
         where: {
@@ -141,87 +142,94 @@ export class EmergencyAccessCleanupService {
             {
               isActive: true,
               endTime: {
-                lte: now
-              }
-            }
-          ]
-        }
+                lte: now,
+              },
+            },
+          ],
+        },
       });
-      
+
       // Get access by type
       const accessByType = await prisma.emergencyAccess.groupBy({
         by: ['accessType'],
         _count: {
-          id: true
-        }
+          id: true,
+        },
       });
-      
-      const byType = accessByType.reduce((acc: any, item: any) => {
-        acc[item.accessType] = item._count.id;
-        return acc;
-      }, {} as Record<string, number>);
-      
+
+      const byType = accessByType.reduce(
+        (acc: any, item: any) => {
+          acc[item.accessType] = item._count.id;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
+
       // Get access by organization
       const accessByOrg = await prisma.emergencyAccess.groupBy({
         by: ['userId'],
         _count: {
-          id: true
-        }
+          id: true,
+        },
       });
-      
+
       const userIds = accessByOrg.map(item => item.userId);
       const users = await prisma.user.findMany({
         where: {
           id: {
-            in: userIds
-          }
+            in: userIds,
+          },
         },
         select: {
           id: true,
           organizationId: true,
           organization: {
             select: {
-              name: true
-            }
-          }
-        }
+              name: true,
+            },
+          },
+        },
       });
-      
-      const byOrganization = accessByOrg.map((item: any) => {
-        const user = users.find((u: any) => u.id === item.userId);
-        return {
-          organizationId: user?.organizationId || 'unknown',
-          organizationName: user?.organization?.name || 'Unknown Organization',
-          count: item._count.id
-        };
-      }).reduce((acc: any, item: any) => {
-        const existing = acc.find((a: any) => a.organizationId === item.organizationId);
-        if (existing) {
-          existing.count += item.count;
-        } else {
-          acc.push(item);
-        }
-        return acc;
-      }, [] as Array<{
-        organizationId: string;
-        organizationName: string;
-        count: number;
-      }>);
-      
+
+      const byOrganization = accessByOrg
+        .map((item: any) => {
+          const user = users.find((u: any) => u.id === item.userId);
+          return {
+            organizationId: user?.organizationId || 'unknown',
+            organizationName: user?.organization?.name || 'Unknown Organization',
+            count: item._count.id,
+          };
+        })
+        .reduce(
+          (acc: any, item: any) => {
+            const existing = acc.find((a: any) => a.organizationId === item.organizationId);
+            if (existing) {
+              existing.count += item.count;
+            } else {
+              acc.push(item);
+            }
+            return acc;
+          },
+          [] as Array<{
+            organizationId: string;
+            organizationName: string;
+            count: number;
+          }>
+        );
+
       return {
         total,
         active,
         expired,
         byType,
-        byOrganization
+        byOrganization,
       };
-      
     } catch (error) {
       console.error('Error getting emergency access stats:', error);
       throw error;
     }
   }
-  
+
   /**
    * Send alerts for emergency access that will expire soon
    * @param hoursBeforeExpiration - Hours before expiration to send alert
@@ -240,48 +248,51 @@ export class EmergencyAccessCleanupService {
     try {
       const now = new Date();
       const alertThreshold = new Date(now.getTime() + hoursBeforeExpiration * 60 * 60 * 1000);
-      
+
       // Find records that will expire soon
       const soonToExpire = await prisma.emergencyAccess.findMany({
         where: {
           isActive: true,
           endTime: {
             gt: now,
-            lte: alertThreshold
-          }
+            lte: alertThreshold,
+          },
         },
         include: {
           user: {
             select: {
-              email: true
-            }
-          }
-        }
+              email: true,
+            },
+          },
+        },
       });
-      
+
       const records = soonToExpire.map((record: any) => ({
         id: record.id,
         userId: record.userId,
         userEmail: record.user.email,
         patientId: record.patientId,
         reason: record.reason,
-        expiresAt: record.endTime || new Date()
+        expiresAt: record.endTime || new Date(),
       }));
-      
+
       // In a real implementation, you would send actual alerts here
       // For now, we'll just log them
       if (records.length > 0) {
-        console.log(`⚠️  Emergency access expiration alerts: ${records.length} records expiring soon`);
+        console.log(
+          `⚠️  Emergency access expiration alerts: ${records.length} records expiring soon`
+        );
         records.forEach((record: any) => {
-          console.log(`  - User ${record.userEmail} (${record.userId}) emergency access to patient ${record.patientId} expires at ${record.expiresAt.toISOString()}`);
+          console.log(
+            `  - User ${record.userEmail} (${record.userId}) emergency access to patient ${record.patientId} expires at ${record.expiresAt.toISOString()}`
+          );
         });
       }
-      
+
       return {
         alertsSent: records.length,
-        records
+        records,
       };
-      
     } catch (error) {
       console.error('Error sending expiration alerts:', error);
       throw error;
@@ -302,26 +313,34 @@ export function initializeEmergencyAccessCleanup(): void {
     .catch(error => {
       console.error('❌ Failed to initialize emergency access cleanup service:', error);
     });
-  
+
   // Schedule cleanup every 5 minutes
-  setInterval(async () => {
-    try {
-      await EmergencyAccessCleanupService.cleanupExpiredAccess();
-    } catch (error) {
-      console.error('❌ Scheduled emergency access cleanup failed:', error);
-    }
-  }, 5 * 60 * 1000); // 5 minutes
-  
+  setInterval(
+    async () => {
+      try {
+        await EmergencyAccessCleanupService.cleanupExpiredAccess();
+      } catch (error) {
+        console.error('❌ Scheduled emergency access cleanup failed:', error);
+      }
+    },
+    5 * 60 * 1000
+  ); // 5 minutes
+
   // Schedule expiration alerts every 30 minutes
-  setInterval(async () => {
-    try {
-      await EmergencyAccessCleanupService.sendExpirationAlerts(2); // 2 hours before expiration
-    } catch (error) {
-      console.error('❌ Scheduled expiration alerts failed:', error);
-    }
-  }, 30 * 60 * 1000); // 30 minutes
-  
-  console.log('🔄 Emergency access cleanup service scheduled (cleanup every 5 minutes, alerts every 30 minutes)');
+  setInterval(
+    async () => {
+      try {
+        await EmergencyAccessCleanupService.sendExpirationAlerts(2); // 2 hours before expiration
+      } catch (error) {
+        console.error('❌ Scheduled expiration alerts failed:', error);
+      }
+    },
+    30 * 60 * 1000
+  ); // 30 minutes
+
+  console.log(
+    '🔄 Emergency access cleanup service scheduled (cleanup every 5 minutes, alerts every 30 minutes)'
+  );
 }
 
 export default EmergencyAccessCleanupService;

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { 
-  LogOut, 
-  User, 
-  Home, 
-  PlusCircle, 
-  Settings, 
+import {
+  LogOut,
+  User,
+  Home,
+  PlusCircle,
+  Settings,
   Users,
   Building,
   UserPlus,
@@ -13,7 +13,7 @@ import {
   BarChart3,
   ChevronDown,
   Menu,
-  X
+  X,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LanguageSelector from '../shared/LanguageSelector';
@@ -32,7 +32,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [pendingConsent, setPendingConsent] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-
   // Fetch pending assignments count for caregivers
   useEffect(() => {
     const fetchPendingAssignments = async () => {
@@ -40,12 +39,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         try {
           const response = await fetch('/api/assignments', {
             headers: {
-              'Authorization': `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
             },
           });
           const data = await response.json();
           if (data.success && data.data) {
-            const pending = data.data.filter((assignment: any) => assignment.status === 'pending').length;
+            const pending = data.data.filter(
+              (assignment: any) => assignment.status === 'pending'
+            ).length;
             setPendingAssignments(pending);
           }
         } catch (error) {
@@ -67,7 +68,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         try {
           const response = await fetch('/api/consent/pending', {
             headers: {
-              'Authorization': `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
             },
           });
           const data = await response.json();
@@ -127,8 +128,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className="min-h-screen">
       {/* Mobile-Responsive Navigation with Drawer */}
       <div className="drawer">
-        <input id="mobile-drawer" type="checkbox" className="drawer-toggle" checked={isMobileMenuOpen} onChange={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-        
+        <input
+          id="mobile-drawer"
+          type="checkbox"
+          className="drawer-toggle"
+          checked={isMobileMenuOpen}
+          onChange={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        />
+
         <div className="drawer-content flex flex-col">
           {/* Top Navigation Bar */}
           <div className="navbar bg-base-100 shadow-lg">
@@ -137,11 +144,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <label htmlFor="mobile-drawer" className="btn btn-square btn-ghost lg:hidden">
                 {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </label>
-              
+
               {/* Logo */}
               <div className="flex items-center ml-2 lg:ml-0">
                 <h1 className="text-xl font-bold">{t('app.name')}</h1>
-                <span className="ml-2 text-sm opacity-60 hidden sm:inline">{t('app.subtitle')}</span>
+                <span className="ml-2 text-sm opacity-60 hidden sm:inline">
+                  {t('app.subtitle')}
+                </span>
               </div>
             </div>
 
@@ -155,7 +164,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <Home className="h-4 w-4" />
                   {t('menu.dashboard')}
                 </button>
-                
+
                 {(user?.role === 'professional_caregiver' || user?.role === 'family_caregiver') && (
                   <button
                     onClick={() => handleNavigation('/caregiver/assignments')}
@@ -170,7 +179,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     )}
                   </button>
                 )}
-                
+
                 {user?.role === 'patient' && (
                   <>
                     <button
@@ -194,7 +203,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </button>
                   </>
                 )}
-                
+
                 {isAdmin && (
                   <div className="dropdown dropdown-end">
                     <div tabIndex={0} role="button" className="btn btn-ghost btn-sm">
@@ -202,7 +211,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       {t('menu.admin')}
                       <ChevronDown className="h-3 w-3" />
                     </div>
-                    <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                    <ul
+                      tabIndex={0}
+                      className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
+                    >
                       <li>
                         <button
                           onClick={() => handleNavigation('/admin/analytics')}
@@ -261,16 +273,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <div className="flex items-center space-x-2">
                 {/* Language Selector */}
                 <LanguageSelector compact className="hidden sm:flex" />
-                
+
                 {/* User Profile Dropdown */}
                 <div className="dropdown dropdown-end">
                   <div tabIndex={0} role="button" className="btn btn-ghost btn-sm">
                     <User className="h-4 w-4" />
                     <span className="hidden sm:inline font-medium">{user?.name}</span>
-                    <span className="ml-2 opacity-60 capitalize hidden md:inline">({user?.role})</span>
+                    <span className="ml-2 opacity-60 capitalize hidden md:inline">
+                      ({user?.role})
+                    </span>
                     <ChevronDown className="h-3 w-3" />
                   </div>
-                  <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                  <ul
+                    tabIndex={0}
+                    className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow"
+                  >
                     <li>
                       <button
                         onClick={() => handleNavigation('/profile')}
@@ -284,10 +301,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       <hr className="my-1" />
                     </li>
                     <li>
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center text-error"
-                      >
+                      <button onClick={handleLogout} className="flex items-center text-error">
                         <LogOut className="h-4 w-4" />
                         {t('menu.logout')}
                       </button>
@@ -315,10 +329,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <h2 className="text-lg font-bold">{t('app.name')}</h2>
                   <p className="text-sm opacity-60">{t('app.subtitle')}</p>
                 </div>
-                <button
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="btn btn-ghost btn-sm"
-                >
+                <button onClick={() => setIsMobileMenuOpen(false)} className="btn btn-ghost btn-sm">
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -347,7 +358,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   {t('menu.dashboard')}
                 </button>
               </li>
-              
+
               {(user?.role === 'professional_caregiver' || user?.role === 'family_caregiver') && (
                 <li>
                   <button
@@ -357,14 +368,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <Users className="h-5 w-5 mr-3" />
                     {t('menu.myAssignments')}
                     {pendingAssignments > 0 && (
-                      <div className="badge badge-error badge-sm ml-auto">
-                        {pendingAssignments}
-                      </div>
+                      <div className="badge badge-error badge-sm ml-auto">{pendingAssignments}</div>
                     )}
                   </button>
                 </li>
               )}
-              
+
               {user?.role === 'patient' && (
                 <>
                   <li>
@@ -375,9 +384,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       <Users className="h-5 w-5 mr-3" />
                       {t('menu.caregiverConsent')}
                       {pendingConsent > 0 && (
-                        <div className="badge badge-error badge-sm ml-auto">
-                          {pendingConsent}
-                        </div>
+                        <div className="badge badge-error badge-sm ml-auto">{pendingConsent}</div>
                       )}
                     </button>
                   </li>
@@ -392,7 +399,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   </li>
                 </>
               )}
-              
+
               {isAdmin && (
                 <>
                   <li className="mt-4">

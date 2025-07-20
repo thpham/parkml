@@ -1,10 +1,10 @@
 /**
  * Performance Audit System for ParkML Encryption Framework
- * 
+ *
  * Comprehensive performance monitoring, benchmarking, and optimization
  * tools for the multi-party encryption system. Provides detailed metrics,
  * bottleneck identification, and optimization recommendations.
- * 
+ *
  * Key Features:
  * - Real-time encryption/decryption performance monitoring
  * - Memory usage analysis for cryptographic operations
@@ -140,9 +140,12 @@ export class PerformanceAuditEngine {
     console.log('🚀 Performance monitoring started');
 
     // Set up periodic cleanup of old metrics
-    setInterval(() => {
-      this.cleanupOldMetrics();
-    }, 5 * 60 * 1000); // Every 5 minutes
+    setInterval(
+      () => {
+        this.cleanupOldMetrics();
+      },
+      5 * 60 * 1000
+    ); // Every 5 minutes
   }
 
   /**
@@ -181,7 +184,7 @@ export class PerformanceAuditEngine {
           dataSize,
           success,
           errorMessage: error,
-          metadata
+          metadata,
         };
 
         if (this.isMonitoring) {
@@ -189,14 +192,20 @@ export class PerformanceAuditEngine {
         }
 
         // Log performance warnings
-        if (metric.duration > 1000) { // > 1 second
-          console.warn(`⚠️ Slow crypto operation: ${operationType} took ${metric.duration.toFixed(2)}ms`);
+        if (metric.duration > 1000) {
+          // > 1 second
+          console.warn(
+            `⚠️ Slow crypto operation: ${operationType} took ${metric.duration.toFixed(2)}ms`
+          );
         }
 
-        if (metric.memoryUsageMB > 100) { // > 100MB
-          console.warn(`⚠️ High memory usage: ${operationType} used ${metric.memoryUsageMB.toFixed(2)}MB`);
+        if (metric.memoryUsageMB > 100) {
+          // > 100MB
+          console.warn(
+            `⚠️ High memory usage: ${operationType} used ${metric.memoryUsageMB.toFixed(2)}MB`
+          );
         }
-      }
+      },
     };
   }
 
@@ -210,26 +219,21 @@ export class PerformanceAuditEngine {
     const timestamp = new Date();
 
     // Run all audit components in parallel
-    const [
-      encryptionMetrics,
-      homomorphicMetrics,
-      databaseMetrics,
-      wasmMetrics,
-      securityFindings
-    ] = await Promise.all([
-      this.auditEncryptionPerformance(),
-      this.auditHomomorphicPerformance(),
-      this.auditDatabasePerformance(),
-      this.auditWASMPerformance(),
-      this.runSecurityAudit()
-    ]);
+    const [encryptionMetrics, homomorphicMetrics, databaseMetrics, wasmMetrics, securityFindings] =
+      await Promise.all([
+        this.auditEncryptionPerformance(),
+        this.auditHomomorphicPerformance(),
+        this.auditDatabasePerformance(),
+        this.auditWASMPerformance(),
+        this.runSecurityAudit(),
+      ]);
 
     // Generate performance recommendations
     const recommendations = this.generatePerformanceRecommendations({
       encryption: encryptionMetrics,
       homomorphic: homomorphicMetrics,
       database: databaseMetrics,
-      wasm: wasmMetrics
+      wasm: wasmMetrics,
     });
 
     // Calculate overall performance score
@@ -237,7 +241,7 @@ export class PerformanceAuditEngine {
       encryption: encryptionMetrics,
       homomorphic: homomorphicMetrics,
       database: databaseMetrics,
-      wasm: wasmMetrics
+      wasm: wasmMetrics,
     });
 
     const audit: SystemPerformanceAudit = {
@@ -248,10 +252,10 @@ export class PerformanceAuditEngine {
         encryption: encryptionMetrics,
         homomorphic: homomorphicMetrics,
         database: databaseMetrics,
-        wasm: wasmMetrics
+        wasm: wasmMetrics,
       },
       recommendations,
-      securityFindings
+      securityFindings,
     };
 
     // Store audit results
@@ -264,7 +268,9 @@ export class PerformanceAuditEngine {
   /**
    * Audit encryption performance
    */
-  private async auditEncryptionPerformance(): Promise<SystemPerformanceAudit['metrics']['encryption']> {
+  private async auditEncryptionPerformance(): Promise<
+    SystemPerformanceAudit['metrics']['encryption']
+  > {
     console.log('🔐 Auditing encryption performance...');
 
     const testData = 'x'.repeat(1024); // 1KB test data
@@ -275,20 +281,15 @@ export class PerformanceAuditEngine {
 
     for (let i = 0; i < iterations; i++) {
       try {
-        const tracker = this.recordCryptoOperation(
-          'encrypt',
-          `perf_test_${i}`,
-          testData.length,
-          {
-            algorithm: 'ABE',
-            dataCategory: DataCategory.DEMOGRAPHICS,
-            organizationId: 'test_org'
-          }
-        );
+        const tracker = this.recordCryptoOperation('encrypt', `perf_test_${i}`, testData.length, {
+          algorithm: 'ABE',
+          dataCategory: DataCategory.DEMOGRAPHICS,
+          organizationId: 'test_org',
+        });
 
         // Simulate encryption operation
         await new Promise(resolve => setTimeout(resolve, Math.random() * 10 + 5));
-        
+
         tracker.recordEnd(true);
         latencies.push(performance.now() - tracker.startTime);
         memoryUsages.push(process.memoryUsage().heapUsed / 1024 / 1024);
@@ -306,14 +307,16 @@ export class PerformanceAuditEngine {
       avgLatencyMs: avgLatency,
       throughputOpsPerSec: throughput,
       memoryUsageMB: avgMemory,
-      errorRate
+      errorRate,
     };
   }
 
   /**
    * Audit homomorphic encryption performance
    */
-  private async auditHomomorphicPerformance(): Promise<SystemPerformanceAudit['metrics']['homomorphic']> {
+  private async auditHomomorphicPerformance(): Promise<
+    SystemPerformanceAudit['metrics']['homomorphic']
+  > {
     console.log('🔢 Auditing homomorphic encryption performance...');
 
     const startTime = performance.now();
@@ -331,7 +334,7 @@ export class PerformanceAuditEngine {
         requesterId: 'test_user',
         organizationId: 'test_org',
         purpose: 'Performance testing',
-        privacyLevel: 'basic' as any
+        privacyLevel: 'basic' as any,
       });
 
       const endTime = performance.now();
@@ -340,14 +343,14 @@ export class PerformanceAuditEngine {
       return {
         avgComputationTimeMs: endTime - startTime,
         memoryUsageMB: memoryAfter - memoryBefore,
-        successRate: 100
+        successRate: 100,
       };
     } catch (error) {
       console.error('Homomorphic performance test failed:', error);
       return {
         avgComputationTimeMs: 0,
         memoryUsageMB: 0,
-        successRate: 0
+        successRate: 0,
       };
     }
   }
@@ -360,11 +363,15 @@ export class PerformanceAuditEngine {
 
     const queryTests = [
       { name: 'Simple select', query: () => prisma.user.findMany({ take: 10 }) },
-      { name: 'Complex join', query: () => prisma.patient.findMany({ 
-        include: { symptomEntries: true }, 
-        take: 5 
-      }) },
-      { name: 'Aggregation', query: () => prisma.symptomEntry.count() }
+      {
+        name: 'Complex join',
+        query: () =>
+          prisma.patient.findMany({
+            include: { symptomEntries: true },
+            take: 5,
+          }),
+      },
+      { name: 'Aggregation', query: () => prisma.symptomEntry.count() },
     ];
 
     const queryTimes: number[] = [];
@@ -386,7 +393,7 @@ export class PerformanceAuditEngine {
     return {
       avgQueryTimeMs: avgQueryTime,
       connectionPoolUtilization: 0.7, // Simulated value
-      queryOptimizationScore: avgQueryTime < 50 ? 95 : avgQueryTime < 100 ? 80 : 60
+      queryOptimizationScore: avgQueryTime < 50 ? 95 : avgQueryTime < 100 ? 80 : 60,
     };
   }
 
@@ -415,14 +422,14 @@ export class PerformanceAuditEngine {
       return {
         initializationTimeMs: initEndTime - initStartTime,
         operationLatencyMs: opEndTime - opStartTime,
-        memoryLeakDetected: memoryDiff > 50 // Flag if memory usage increased by >50MB
+        memoryLeakDetected: memoryDiff > 50, // Flag if memory usage increased by >50MB
       };
     } catch (error) {
       console.error('WASM performance test failed:', error);
       return {
         initializationTimeMs: 5000, // High penalty for failure
         operationLatencyMs: 1000,
-        memoryLeakDetected: true
+        memoryLeakDetected: true,
       };
     }
   }
@@ -436,10 +443,10 @@ export class PerformanceAuditEngine {
     const findings: SecurityAuditFinding[] = [];
 
     // Check for common security issues
-    findings.push(...await this.checkKeyManagementSecurity());
-    findings.push(...await this.checkAccessControlSecurity());
-    findings.push(...await this.checkDataExposureSecurity());
-    findings.push(...await this.checkAuditTrailSecurity());
+    findings.push(...(await this.checkKeyManagementSecurity()));
+    findings.push(...(await this.checkAccessControlSecurity()));
+    findings.push(...(await this.checkDataExposureSecurity()));
+    findings.push(...(await this.checkAuditTrailSecurity()));
 
     return findings;
   }
@@ -454,7 +461,7 @@ export class PerformanceAuditEngine {
     try {
       const encryptionKeys = await prisma.encryptionKey.findMany({
         where: { isActive: true },
-        take: 10
+        take: 10,
       });
 
       if (encryptionKeys.some(key => !key.encryptedKey || key.encryptedKey.length < 32)) {
@@ -463,11 +470,13 @@ export class PerformanceAuditEngine {
           severity: 'high',
           category: 'key_management',
           title: 'Weak Key Storage Detected',
-          description: 'Some encryption keys appear to be stored without proper encryption or are too short.',
-          recommendation: 'Ensure all keys are properly encrypted at rest and meet minimum length requirements.',
+          description:
+            'Some encryption keys appear to be stored without proper encryption or are too short.',
+          recommendation:
+            'Ensure all keys are properly encrypted at rest and meet minimum length requirements.',
           affectedComponents: ['EncryptionKey'],
           riskScore: 8.5,
-          discoveredAt: new Date()
+          discoveredAt: new Date(),
         });
       }
     } catch {
@@ -480,7 +489,7 @@ export class PerformanceAuditEngine {
         recommendation: 'Verify database access permissions and key storage schema.',
         affectedComponents: ['Database', 'EncryptionKey'],
         riskScore: 6.0,
-        discoveredAt: new Date()
+        discoveredAt: new Date(),
       });
     }
 
@@ -496,7 +505,7 @@ export class PerformanceAuditEngine {
     // Check for proper role-based access
     try {
       const superAdmins = await prisma.user.count({
-        where: { role: 'super_admin', isActive: true }
+        where: { role: 'super_admin', isActive: true },
       });
 
       if (superAdmins > 5) {
@@ -509,7 +518,7 @@ export class PerformanceAuditEngine {
           recommendation: 'Review super admin accounts and revoke unnecessary privileges.',
           affectedComponents: ['User', 'AccessControl'],
           riskScore: 5.5,
-          discoveredAt: new Date()
+          discoveredAt: new Date(),
         });
       }
 
@@ -518,9 +527,9 @@ export class PerformanceAuditEngine {
         where: {
           isActive: true,
           createdAt: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
-          }
-        }
+            gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
+          },
+        },
       });
 
       if (recentEmergencyAccess > 10) {
@@ -533,7 +542,7 @@ export class PerformanceAuditEngine {
           recommendation: 'Investigate high emergency access usage and review approval processes.',
           affectedComponents: ['EmergencyAccess'],
           riskScore: 7.5,
-          discoveredAt: new Date()
+          discoveredAt: new Date(),
         });
       }
     } catch {
@@ -546,7 +555,7 @@ export class PerformanceAuditEngine {
         recommendation: 'Verify database connectivity and permissions.',
         affectedComponents: ['Database'],
         riskScore: 3.0,
-        discoveredAt: new Date()
+        discoveredAt: new Date(),
       });
     }
 
@@ -562,7 +571,7 @@ export class PerformanceAuditEngine {
     // Check for unencrypted sensitive data
     try {
       const unencryptedPatients = await prisma.patient.count({
-        where: { encryptionMetadata: null }
+        where: { encryptionMetadata: null },
       });
 
       if (unencryptedPatients > 0) {
@@ -575,12 +584,12 @@ export class PerformanceAuditEngine {
           recommendation: 'Run data migration to encrypt all patient records immediately.',
           affectedComponents: ['Patient', 'DataMigration'],
           riskScore: 9.5,
-          discoveredAt: new Date()
+          discoveredAt: new Date(),
         });
       }
 
       const unencryptedSymptoms = await prisma.symptomEntry.count({
-        where: { encryptionMetadata: null }
+        where: { encryptionMetadata: null },
       });
 
       if (unencryptedSymptoms > 0) {
@@ -593,7 +602,7 @@ export class PerformanceAuditEngine {
           recommendation: 'Run data migration to encrypt all symptom entries.',
           affectedComponents: ['SymptomEntry', 'DataMigration'],
           riskScore: 8.5,
-          discoveredAt: new Date()
+          discoveredAt: new Date(),
         });
       }
     } catch {
@@ -606,7 +615,7 @@ export class PerformanceAuditEngine {
         recommendation: 'Check database connectivity and schema consistency.',
         affectedComponents: ['Database'],
         riskScore: 5.0,
-        discoveredAt: new Date()
+        discoveredAt: new Date(),
       });
     }
 
@@ -624,9 +633,9 @@ export class PerformanceAuditEngine {
       const recentEntries = await prisma.cryptoAuditEntry.count({
         where: {
           timestamp: {
-            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
-          }
-        }
+            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+          },
+        },
       });
 
       if (auditEntries === 0) {
@@ -639,7 +648,7 @@ export class PerformanceAuditEngine {
           recommendation: 'Verify audit logging is properly configured and operational.',
           affectedComponents: ['CryptoAuditEntry', 'AuditSystem'],
           riskScore: 8.0,
-          discoveredAt: new Date()
+          discoveredAt: new Date(),
         });
       } else if (recentEntries === 0) {
         findings.push({
@@ -651,7 +660,7 @@ export class PerformanceAuditEngine {
           recommendation: 'Check if audit logging is still active and properly configured.',
           affectedComponents: ['CryptoAuditEntry'],
           riskScore: 6.0,
-          discoveredAt: new Date()
+          discoveredAt: new Date(),
         });
       }
     } catch {
@@ -664,7 +673,7 @@ export class PerformanceAuditEngine {
         recommendation: 'Check database connectivity and audit table schema.',
         affectedComponents: ['Database', 'CryptoAuditEntry'],
         riskScore: 5.5,
-        discoveredAt: new Date()
+        discoveredAt: new Date(),
       });
     }
 
@@ -688,7 +697,7 @@ export class PerformanceAuditEngine {
         improvement: 'Reduce encryption latency by 50%',
         implementation: 'Implement encryption caching and optimize ABE key derivation',
         estimatedImpact: '50% faster encryption operations',
-        effort: 'medium'
+        effort: 'medium',
       });
     }
 
@@ -703,7 +712,7 @@ export class PerformanceAuditEngine {
         improvement: 'Optimize memory usage for crypto operations',
         implementation: 'Implement memory pooling and cleanup routines',
         estimatedImpact: '50% reduction in memory footprint',
-        effort: 'medium'
+        effort: 'medium',
       });
     }
 
@@ -718,7 +727,7 @@ export class PerformanceAuditEngine {
         improvement: 'Optimize database query performance',
         implementation: 'Add database indexes and optimize complex queries',
         estimatedImpact: '50% faster database operations',
-        effort: 'low'
+        effort: 'low',
       });
     }
 
@@ -733,7 +742,7 @@ export class PerformanceAuditEngine {
         improvement: 'Optimize WASM module initialization',
         implementation: 'Implement WASM module caching and lazy loading',
         estimatedImpact: '50% faster WASM initialization',
-        effort: 'medium'
+        effort: 'medium',
       });
     }
 
@@ -750,13 +759,13 @@ export class PerformanceAuditEngine {
     if (metrics.encryption.avgLatencyMs > 100) score -= 15;
     if (metrics.encryption.memoryUsageMB > 50) score -= 10;
     if (metrics.encryption.errorRate > 5) score -= 20;
-    
+
     if (metrics.database.avgQueryTimeMs > 100) score -= 15;
     if (metrics.database.queryOptimizationScore < 80) score -= 10;
-    
+
     if (metrics.wasm.initializationTimeMs > 1000) score -= 10;
     if (metrics.wasm.memoryLeakDetected) score -= 15;
-    
+
     if (metrics.homomorphic.successRate < 90) score -= 10;
 
     return Math.max(0, score);
@@ -774,8 +783,8 @@ export class PerformanceAuditEngine {
           overallScore: audit.overallScore,
           metrics: JSON.stringify(audit.metrics),
           recommendations: JSON.stringify(audit.recommendations),
-          securityFindings: JSON.stringify(audit.securityFindings)
-        }
+          securityFindings: JSON.stringify(audit.securityFindings),
+        },
       });
     } catch (error) {
       console.warn('Failed to store audit results:', error);
@@ -787,10 +796,8 @@ export class PerformanceAuditEngine {
    * Clean up old metrics to prevent memory leaks
    */
   private cleanupOldMetrics(): void {
-    const cutoffTime = Date.now() - (60 * 60 * 1000); // 1 hour ago
-    this.metricsCollector = this.metricsCollector.filter(
-      metric => metric.startTime > cutoffTime
-    );
+    const cutoffTime = Date.now() - 60 * 60 * 1000; // 1 hour ago
+    this.metricsCollector = this.metricsCollector.filter(metric => metric.startTime > cutoffTime);
   }
 
   /**
@@ -803,13 +810,13 @@ export class PerformanceAuditEngine {
     memoryUsage: number;
   } {
     const totalOps = this.metricsCollector.length;
-    
+
     if (totalOps === 0) {
       return {
         totalOperations: 0,
         avgLatency: 0,
         errorRate: 0,
-        memoryUsage: 0
+        memoryUsage: 0,
       };
     }
 
@@ -822,7 +829,7 @@ export class PerformanceAuditEngine {
       totalOperations: totalOps,
       avgLatency,
       errorRate,
-      memoryUsage: avgMemory
+      memoryUsage: avgMemory,
     };
   }
 }

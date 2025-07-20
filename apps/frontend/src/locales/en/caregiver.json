@@ -45,7 +45,7 @@
     "caregiverSuffix": "Caregiver",
     "stats": {
       "totalAssignments": "Total Assignments",
-      "pendingRequests": "Pending Requests", 
+      "pendingRequests": "Pending Requests",
       "activeAssignments": "Active Assignments",
       "patients": "Patients"
     },
@@ -67,7 +67,7 @@
       "started": "Started:",
       "consent": "Consent:",
       "consentStatus": "Consent",
-      "given": "Given", 
+      "given": "Given",
       "pending": "Pending",
       "active": "Active",
       "caregiverSuffix": "caregiver"
@@ -79,7 +79,7 @@
   },
   "messages": {
     "assignmentAccepted": "Assignment accepted successfully",
-    "assignmentDeclined": "Assignment declined successfully", 
+    "assignmentDeclined": "Assignment declined successfully",
     "updateError": "Failed to update assignment",
     "fetchError": "Failed to fetch assignments"
   }

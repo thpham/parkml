@@ -40,10 +40,10 @@ export class WASMCryptoLoader {
   private static async _initializeSEAL(): Promise<void> {
     try {
       console.log('🔐 Initializing SEAL WASM module for homomorphic encryption...');
-      
+
       // Initialize SEAL with default security parameters
       this.sealInstance = await SEAL();
-      
+
       // Verify SEAL is properly initialized
       if (!this.sealInstance) {
         throw new Error('Failed to initialize SEAL WASM module');
@@ -53,17 +53,13 @@ export class WASMCryptoLoader {
       const schemeType = this.sealInstance.SchemeType.bfv;
       const securityLevel = this.sealInstance.SecurityLevel.tc128;
       const polyModulusDegree = 4096;
-      
+
       const parms = this.sealInstance.EncryptionParameters(schemeType);
       parms.setPolyModulusDegree(polyModulusDegree);
-      
+
       // Use SEAL's recommended parameters for BFV with security level 128
-      parms.setCoeffModulus(
-        this.sealInstance.CoeffModulus.BFVDefault(polyModulusDegree)
-      );
-      parms.setPlainModulus(
-        this.sealInstance.PlainModulus.Batching(polyModulusDegree, 20)
-      );
+      parms.setCoeffModulus(this.sealInstance.CoeffModulus.BFVDefault(polyModulusDegree));
+      parms.setPlainModulus(this.sealInstance.PlainModulus.Batching(polyModulusDegree, 20));
 
       // Verify parameters are valid
       const context = this.sealInstance.Context(parms, true, securityLevel);
@@ -101,9 +97,11 @@ export class WASMCryptoLoader {
   /**
    * Create SEAL encryption context for homomorphic operations
    */
-  public static createHomomorphicContext(securityLevel: 'tc128' | 'tc192' | 'tc256' = 'tc128'): any {
+  public static createHomomorphicContext(
+    securityLevel: 'tc128' | 'tc192' | 'tc256' = 'tc128'
+  ): any {
     const seal = this.getSEAL();
-    
+
     // Configure CKKS scheme for floating-point operations (medical analytics)
     const schemeType = seal.SchemeType.ckks;
     const polyModulusDegree = 8192;
@@ -111,14 +109,14 @@ export class WASMCryptoLoader {
 
     const parms = seal.EncryptionParameters(schemeType);
     parms.setPolyModulusDegree(polyModulusDegree);
-    
+
     // Use SEAL's recommended parameters for CKKS with security level 128
     parms.setCoeffModulus(
       seal.CoeffModulus.Create(polyModulusDegree, new Int32Array([60, 40, 40, 60]))
     );
 
     const context = seal.Context(parms, true, security);
-    
+
     if (!context.parametersSet()) {
       throw new Error('Failed to create valid SEAL context');
     }
@@ -130,7 +128,7 @@ export class WASMCryptoLoader {
       encoder: seal.CKKSEncoder(context),
       evaluator: seal.Evaluator(context),
       decryptor: null, // Will be set when private key is available
-      encryptor: null   // Will be set when public key is available
+      encryptor: null, // Will be set when public key is available
     };
   }
 
@@ -144,7 +142,7 @@ export class WASMCryptoLoader {
     galoisKeys: string;
   } {
     const { keyGenerator } = context;
-    
+
     const secretKey = keyGenerator.secretKey();
     const publicKey = keyGenerator.createPublicKey();
     const relinKeys = keyGenerator.createRelinKeys();
@@ -154,7 +152,7 @@ export class WASMCryptoLoader {
       publicKey: publicKey.save(),
       secretKey: secretKey.save(),
       relinKeys: relinKeys.save(),
-      galoisKeys: galoisKeys.save()
+      galoisKeys: galoisKeys.save(),
     };
   }
 
@@ -190,24 +188,24 @@ export class HomomorphicEncryption {
     galoisKeysData?: string
   ) {
     this.context = WASMCryptoLoader.createHomomorphicContext();
-    
+
     if (publicKeyData) {
       this.publicKey = this.context.seal.PublicKey();
       this.publicKey.load(this.context.context, publicKeyData);
       this.context.encryptor = this.context.seal.Encryptor(this.context.context, this.publicKey);
     }
-    
+
     if (secretKeyData) {
       this.secretKey = this.context.seal.SecretKey();
       this.secretKey.load(this.context.context, secretKeyData);
       this.context.decryptor = this.context.seal.Decryptor(this.context.context, this.secretKey);
     }
-    
+
     if (relinKeysData) {
       this.relinKeys = this.context.seal.RelinKeys();
       this.relinKeys.load(this.context.context, relinKeysData);
     }
-    
+
     if (galoisKeysData) {
       this.galoisKeys = this.context.seal.GaloisKeys();
       this.galoisKeys.load(this.context.context, galoisKeysData);
@@ -224,10 +222,10 @@ export class HomomorphicEncryption {
 
     const plaintext = this.context.seal.PlainText();
     this.context.encoder.encode(numbers, scale, plaintext);
-    
+
     const ciphertext = this.context.seal.CipherText();
     this.context.encryptor.encrypt(plaintext, ciphertext);
-    
+
     return ciphertext.save();
   }
 
@@ -241,13 +239,13 @@ export class HomomorphicEncryption {
 
     const ciphertext = this.context.seal.CipherText();
     ciphertext.load(this.context.context, ciphertextData);
-    
+
     const plaintext = this.context.seal.PlainText();
     this.context.decryptor.decrypt(ciphertext, plaintext);
-    
+
     const result: number[] = [];
     this.context.encoder.decode(plaintext, result);
-    
+
     return result;
   }
 
@@ -257,13 +255,13 @@ export class HomomorphicEncryption {
   public add(ciphertext1Data: string, ciphertext2Data: string): string {
     const ct1 = this.context.seal.CipherText();
     ct1.load(this.context.context, ciphertext1Data);
-    
+
     const ct2 = this.context.seal.CipherText();
     ct2.load(this.context.context, ciphertext2Data);
-    
+
     const result = this.context.seal.CipherText();
     this.context.evaluator.add(ct1, ct2, result);
-    
+
     return result.save();
   }
 
@@ -277,14 +275,14 @@ export class HomomorphicEncryption {
 
     const ct1 = this.context.seal.CipherText();
     ct1.load(this.context.context, ciphertext1Data);
-    
+
     const ct2 = this.context.seal.CipherText();
     ct2.load(this.context.context, ciphertext2Data);
-    
+
     const result = this.context.seal.CipherText();
     this.context.evaluator.multiply(ct1, ct2, result);
     this.context.evaluator.relinearize(result, this.relinKeys, result);
-    
+
     return result.save();
   }
 
@@ -305,7 +303,7 @@ export class HomomorphicEncryption {
  */
 export async function initializeCryptoModules(): Promise<void> {
   console.log('🚀 Initializing WASM crypto modules...');
-  
+
   try {
     await WASMCryptoLoader.initializeSEAL();
     console.log('✅ All WASM crypto modules initialized successfully');

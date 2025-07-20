@@ -5,12 +5,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { accessControlEngine } from './access-control';
-import { 
-  AccessLevel, 
-  DataCategory, 
-  EncryptionContext,
-  ApiResponse
-} from '@parkml/shared';
+import { AccessLevel, DataCategory, EncryptionContext, ApiResponse } from '@parkml/shared';
 
 /**
  * Extended Request interface with access control context
@@ -45,7 +40,7 @@ export function requireDataAccess(
       if (!req.user) {
         return res.status(401).json({
           success: false,
-          error: 'Authentication required'
+          error: 'Authentication required',
         } as ApiResponse);
       }
 
@@ -54,7 +49,7 @@ export function requireDataAccess(
       if (!patientId) {
         return res.status(400).json({
           success: false,
-          error: 'Patient ID required'
+          error: 'Patient ID required',
         } as ApiResponse);
       }
 
@@ -67,7 +62,7 @@ export function requireDataAccess(
         requesterRole: req.user.role as any,
         dataCategories: requiredCategories,
         emergencyContext: await extractEmergencyContext(req),
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       // Evaluate access permissions
@@ -85,7 +80,7 @@ export function requireDataAccess(
       if (!accessResult.granted) {
         return res.status(403).json({
           success: false,
-          error: accessResult.denialReason || 'Access denied'
+          error: accessResult.denialReason || 'Access denied',
         } as ApiResponse);
       }
 
@@ -97,7 +92,7 @@ export function requireDataAccess(
       if (inaccessibleCategories.length > 0) {
         return res.status(403).json({
           success: false,
-          error: `Access denied to data categories: ${inaccessibleCategories.join(', ')}`
+          error: `Access denied to data categories: ${inaccessibleCategories.join(', ')}`,
         } as ApiResponse);
       }
 
@@ -108,16 +103,15 @@ export function requireDataAccess(
         accessLevel: accessResult.accessLevel,
         accessibleCategories: accessResult.accessibleCategories,
         encryptionKeys: accessResult.encryptionKeys,
-        expiresAt: accessResult.expiresAt
+        expiresAt: accessResult.expiresAt,
       };
 
       next();
-
     } catch (error) {
       console.error('Access control middleware error:', error);
       return res.status(500).json({
         success: false,
-        error: 'Access control system error'
+        error: 'Access control system error',
       } as ApiResponse);
     }
   };
@@ -133,7 +127,7 @@ export function requireEmergencyAccess() {
       if (!req.user) {
         return res.status(401).json({
           success: false,
-          error: 'Authentication required'
+          error: 'Authentication required',
         } as ApiResponse);
       }
 
@@ -141,7 +135,7 @@ export function requireEmergencyAccess() {
       if (!emergencyAccessId) {
         return res.status(400).json({
           success: false,
-          error: 'Emergency access ID required'
+          error: 'Emergency access ID required',
         } as ApiResponse);
       }
 
@@ -149,27 +143,27 @@ export function requireEmergencyAccess() {
       const { prisma } = await import('../database/prisma-client');
       const emergencyAccess = await prisma.emergencyAccess.findUnique({
         where: { id: emergencyAccessId },
-        include: { patient: true }
+        include: { patient: true },
       });
 
       if (!emergencyAccess || !emergencyAccess.isActive) {
         return res.status(403).json({
           success: false,
-          error: 'Emergency access not found or inactive'
+          error: 'Emergency access not found or inactive',
         } as ApiResponse);
       }
 
       if (emergencyAccess.userId !== req.user.id) {
         return res.status(403).json({
           success: false,
-          error: 'Emergency access belongs to different user'
+          error: 'Emergency access belongs to different user',
         } as ApiResponse);
       }
 
       if (emergencyAccess.endTime && emergencyAccess.endTime < new Date()) {
         return res.status(403).json({
           success: false,
-          error: 'Emergency access has expired'
+          error: 'Emergency access has expired',
         } as ApiResponse);
       }
 
@@ -185,9 +179,9 @@ export function requireEmergencyAccess() {
           accessType: emergencyAccess.accessType as any,
           reason: emergencyAccess.reason,
           durationHours: 24, // Default emergency duration
-          emergencyAccessId: emergencyAccess.id
+          emergencyAccessId: emergencyAccess.id,
         },
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       // Evaluate emergency access
@@ -196,7 +190,7 @@ export function requireEmergencyAccess() {
       if (!accessResult.granted) {
         return res.status(403).json({
           success: false,
-          error: accessResult.denialReason || 'Emergency access denied'
+          error: accessResult.denialReason || 'Emergency access denied',
         } as ApiResponse);
       }
 
@@ -207,16 +201,15 @@ export function requireEmergencyAccess() {
         accessLevel: accessResult.accessLevel,
         accessibleCategories: accessResult.accessibleCategories,
         encryptionKeys: accessResult.encryptionKeys,
-        expiresAt: accessResult.expiresAt
+        expiresAt: accessResult.expiresAt,
       };
 
       next();
-
     } catch (error) {
       console.error('Emergency access middleware error:', error);
       return res.status(500).json({
         success: false,
-        error: 'Emergency access system error'
+        error: 'Emergency access system error',
       } as ApiResponse);
     }
   };
@@ -232,14 +225,14 @@ export function requirePatientAccess() {
       if (!req.user) {
         return res.status(401).json({
           success: false,
-          error: 'Authentication required'
+          error: 'Authentication required',
         } as ApiResponse);
       }
 
       if (req.user.role !== 'patient') {
         return res.status(403).json({
           success: false,
-          error: 'Patient access required'
+          error: 'Patient access required',
         } as ApiResponse);
       }
 
@@ -247,7 +240,7 @@ export function requirePatientAccess() {
       if (!patientId) {
         return res.status(400).json({
           success: false,
-          error: 'Patient ID required'
+          error: 'Patient ID required',
         } as ApiResponse);
       }
 
@@ -256,14 +249,14 @@ export function requirePatientAccess() {
       const patient = await prisma.patient.findFirst({
         where: {
           id: patientId as string,
-          userId: req.user.id
-        }
+          userId: req.user.id,
+        },
       });
 
       if (!patient) {
         return res.status(403).json({
           success: false,
-          error: 'Cannot access other patient\'s data'
+          error: "Cannot access other patient's data",
         } as ApiResponse);
       }
 
@@ -276,21 +269,20 @@ export function requirePatientAccess() {
           organizationId: req.user.organizationId || '',
           requesterRole: 'patient',
           dataCategories: Object.values(DataCategory),
-          timestamp: new Date()
+          timestamp: new Date(),
         },
         granted: true,
         accessLevel: AccessLevel.PATIENT_FULL,
         accessibleCategories: Object.values(DataCategory),
-        encryptionKeys: [`patient_key_${req.user.id}`]
+        encryptionKeys: [`patient_key_${req.user.id}`],
       };
 
       next();
-
     } catch (error) {
       console.error('Patient access middleware error:', error);
       return res.status(500).json({
         success: false,
-        error: 'Patient access system error'
+        error: 'Patient access system error',
       } as ApiResponse);
     }
   };
@@ -306,24 +298,23 @@ export function requireOrganizationAdmin() {
       if (!req.user) {
         return res.status(401).json({
           success: false,
-          error: 'Authentication required'
+          error: 'Authentication required',
         } as ApiResponse);
       }
 
       if (!['clinic_admin', 'super_admin'].includes(req.user.role)) {
         return res.status(403).json({
           success: false,
-          error: 'Administrative access required'
+          error: 'Administrative access required',
         } as ApiResponse);
       }
 
       next();
-
     } catch (error) {
       console.error('Organization admin middleware error:', error);
       return res.status(500).json({
         success: false,
-        error: 'Administrative access system error'
+        error: 'Administrative access system error',
       } as ApiResponse);
     }
   };
@@ -339,24 +330,23 @@ export function requireSuperAdmin() {
       if (!req.user) {
         return res.status(401).json({
           success: false,
-          error: 'Authentication required'
+          error: 'Authentication required',
         } as ApiResponse);
       }
 
       if (req.user.role !== 'super_admin') {
         return res.status(403).json({
           success: false,
-          error: 'Super admin access required'
+          error: 'Super admin access required',
         } as ApiResponse);
       }
 
       next();
-
     } catch (error) {
       console.error('Super admin middleware error:', error);
       return res.status(500).json({
         success: false,
-        error: 'Super admin access system error'
+        error: 'Super admin access system error',
       } as ApiResponse);
     }
   };
@@ -374,7 +364,7 @@ async function extractEmergencyContext(req: Request): Promise<any> {
   try {
     const { prisma } = await import('../database/prisma-client');
     const emergencyAccess = await prisma.emergencyAccess.findUnique({
-      where: { id: emergencyAccessId }
+      where: { id: emergencyAccessId },
     });
 
     if (!emergencyAccess || !emergencyAccess.isActive) {
@@ -385,7 +375,7 @@ async function extractEmergencyContext(req: Request): Promise<any> {
       accessType: emergencyAccess.accessType,
       reason: emergencyAccess.reason,
       durationHours: 24, // Default duration
-      emergencyAccessId: emergencyAccess.id
+      emergencyAccessId: emergencyAccess.id,
     };
   } catch (error) {
     console.error('Error extracting emergency context:', error);
@@ -396,10 +386,7 @@ async function extractEmergencyContext(req: Request): Promise<any> {
 /**
  * Utility function to check if user has specific data category access
  */
-export function hasDataCategoryAccess(
-  req: AccessControlRequest,
-  category: DataCategory
-): boolean {
+export function hasDataCategoryAccess(req: AccessControlRequest, category: DataCategory): boolean {
   return req.accessControl?.accessibleCategories.includes(category) || false;
 }
 

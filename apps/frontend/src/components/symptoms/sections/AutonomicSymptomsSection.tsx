@@ -9,18 +9,16 @@ interface AutonomicSymptomsSectionProps {
   errors: FieldErrors<Partial<SymptomEntry>>;
 }
 
-const AutonomicSymptomsSection: React.FC<AutonomicSymptomsSectionProps> = ({
-  register,
-}) => {
+const AutonomicSymptomsSection: React.FC<AutonomicSymptomsSectionProps> = ({ register }) => {
   const { t } = useTranslation('symptoms');
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-medium">{t('autonomic.title')}</h2>
-      
+
       <div className="card bg-base-200">
         <div className="card-body">
           <h3 className="card-title text-md">{t('autonomic.bladderBowel.title')}</h3>
-        
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">
               <label className="label">
@@ -37,7 +35,7 @@ const AutonomicSymptomsSection: React.FC<AutonomicSymptomsSectionProps> = ({
                 <option value="incontinence">{t('autonomic.urinationTypes.incontinence')}</option>
               </select>
             </div>
-            
+
             <div className="form-control">
               <label className="label">
                 <span className="label-text">{t('autonomic.bladderBowel.bowelMovements')}</span>
@@ -54,7 +52,7 @@ const AutonomicSymptomsSection: React.FC<AutonomicSymptomsSectionProps> = ({
               </select>
             </div>
           </div>
-        
+
           <div className="form-control mt-4">
             <label className="label">
               <span className="label-text">{t('autonomic.bladderBowel.notes')}</span>

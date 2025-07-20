@@ -31,7 +31,7 @@ const customBackend = {
     } catch (error) {
       callback(error, null);
     }
-  }
+  },
 };
 
 // Supported languages configuration
@@ -43,7 +43,7 @@ export const supportedLanguages = [
   //{ code: 'zh', name: 'Chinese', nativeName: '中文', flag: '🇨🇳' },
 ] as const;
 
-export type SupportedLanguage = typeof supportedLanguages[number]['code'];
+export type SupportedLanguage = (typeof supportedLanguages)[number]['code'];
 
 // Get initial language from localStorage or fallback to default
 const getInitialLanguage = (): SupportedLanguage => {
@@ -67,21 +67,32 @@ i18n
     lng: getInitialLanguage(), // Load from localStorage or default
     fallbackLng: 'en',
     supportedLngs: supportedLanguages.map(lang => lang.code),
-    
+
     // Namespace settings
-    ns: ['common', 'navigation', 'auth', 'dashboard', 'admin', 'patient', 'caregiver', 'symptoms', 'security', 'profile'],
+    ns: [
+      'common',
+      'navigation',
+      'auth',
+      'dashboard',
+      'admin',
+      'patient',
+      'caregiver',
+      'symptoms',
+      'security',
+      'profile',
+    ],
     defaultNS: 'common',
-    
+
     // Debug mode (disable in production)
     debug: import.meta.env.DEV,
-    
+
     // Language detection settings
     detection: {
       order: ['localStorage', 'navigator', 'htmlTag'],
       lookupLocalStorage: 'parkml-language',
       caches: ['localStorage'],
     },
-    
+
     // Interpolation settings
     interpolation: {
       escapeValue: false, // React already escapes values
@@ -99,11 +110,11 @@ i18n
         return value;
       },
     },
-    
+
     // Performance optimizations
     load: 'languageOnly', // Don't load region-specific translations
     cleanCode: true, // Clean language codes
-    
+
     // React specific settings
     react: {
       useSuspense: false, // We'll handle loading ourselves
@@ -113,7 +124,7 @@ i18n
       transSupportBasicHtmlNodes: true,
       transKeepBasicHtmlNodesFor: ['br', 'strong', 'i', 'em'],
     },
-    
+
     // Backend settings
     backend: {
       loadPath: '/locales/{{lng}}/{{ns}}.json', // This won't be used with our custom backend
@@ -124,10 +135,10 @@ i18n
 export const changeLanguage = async (language: SupportedLanguage) => {
   try {
     await i18n.changeLanguage(language);
-    
+
     // Ensure persistence to localStorage (redundant but safe)
     localStorage.setItem('parkml-language', language);
-    
+
     console.log(`Language changed to: ${language} and saved to localStorage`);
   } catch (error) {
     console.error('Failed to change language:', error);

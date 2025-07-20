@@ -6,7 +6,13 @@ interface AuthContextType {
   token: string | null;
   organization: Organization | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string, role: string, organizationId?: string) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    name: string,
+    role: string,
+    organizationId?: string
+  ) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
   hasRole: (role: string) => boolean;
@@ -41,16 +47,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const storedToken = localStorage.getItem('parkml_token');
     const storedUser = localStorage.getItem('parkml_user');
     const storedOrganization = localStorage.getItem('parkml_organization');
-    
+
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
-      
+
       if (storedOrganization) {
         setOrganization(JSON.parse(storedOrganization));
       }
     }
-    
+
     setIsLoading(false);
   }, []);
 
@@ -73,13 +79,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       setUser(data.data.user);
       setToken(data.data.token);
-      
+
       // Set organization if available
       if (data.data.user.organization) {
         setOrganization(data.data.user.organization);
         localStorage.setItem('parkml_organization', JSON.stringify(data.data.user.organization));
       }
-      
+
       // Store in localStorage
       localStorage.setItem('parkml_token', data.data.token);
       localStorage.setItem('parkml_user', JSON.stringify(data.data.user));
@@ -91,7 +97,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (email: string, password: string, name: string, role: string, organizationId?: string) => {
+  const register = async (
+    email: string,
+    password: string,
+    name: string,
+    role: string,
+    organizationId?: string
+  ) => {
     setIsLoading(true);
     try {
       const response = await fetch('/api/auth/register', {
@@ -110,13 +122,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       setUser(data.data.user);
       setToken(data.data.token);
-      
+
       // Set organization if available
       if (data.data.user.organization) {
         setOrganization(data.data.user.organization);
         localStorage.setItem('parkml_organization', JSON.stringify(data.data.user.organization));
       }
-      
+
       // Store in localStorage
       localStorage.setItem('parkml_token', data.data.token);
       localStorage.setItem('parkml_user', JSON.stringify(data.data.user));
@@ -136,7 +148,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         await fetch('/api/auth/logout', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${currentToken}`,
+            Authorization: `Bearer ${currentToken}`,
             'Content-Type': 'application/json',
           },
         }).catch(error => {
@@ -147,7 +159,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.warn('Error during logout API call:', error);
     }
-    
+
     // Always clear local state regardless of API call success
     setUser(null);
     setToken(null);
@@ -165,10 +177,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const hasPermission = (_permission: string): boolean => {
     // Basic permission checking - can be expanded
     if (!user) return false;
-    
+
     // Super admin has all permissions
     if (user.role === 'super_admin') return true;
-    
+
     // Add more permission logic as needed
     return true;
   };

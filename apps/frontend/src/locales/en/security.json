@@ -1,7 +1,7 @@
 {
   "score": {
     "excellent": "Excellent",
-    "good": "Good", 
+    "good": "Good",
     "fair": "Fair",
     "poor": "Poor"
   },
@@ -37,7 +37,7 @@
     "requirements": {
       "minLength": "At least 8 characters",
       "uppercase": "Uppercase letter",
-      "lowercase": "Lowercase letter", 
+      "lowercase": "Lowercase letter",
       "numbers": "Number",
       "specialChars": "Special character"
     },
@@ -141,7 +141,7 @@
     "title": "Passkeys",
     "description": "Sign in securely with biometrics or device authentication",
     "add": "Add Passkey",
-    "manage": "Manage Passkeys", 
+    "manage": "Manage Passkeys",
     "register": "Register Passkey",
     "deviceName": "Device Name",
     "deviceNamePlaceholder": "e.g., iPhone 15 Pro",
@@ -188,7 +188,7 @@
     "suspiciousActivity": "Suspicious activity detected",
     "actions": {
       "login": "Login",
-      "logout": "Logout", 
+      "logout": "Logout",
       "password_change": "Password Changed",
       "2fa_enabled": "2FA Enabled",
       "2fa_disabled": "2FA Disabled",
@@ -220,7 +220,7 @@
     "recentAttempts": "recent login attempts"
   },
   "recommendations": {
-    "title": "Security Recommendations", 
+    "title": "Security Recommendations",
     "enable2fa": "Enable two-factor authentication for better security",
     "addPasskey": "Add a passkey for passwordless authentication",
     "strongPassword": "Use a stronger password with mixed characters"

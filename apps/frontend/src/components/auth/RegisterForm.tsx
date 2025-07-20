@@ -164,7 +164,7 @@ const RegisterForm: React.FC = () => {
               <input
                 {...register('confirmPassword', {
                   required: t('validation.confirmPasswordRequired'),
-                  validate: (value) => value === password || t('validation.passwordMismatch'),
+                  validate: value => value === password || t('validation.passwordMismatch'),
                 })}
                 type={showConfirmPassword ? 'text' : 'password'}
                 id="confirmPassword"
@@ -190,11 +190,7 @@ const RegisterForm: React.FC = () => {
             )}
           </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="btn btn-primary w-full"
-          >
+          <button type="submit" disabled={isSubmitting} className="btn btn-primary w-full">
             {isSubmitting ? (
               <span className="loading loading-spinner loading-sm"></span>
             ) : (

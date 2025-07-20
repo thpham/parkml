@@ -2,25 +2,32 @@
 
 ## Overview
 
-The ParkML backend is a comprehensive medical data management platform for Parkinson's disease monitoring with advanced multi-party encryption capabilities. The system provides secure data storage, fine-grained access control, emergency access mechanisms, and privacy-preserving analytics while maintaining compliance with healthcare regulations.
+The ParkML backend is a comprehensive medical data management platform for
+Parkinson's disease monitoring with advanced multi-party encryption
+capabilities. The system provides secure data storage, fine-grained access
+control, emergency access mechanisms, and privacy-preserving analytics while
+maintaining compliance with healthcare regulations.
 
 ## Architecture Overview
 
 ### Core Systems
 
 1. **Multi-Party Encryption Framework**
+
    - Attribute-Based Encryption (ABE) for fine-grained access control
    - Proxy Re-Encryption for patient-controlled delegation
    - Homomorphic Encryption for privacy-preserving analytics
    - Emergency cryptographic keys for secure emergency access
 
 2. **Access Control Engine**
+
    - Multi-tier access levels (Patient/Caregiver/Doctor/Researcher)
    - Data category-specific permissions
    - Temporal access control with automatic expiration
    - Emergency access with cryptographic approval workflows
 
 3. **Data Management**
+
    - Secure data migration from unencrypted to encrypted format
    - Comprehensive backup and rollback capabilities
    - Real-time performance monitoring and optimization
@@ -37,18 +44,22 @@ The ParkML backend is a comprehensive medical data management platform for Parki
 ### Core System Documentation
 
 #### 1. [Emergency Access System](./emergency-access-system.md)
+
 Basic emergency access functionality for healthcare professionals.
 
 **Key Features:**
+
 - Emergency access request and approval
 - Automatic expiration and cleanup
 - Role-based permissions
 - Comprehensive audit logging
 
 #### 2. [Cryptographic Emergency Access](./CRYPTOGRAPHIC_EMERGENCY_ACCESS.md)
+
 Advanced emergency access with cryptographic security features.
 
 **Key Features:**
+
 - Multi-signature approval workflows
 - Cryptographic emergency keys
 - Digital signature authentication
@@ -56,9 +67,11 @@ Advanced emergency access with cryptographic security features.
 - Tamper-proof audit trails
 
 #### 3. [Multi-Tier Access Control](./ACCESS_CONTROL_IMPLEMENTATION.md)
+
 Comprehensive access control system with granular permissions.
 
 **Key Features:**
+
 - Role-based access control matrix
 - Data category-specific permissions
 - Emergency access integration
@@ -66,9 +79,11 @@ Comprehensive access control system with granular permissions.
 - Real-time access decision auditing
 
 #### 4. [Performance Audit System](./PERFORMANCE_AUDIT_SYSTEM.md)
+
 System monitoring, performance optimization, and security assessment.
 
 **Key Features:**
+
 - Real-time performance monitoring
 - Automated security vulnerability scanning
 - Performance optimization recommendations
@@ -76,9 +91,11 @@ System monitoring, performance optimization, and security assessment.
 - Resource utilization analysis
 
 #### 5. [Data Migration System](./DATA_MIGRATION_SYSTEM.md)
+
 Secure migration of existing data to encrypted format.
 
 **Key Features:**
+
 - Batch processing for large datasets
 - Zero-data-loss guarantees
 - Comprehensive backup creation
@@ -112,12 +129,16 @@ The API is organized into logical modules with clear separation of concerns:
 
 ### Authentication and Authorization
 
-All API endpoints require authentication using JWT tokens. Authorization is enforced at multiple levels:
+All API endpoints require authentication using JWT tokens. Authorization is
+enforced at multiple levels:
 
-1. **Role-Based Access**: Users have roles (patient, caregiver, admin) with different permissions
-2. **Organization Boundaries**: Users can only access data within their organization
+1. **Role-Based Access**: Users have roles (patient, caregiver, admin) with
+   different permissions
+2. **Organization Boundaries**: Users can only access data within their
+   organization
 3. **Patient Relationships**: Caregivers can only access assigned patients
-4. **Data Category Permissions**: Granular access control for different types of medical data
+4. **Data Category Permissions**: Granular access control for different types of
+   medical data
 5. **Emergency Access**: Temporary elevated access for emergency situations
 
 ## Security Features
@@ -125,25 +146,33 @@ All API endpoints require authentication using JWT tokens. Authorization is enfo
 ### Encryption and Cryptography
 
 1. **Data-at-Rest Encryption**: All sensitive data encrypted using AES-256
-2. **Attribute-Based Encryption**: Policy-driven encryption with fine-grained access control
-3. **Proxy Re-Encryption**: Patient-controlled access delegation without key sharing
-4. **Homomorphic Encryption**: Computation on encrypted data for privacy-preserving analytics
-5. **Emergency Cryptographic Keys**: Secure emergency access with multi-signature approval
+2. **Attribute-Based Encryption**: Policy-driven encryption with fine-grained
+   access control
+3. **Proxy Re-Encryption**: Patient-controlled access delegation without key
+   sharing
+4. **Homomorphic Encryption**: Computation on encrypted data for
+   privacy-preserving analytics
+5. **Emergency Cryptographic Keys**: Secure emergency access with
+   multi-signature approval
 
 ### Access Control and Audit
 
-1. **Multi-Tier Access Control**: Granular permissions based on roles and data categories
+1. **Multi-Tier Access Control**: Granular permissions based on roles and data
+   categories
 2. **Temporal Access**: Time-bounded access with automatic expiration
 3. **Comprehensive Audit Trails**: All actions logged with cryptographic proofs
-4. **Real-time Monitoring**: Continuous monitoring of access patterns and security events
+4. **Real-time Monitoring**: Continuous monitoring of access patterns and
+   security events
 5. **Compliance Verification**: Automated HIPAA/GDPR compliance checking
 
 ### Emergency Access Security
 
-1. **Multi-Signature Approval**: Configurable approval workflows based on urgency level
+1. **Multi-Signature Approval**: Configurable approval workflows based on
+   urgency level
 2. **Digital Signatures**: Cryptographic verification of all approvals
 3. **Time-Bounded Access**: Automatic expiration of emergency access
-4. **Comprehensive Logging**: Detailed audit trails for all emergency access activities
+4. **Comprehensive Logging**: Detailed audit trails for all emergency access
+   activities
 5. **Anomaly Detection**: Monitoring for unusual emergency access patterns
 
 ## Data Model
@@ -211,6 +240,7 @@ AUDIT_RETENTION_DAYS=2555
 ### System Requirements
 
 #### Minimum Requirements
+
 - **Memory**: 4GB RAM
 - **Storage**: 20GB available space
 - **CPU**: 2 cores
@@ -218,6 +248,7 @@ AUDIT_RETENTION_DAYS=2555
 - **Database**: SQLite (development) or PostgreSQL (production)
 
 #### Recommended for Production
+
 - **Memory**: 16GB RAM
 - **Storage**: 100GB+ SSD
 - **CPU**: 8 cores
@@ -250,21 +281,25 @@ The system provides comprehensive health monitoring through:
 ### Maintenance Tasks
 
 #### Daily
+
 - Monitor system health and performance metrics
 - Review security alerts and emergency access logs
 - Check backup completion and integrity
 
 #### Weekly
+
 - Run comprehensive performance audits
 - Review access control logs for anomalies
 - Update security vulnerability assessments
 
 #### Monthly
+
 - Conduct full security audits
 - Review and rotate cryptographic keys
 - Analyze performance trends and optimization opportunities
 
 #### Quarterly
+
 - Comprehensive compliance audits
 - Disaster recovery testing
 - Security penetration testing
@@ -352,10 +387,16 @@ Privacy protection features for GDPR compliance:
 
 ## Conclusion
 
-The ParkML backend provides a comprehensive, secure, and compliant platform for medical data management with advanced encryption capabilities. The system balances security, privacy, and usability while providing the flexibility needed for healthcare applications, research, and emergency medical care.
+The ParkML backend provides a comprehensive, secure, and compliant platform for
+medical data management with advanced encryption capabilities. The system
+balances security, privacy, and usability while providing the flexibility needed
+for healthcare applications, research, and emergency medical care.
 
-For specific implementation details, refer to the individual documentation files for each system component.
+For specific implementation details, refer to the individual documentation files
+for each system component.
 
 ---
 
-*This documentation is maintained as part of the ParkML system documentation. For updates and additional information, please refer to the specific component documentation files.*
+_This documentation is maintained as part of the ParkML system documentation.
+For updates and additional information, please refer to the specific component
+documentation files._

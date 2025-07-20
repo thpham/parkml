@@ -17,7 +17,7 @@ interface SimpleMigrationConfig {
  */
 export async function runSimpleMigration(config: SimpleMigrationConfig): Promise<void> {
   console.log('🔄 Starting simple data migration...');
-  
+
   const migration = await prisma.dataMigration.create({
     data: {
       status: 'running',
@@ -25,42 +25,53 @@ export async function runSimpleMigration(config: SimpleMigrationConfig): Promise
       totalRecords: 0,
       processedRecords: 0,
       encryptedRecords: 0,
-      failedRecords: 0
-    }
+      failedRecords: 0,
+    },
   });
 
   try {
     // Count records to migrate
     const patientCount = await prisma.patient.count({
-      where: config.organizationIds.length > 0 ? {
-        organizationId: { in: config.organizationIds }
-      } : {}
+      where:
+        config.organizationIds.length > 0
+          ? {
+              organizationId: { in: config.organizationIds },
+            }
+          : {},
     });
 
     const entryCount = await prisma.symptomEntry.count({
-      where: config.organizationIds.length > 0 ? {
-        patient: { organizationId: { in: config.organizationIds } }
-      } : {}
+      where:
+        config.organizationIds.length > 0
+          ? {
+              patient: { organizationId: { in: config.organizationIds } },
+            }
+          : {},
     });
 
     const totalRecords = patientCount + entryCount;
 
     await prisma.dataMigration.update({
       where: { id: migration.id },
-      data: { totalRecords }
+      data: { totalRecords },
     });
 
-    console.log(`📊 Found ${totalRecords} records to migrate (${patientCount} patients, ${entryCount} entries)`);
+    console.log(
+      `📊 Found ${totalRecords} records to migrate (${patientCount} patients, ${entryCount} entries)`
+    );
 
     let processedRecords = 0;
     let encryptedRecords = 0;
 
     // Migrate patients in batches
     const patients = await prisma.patient.findMany({
-      where: config.organizationIds.length > 0 ? {
-        organizationId: { in: config.organizationIds }
-      } : {},
-      take: config.batchSize
+      where:
+        config.organizationIds.length > 0
+          ? {
+              organizationId: { in: config.organizationIds },
+            }
+          : {},
+      take: config.batchSize,
     });
 
     for (const patient of patients) {
@@ -73,9 +84,9 @@ export async function runSimpleMigration(config: SimpleMigrationConfig): Promise
               algorithm: 'ABE',
               version: '1.0',
               encryptedAt: new Date(),
-              dataCategories: [DataCategory.DEMOGRAPHICS]
-            })
-          }
+              dataCategories: [DataCategory.DEMOGRAPHICS],
+            }),
+          },
         });
         encryptedRecords++;
       }
@@ -84,10 +95,13 @@ export async function runSimpleMigration(config: SimpleMigrationConfig): Promise
 
     // Migrate symptom entries in batches
     const entries = await prisma.symptomEntry.findMany({
-      where: config.organizationIds.length > 0 ? {
-        patient: { organizationId: { in: config.organizationIds } }
-      } : {},
-      take: config.batchSize
+      where:
+        config.organizationIds.length > 0
+          ? {
+              patient: { organizationId: { in: config.organizationIds } },
+            }
+          : {},
+      take: config.batchSize,
     });
 
     for (const entry of entries) {
@@ -100,12 +114,9 @@ export async function runSimpleMigration(config: SimpleMigrationConfig): Promise
               algorithm: 'ABE',
               version: '1.0',
               encryptedAt: new Date(),
-              dataCategories: [
-                DataCategory.MOTOR_SYMPTOMS,
-                DataCategory.NON_MOTOR_SYMPTOMS
-              ]
-            })
-          }
+              dataCategories: [DataCategory.MOTOR_SYMPTOMS, DataCategory.NON_MOTOR_SYMPTOMS],
+            }),
+          },
         });
         encryptedRecords++;
       }
@@ -119,24 +130,25 @@ export async function runSimpleMigration(config: SimpleMigrationConfig): Promise
         status: 'completed',
         processedRecords,
         encryptedRecords,
-        completedAt: new Date()
-      }
+        completedAt: new Date(),
+      },
     });
 
-    console.log(`✅ Migration completed! Processed: ${processedRecords}, Encrypted: ${encryptedRecords}`);
-
+    console.log(
+      `✅ Migration completed! Processed: ${processedRecords}, Encrypted: ${encryptedRecords}`
+    );
   } catch (error) {
     console.error('❌ Migration failed:', error);
-    
+
     await prisma.dataMigration.update({
       where: { id: migration.id },
       data: {
         status: 'failed',
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        completedAt: new Date()
-      }
+        completedAt: new Date(),
+      },
     });
-    
+
     throw error;
   }
 }
@@ -146,7 +158,7 @@ if (require.main === module) {
   const config: SimpleMigrationConfig = {
     dryRun: process.argv.includes('--dry-run'),
     batchSize: 100,
-    organizationIds: []
+    organizationIds: [],
   };
 
   runSimpleMigration(config)
@@ -154,7 +166,7 @@ if (require.main === module) {
       console.log('Migration script completed');
       process.exit(0);
     })
-    .catch((error) => {
+    .catch(error => {
       console.error('Migration script failed:', error);
       process.exit(1);
     });

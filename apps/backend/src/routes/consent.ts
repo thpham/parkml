@@ -1,18 +1,19 @@
 import { Router } from 'express';
 import { prisma } from '../database/prisma-client';
 import { ApiResponse } from '@parkml/shared';
-import { 
-  authenticateToken, 
-  authorizeRole, 
+import {
+  authenticateToken,
+  authorizeRole,
   logUserActivity,
-  AuthenticatedRequest 
+  AuthenticatedRequest,
 } from '../middleware/auth';
 
 const router = Router();
 
 // Get pending consent requests for a patient
-router.get('/pending', 
-  authenticateToken, 
+router.get(
+  '/pending',
+  authenticateToken,
   authorizeRole(['patient']),
   async (req: AuthenticatedRequest, res) => {
     try {
@@ -27,7 +28,7 @@ router.get('/pending',
       // Get patient record
       const patient = await prisma.patient.findUnique({
         where: { userId: req.user.userId },
-        select: { id: true }
+        select: { id: true },
       });
 
       if (!patient) {
@@ -43,9 +44,9 @@ router.get('/pending',
         where: {
           patientId: patient.id,
           status: {
-            in: ['pending', 'active']
+            in: ['pending', 'active'],
           },
-          consentGiven: false
+          consentGiven: false,
         },
         include: {
           caregiver: {
@@ -53,19 +54,19 @@ router.get('/pending',
               id: true,
               name: true,
               email: true,
-              role: true
-            }
+              role: true,
+            },
           },
           assignedByUser: {
             select: {
               id: true,
               name: true,
               email: true,
-              role: true
-            }
-          }
+              role: true,
+            },
+          },
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       });
 
       const response: ApiResponse = {
@@ -79,8 +80,8 @@ router.get('/pending',
           caregiver: assignment.caregiver,
           assignedBy: assignment.assignedBy,
           assignedByUser: assignment.assignedByUser,
-          createdAt: assignment.createdAt
-        }))
+          createdAt: assignment.createdAt,
+        })),
       };
 
       res.json(response);
@@ -96,8 +97,9 @@ router.get('/pending',
 );
 
 // Approve caregiver assignment (patient consent)
-router.post('/approve/:assignmentId', 
-  authenticateToken, 
+router.post(
+  '/approve/:assignmentId',
+  authenticateToken,
   authorizeRole(['patient']),
   logUserActivity('APPROVE', 'consent'),
   async (req: AuthenticatedRequest, res) => {
@@ -121,18 +123,18 @@ router.post('/approve/:assignmentId',
             select: {
               id: true,
               userId: true,
-              name: true
-            }
+              name: true,
+            },
           },
           caregiver: {
             select: {
               id: true,
               name: true,
               email: true,
-              role: true
-            }
-          }
-        }
+              role: true,
+            },
+          },
+        },
       });
 
       if (!assignment) {
@@ -168,7 +170,7 @@ router.post('/approve/:assignmentId',
           status: 'active',
           consentGiven: true,
           consentDate: new Date(),
-          permissions: permissions ? JSON.stringify(permissions) : assignment.permissions
+          permissions: permissions ? JSON.stringify(permissions) : assignment.permissions,
         },
         include: {
           patient: {
@@ -179,28 +181,28 @@ router.post('/approve/:assignmentId',
               user: {
                 select: {
                   email: true,
-                  name: true
-                }
-              }
-            }
+                  name: true,
+                },
+              },
+            },
           },
           caregiver: {
             select: {
               id: true,
               name: true,
               email: true,
-              role: true
-            }
+              role: true,
+            },
           },
           assignedByUser: {
             select: {
               id: true,
               name: true,
               email: true,
-              role: true
-            }
-          }
-        }
+              role: true,
+            },
+          },
+        },
       });
 
       const response: ApiResponse = {
@@ -222,8 +224,8 @@ router.post('/approve/:assignmentId',
           assignedBy: updatedAssignment.assignedBy,
           assignedByUser: (updatedAssignment as any).assignedByUser,
           createdAt: updatedAssignment.createdAt,
-          updatedAt: updatedAssignment.updatedAt
-        }
+          updatedAt: updatedAssignment.updatedAt,
+        },
       };
 
       res.json(response);
@@ -239,8 +241,9 @@ router.post('/approve/:assignmentId',
 );
 
 // Decline caregiver assignment (patient consent)
-router.post('/decline/:assignmentId', 
-  authenticateToken, 
+router.post(
+  '/decline/:assignmentId',
+  authenticateToken,
   authorizeRole(['patient']),
   logUserActivity('DECLINE', 'consent'),
   async (req: AuthenticatedRequest, res) => {
@@ -264,18 +267,18 @@ router.post('/decline/:assignmentId',
             select: {
               id: true,
               userId: true,
-              name: true
-            }
+              name: true,
+            },
           },
           caregiver: {
             select: {
               id: true,
               name: true,
               email: true,
-              role: true
-            }
-          }
-        }
+              role: true,
+            },
+          },
+        },
       });
 
       if (!assignment) {
@@ -309,7 +312,9 @@ router.post('/decline/:assignmentId',
         where: { id: assignmentId },
         data: {
           status: 'declined',
-          notes: assignment.notes + (reason ? `\nDeclined by patient: ${reason}` : '\nDeclined by patient')
+          notes:
+            assignment.notes +
+            (reason ? `\nDeclined by patient: ${reason}` : '\nDeclined by patient'),
         },
         include: {
           patient: {
@@ -320,28 +325,28 @@ router.post('/decline/:assignmentId',
               user: {
                 select: {
                   email: true,
-                  name: true
-                }
-              }
-            }
+                  name: true,
+                },
+              },
+            },
           },
           caregiver: {
             select: {
               id: true,
               name: true,
               email: true,
-              role: true
-            }
+              role: true,
+            },
           },
           assignedByUser: {
             select: {
               id: true,
               name: true,
               email: true,
-              role: true
-            }
-          }
-        }
+              role: true,
+            },
+          },
+        },
       });
 
       const response: ApiResponse = {
@@ -363,8 +368,8 @@ router.post('/decline/:assignmentId',
           assignedBy: updatedAssignment.assignedBy,
           assignedByUser: (updatedAssignment as any).assignedByUser,
           createdAt: updatedAssignment.createdAt,
-          updatedAt: updatedAssignment.updatedAt
-        }
+          updatedAt: updatedAssignment.updatedAt,
+        },
       };
 
       res.json(response);
@@ -380,8 +385,9 @@ router.post('/decline/:assignmentId',
 );
 
 // Modify permissions for existing active assignment
-router.put('/permissions/:assignmentId', 
-  authenticateToken, 
+router.put(
+  '/permissions/:assignmentId',
+  authenticateToken,
   authorizeRole(['patient']),
   logUserActivity('UPDATE', 'permissions'),
   async (req: AuthenticatedRequest, res) => {
@@ -413,10 +419,10 @@ router.put('/permissions/:assignmentId',
             select: {
               id: true,
               userId: true,
-              name: true
-            }
-          }
-        }
+              name: true,
+            },
+          },
+        },
       });
 
       if (!assignment) {
@@ -431,7 +437,7 @@ router.put('/permissions/:assignmentId',
       if (assignment.patient.userId !== req.user.userId) {
         const response: ApiResponse = {
           success: false,
-          error: 'Cannot modify permissions for another patient\'s assignment',
+          error: "Cannot modify permissions for another patient's assignment",
         };
         return res.status(403).json(response);
       }
@@ -449,7 +455,7 @@ router.put('/permissions/:assignmentId',
       const updatedAssignment = await prisma.caregiverAssignment.update({
         where: { id: assignmentId },
         data: {
-          permissions: JSON.stringify(permissions)
+          permissions: JSON.stringify(permissions),
         },
         include: {
           patient: {
@@ -460,28 +466,28 @@ router.put('/permissions/:assignmentId',
               user: {
                 select: {
                   email: true,
-                  name: true
-                }
-              }
-            }
+                  name: true,
+                },
+              },
+            },
           },
           caregiver: {
             select: {
               id: true,
               name: true,
               email: true,
-              role: true
-            }
+              role: true,
+            },
           },
           assignedByUser: {
             select: {
               id: true,
               name: true,
               email: true,
-              role: true
-            }
-          }
-        }
+              role: true,
+            },
+          },
+        },
       });
 
       const response: ApiResponse = {
@@ -503,8 +509,8 @@ router.put('/permissions/:assignmentId',
           assignedBy: updatedAssignment.assignedBy,
           assignedByUser: (updatedAssignment as any).assignedByUser,
           createdAt: updatedAssignment.createdAt,
-          updatedAt: updatedAssignment.updatedAt
-        }
+          updatedAt: updatedAssignment.updatedAt,
+        },
       };
 
       res.json(response);
@@ -520,8 +526,9 @@ router.put('/permissions/:assignmentId',
 );
 
 // Revoke consent (deactivate assignment)
-router.post('/revoke/:assignmentId', 
-  authenticateToken, 
+router.post(
+  '/revoke/:assignmentId',
+  authenticateToken,
   authorizeRole(['patient']),
   logUserActivity('REVOKE', 'consent'),
   async (req: AuthenticatedRequest, res) => {
@@ -545,10 +552,10 @@ router.post('/revoke/:assignmentId',
             select: {
               id: true,
               userId: true,
-              name: true
-            }
-          }
-        }
+              name: true,
+            },
+          },
+        },
       });
 
       if (!assignment) {
@@ -563,7 +570,7 @@ router.post('/revoke/:assignmentId',
       if (assignment.patient.userId !== req.user.userId) {
         const response: ApiResponse = {
           success: false,
-          error: 'Cannot revoke consent for another patient\'s assignment',
+          error: "Cannot revoke consent for another patient's assignment",
         };
         return res.status(403).json(response);
       }
@@ -583,7 +590,9 @@ router.post('/revoke/:assignmentId',
         data: {
           status: 'revoked',
           endDate: new Date(),
-          notes: assignment.notes + (reason ? `\nConsent revoked by patient: ${reason}` : '\nConsent revoked by patient')
+          notes:
+            assignment.notes +
+            (reason ? `\nConsent revoked by patient: ${reason}` : '\nConsent revoked by patient'),
         },
         include: {
           patient: {
@@ -594,28 +603,28 @@ router.post('/revoke/:assignmentId',
               user: {
                 select: {
                   email: true,
-                  name: true
-                }
-              }
-            }
+                  name: true,
+                },
+              },
+            },
           },
           caregiver: {
             select: {
               id: true,
               name: true,
               email: true,
-              role: true
-            }
+              role: true,
+            },
           },
           assignedByUser: {
             select: {
               id: true,
               name: true,
               email: true,
-              role: true
-            }
-          }
-        }
+              role: true,
+            },
+          },
+        },
       });
 
       const response: ApiResponse = {
@@ -637,8 +646,8 @@ router.post('/revoke/:assignmentId',
           assignedBy: updatedAssignment.assignedBy,
           assignedByUser: (updatedAssignment as any).assignedByUser,
           createdAt: updatedAssignment.createdAt,
-          updatedAt: updatedAssignment.updatedAt
-        }
+          updatedAt: updatedAssignment.updatedAt,
+        },
       };
 
       res.json(response);

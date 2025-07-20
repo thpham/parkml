@@ -30,9 +30,7 @@
       "size": "basic"
     }
   },
-  "addons": [
-    "dokku-postgres"
-  ],
+  "addons": ["dokku-postgres"],
   "buildpacks": [
     {
       "url": "heroku/nodejs"
@@ -40,9 +38,7 @@
   ],
   "environments": {
     "production": {
-      "addons": [
-        "dokku-postgres:create"
-      ]
+      "addons": ["dokku-postgres:create"]
     }
   }
 }

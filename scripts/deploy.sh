@@ -35,7 +35,7 @@ print_error() {
 # Check if we're on the correct server
 if [ "$1" = "server" ]; then
     print_status "Running server-side deployment setup..."
-    
+
     # Create the Dokku app if it doesn't exist
     if ! dokku apps:exists "$APP_NAME"; then
         print_status "Creating Dokku app: $APP_NAME"
@@ -43,7 +43,7 @@ if [ "$1" = "server" ]; then
     else
         print_status "App $APP_NAME already exists"
     fi
-    
+
     # Create PostgreSQL database if it doesn't exist
     if ! dokku postgres:exists "$DB_NAME"; then
         print_status "Creating PostgreSQL database: $DB_NAME"
@@ -54,35 +54,35 @@ if [ "$1" = "server" ]; then
         # Ensure it's linked to the app
         dokku postgres:link "$DB_NAME" "$APP_NAME" || true
     fi
-    
+
     # Set environment variables
     print_status "Setting environment variables..."
     dokku config:set "$APP_NAME" NODE_ENV=production
     dokku config:set "$APP_NAME" DB_TYPE=postgresql
     dokku config:set "$APP_NAME" PORT=5000
-    
+
     # Generate JWT secret if not set
     if ! dokku config:get "$APP_NAME" JWT_SECRET > /dev/null 2>&1; then
         JWT_SECRET=$(openssl rand -base64 32)
         dokku config:set "$APP_NAME" JWT_SECRET="$JWT_SECRET"
         print_status "Generated JWT secret"
     fi
-    
+
     # Set bcrypt rounds
     dokku config:set "$APP_NAME" BCRYPT_ROUNDS=12
-    
+
     # Configure domains (optional)
     if [ -n "$DOMAIN" ]; then
         print_status "Setting domain: $DOMAIN"
         dokku domains:set "$APP_NAME" "$DOMAIN"
     fi
-    
+
     # Configure SSL (optional)
     if [ "$SSL" = "true" ]; then
         print_status "Enabling SSL..."
         dokku letsencrypt:enable "$APP_NAME" || print_warning "SSL setup failed, continuing without SSL"
     fi
-    
+
     print_status "Server setup complete!"
     exit 0
 fi
@@ -134,23 +134,23 @@ git push dokku main || {
 
 # Run database migrations with Prisma
 print_status "Running Prisma database migrations..."
-ssh "$DOKKU_USER@$DOKKU_HOST" "dokku run $APP_NAME npm run db:migrate:deploy" || {
+ssh "$DOKKU_USER@$DOKKU_HOST" "dokku run '$APP_NAME' npm run db:migrate:deploy" || {
     print_warning "Prisma migration failed"
 }
 
 # Generate Prisma client in production
 print_status "Generating Prisma client..."
-ssh "$DOKKU_USER@$DOKKU_HOST" "dokku run $APP_NAME npm run db:generate" || {
+ssh "$DOKKU_USER@$DOKKU_HOST" "dokku run '$APP_NAME' npm run db:generate" || {
     print_warning "Prisma client generation failed"
 }
 
 # Check deployment status
 print_status "Checking deployment status..."
-ssh "$DOKKU_USER@$DOKKU_HOST" "dokku ps:report $APP_NAME"
+ssh "$DOKKU_USER@$DOKKU_HOST" "dokku ps:report '$APP_NAME'"
 
 print_status "✅ Deployment complete!"
 print_status "Your application should be available at: http://$DOKKU_HOST"
 
 # Show logs
 print_status "Recent logs:"
-ssh "$DOKKU_USER@$DOKKU_HOST" "dokku logs $APP_NAME --tail"
+ssh "$DOKKU_USER@$DOKKU_HOST" "dokku logs '$APP_NAME' --tail"

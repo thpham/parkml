@@ -1,13 +1,22 @@
 # User Management Workflows
 
 ## Overview
-This document outlines the complete user management workflows for the enhanced ParkML system, including user roles, invitation processes, assignment workflows, emergency access procedures, and the dual consent system for caregiver assignments.
+
+This document outlines the complete user management workflows for the enhanced
+ParkML system, including user roles, invitation processes, assignment workflows,
+emergency access procedures, and the dual consent system for caregiver
+assignments.
 
 ## 🆕 Latest Updates
-- **Dual Consent Workflow**: Implemented two-step consent process (caregiver acceptance + patient approval)
-- **Role-Based Admin Dashboards**: Separate dashboards for super admins vs clinic admins
-- **Organization Permissions**: Clinic admins restricted to their organization only
-- **Patient Consent Dashboard**: New UI for patients to manage caregiver consent requests
+
+- **Dual Consent Workflow**: Implemented two-step consent process (caregiver
+  acceptance + patient approval)
+- **Role-Based Admin Dashboards**: Separate dashboards for super admins vs
+  clinic admins
+- **Organization Permissions**: Clinic admins restricted to their organization
+  only
+- **Patient Consent Dashboard**: New UI for patients to manage caregiver consent
+  requests
 
 ## 🎯 User Flow Diagrams
 
@@ -37,7 +46,7 @@ This document outlines the complete user management workflows for the enhanced P
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 2. **Clinic Admin Workflow** 
+### 2. **Clinic Admin Workflow**
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -151,7 +160,8 @@ This document outlines the complete user management workflows for the enhanced P
 
 ## 🆕 Dual Consent Assignment Workflow
 
-The system now implements a comprehensive two-step consent process for all caregiver assignments:
+The system now implements a comprehensive two-step consent process for all
+caregiver assignments:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -194,21 +204,28 @@ The system now implements a comprehensive two-step consent process for all careg
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Key Features:
-- **Real-time Notifications**: Both caregivers and patients see notification badges
-- **Detailed Review**: Patients can see full caregiver information before approving
+### Key Features
+
+- **Real-time Notifications**: Both caregivers and patients see notification
+  badges
+- **Detailed Review**: Patients can see full caregiver information before
+  approving
 - **Permission Control**: Patients can approve with specific permission levels
-- **Order-Independent Consent**: Patients can provide consent regardless of caregiver response order
+- **Order-Independent Consent**: Patients can provide consent regardless of
+  caregiver response order
 - **Audit Trail**: All consent decisions are logged with timestamps
 - **Revocation Support**: Patients can revoke consent at any time
 
-### Edge Case Handling:
+### Edge Case Handling
+
 The system now properly handles out-of-order consent responses:
+
 - **Scenario 1**: Admin creates → Caregiver accepts → Patient consents ✅
 - **Scenario 2**: Admin creates → Patient consents → Caregiver accepts ✅
 - **Scenario 3**: Admin creates → Patient declines → Assignment blocked ✅
 
-The consent API automatically detects assignments that need patient consent regardless of current status (pending or active).
+The consent API automatically detects assignments that need patient consent
+regardless of current status (pending or active).
 
 ## 🔄 Detailed Workflow Processes
 
@@ -328,29 +345,30 @@ The consent API automatically detects assignments that need patient consent rega
 
 ### **Data Access Matrix**
 
-| Role | Patient Data | Other Users | Organization Management | System Admin | Emergency Access |
-|------|-------------|-------------|----------------------|--------------|------------------|
-| Super Admin | ❌ No Direct Access | ✅ All Users | ✅ All Organizations | ✅ Full System | ✅ With Audit |
-| Clinic Admin | ❌ No Direct Access | ✅ Organization Only | ❌ No Access | ✅ Organization Only | ✅ With Audit |
-| Professional Caregiver | ✅ Assigned Only | ❌ No Access | ❌ No Access | ❌ No Access | ❌ No Access |
-| Family Caregiver | ✅ Assigned Only | ❌ No Access | ❌ No Access | ❌ No Access | ❌ No Access |
-| Patient | ✅ Own Data Only | ❌ No Access | ❌ No Access | ❌ No Access | ❌ No Access |
+| Role                   | Patient Data        | Other Users          | Organization Management | System Admin         | Emergency Access |
+| ---------------------- | ------------------- | -------------------- | ----------------------- | -------------------- | ---------------- |
+| Super Admin            | ❌ No Direct Access | ✅ All Users         | ✅ All Organizations    | ✅ Full System       | ✅ With Audit    |
+| Clinic Admin           | ❌ No Direct Access | ✅ Organization Only | ❌ No Access            | ✅ Organization Only | ✅ With Audit    |
+| Professional Caregiver | ✅ Assigned Only    | ❌ No Access         | ❌ No Access            | ❌ No Access         | ❌ No Access     |
+| Family Caregiver       | ✅ Assigned Only    | ❌ No Access         | ❌ No Access            | ❌ No Access         | ❌ No Access     |
+| Patient                | ✅ Own Data Only    | ❌ No Access         | ❌ No Access            | ❌ No Access         | ❌ No Access     |
 
 ### **Admin Dashboard Features**
 
-| Feature | Super Admin | Clinic Admin |
-|---------|-------------|--------------|
-| **Dashboard Title** | "System Administration" | "Clinic Administration" |
-| **Organizations Management** | ✅ Full Access | ❌ Hidden |
-| **User Management** | ✅ All Users | ✅ Organization Users Only |
-| **Patient Analytics** | ✅ System-wide | ✅ Organization Only |
-| **Assignment Management** | ✅ All Assignments | ✅ Organization Only |
-| **Emergency Access** | ✅ System-wide | ✅ Organization Only |
-| **Statistics Scope** | All organizations | Single organization |
+| Feature                      | Super Admin             | Clinic Admin               |
+| ---------------------------- | ----------------------- | -------------------------- |
+| **Dashboard Title**          | "System Administration" | "Clinic Administration"    |
+| **Organizations Management** | ✅ Full Access          | ❌ Hidden                  |
+| **User Management**          | ✅ All Users            | ✅ Organization Users Only |
+| **Patient Analytics**        | ✅ System-wide          | ✅ Organization Only       |
+| **Assignment Management**    | ✅ All Assignments      | ✅ Organization Only       |
+| **Emergency Access**         | ✅ System-wide          | ✅ Organization Only       |
+| **Statistics Scope**         | All organizations       | Single organization        |
 
 ### **Permission Levels**
 
 **Family Caregiver Permissions:**
+
 - `view_symptoms`: Can view symptom entries
 - `edit_symptoms`: Can help with symptom entry
 - `view_reports`: Can generate basic reports
@@ -358,6 +376,7 @@ The consent API automatically detects assignments that need patient consent rega
 - `communicate_professional`: Can message professional caregivers
 
 **Professional Caregiver Permissions:**
+
 - `view_all_symptoms`: Full symptom data access
 - `edit_symptoms`: Can help with symptom entry
 - `generate_reports`: Can create professional reports
@@ -368,6 +387,7 @@ The consent API automatically detects assignments that need patient consent rega
 ## 📊 Audit & Compliance
 
 ### **Audit Events Tracked**
+
 - User login/logout
 - Data access (patient records, symptom entries)
 - Permission changes
@@ -378,6 +398,7 @@ The consent API automatically detects assignments that need patient consent rega
 - Account deactivation
 
 ### **Compliance Features**
+
 - **HIPAA Compliance**: Full audit trails for all data access
 - **GDPR Compliance**: Data export and deletion capabilities
 - **Emergency Access**: Properly documented and time-limited
@@ -387,50 +408,65 @@ The consent API automatically detects assignments that need patient consent rega
 ## 🚀 Implementation Status
 
 ### **✅ Phase 1: Core Foundation** (COMPLETED)
+
 1. ✅ Database schema migration with enhanced user management
 2. ✅ Enhanced user authentication with JWT and organization claims
 3. ✅ Comprehensive role management (5 roles)
 4. ✅ Invitation system foundation
 
 ### **✅ Phase 2: Assignment System** (COMPLETED)
+
 1. ✅ Caregiver assignment workflow with dual consent
 2. ✅ Patient consent management dashboard
 3. ✅ Comprehensive permission system
 4. ✅ Full audit logging implementation
 
 ### **✅ Phase 3: Multi-Clinic Support** (COMPLETED)
+
 1. ✅ Organization management (super admin only)
 2. ✅ Clinic-specific user management (clinic admin restrictions)
 3. ✅ Multi-tenant data isolation by organization
 4. ✅ Role-based admin dashboards
 
 ### **✅ Phase 4: Advanced Features** (COMPLETED)
+
 1. ✅ Emergency access system with automated cleanup
 2. ✅ Comprehensive audit system with detailed logging
 3. ✅ Advanced permission controls with dual consent
 4. ✅ Enhanced user experience with real-time notifications
 
 ### **🆕 Current Features (Latest Implementation)**
+
 1. ✅ **Dual Consent Workflow**: Two-step approval process
 2. ✅ **Real-time Notifications**: Badge notifications for pending actions
 3. ✅ **Role-Based Dashboards**: Separate admin dashboards based on role
 4. ✅ **Organization Restrictions**: Clinic admins limited to their organization
 5. ✅ **Patient Consent Dashboard**: Comprehensive consent management interface
 6. ✅ **Caregiver Dashboard**: Assignment acceptance and management
-7. ✅ **Permission-Based UI**: UI elements shown/hidden based on role permissions
+7. ✅ **Permission-Based UI**: UI elements shown/hidden based on role
+   permissions
 8. ✅ **Edge Case Resolution**: Fixed out-of-order consent workflow bug
 
 ### **🔧 Technical Implementation Details**
 
 #### **Dual Consent Edge Case Fix**
-**Problem Identified**: The original consent API only showed assignments with `status: 'pending'` but caregiver acceptance changed status to `'active'`, creating a logical contradiction where patients couldn't consent if caregivers accepted first.
+
+**Problem Identified**: The original consent API only showed assignments with
+`status: 'pending'` but caregiver acceptance changed status to `'active'`,
+creating a logical contradiction where patients couldn't consent if caregivers
+accepted first.
 
 **Solution Implemented**:
-- **Consent Query Fix** (`/api/consent/pending`): Now includes both `'pending'` and `'active'` assignments that need patient consent
-- **Approval Logic Fix** (`/api/consent/approve/:id`): Now accepts consent for both pending and active assignments
-- **Decline Logic Fix** (`/api/consent/decline/:id`): Now allows declining both pending and active assignments
+
+- **Consent Query Fix** (`/api/consent/pending`): Now includes both `'pending'`
+  and `'active'` assignments that need patient consent
+- **Approval Logic Fix** (`/api/consent/approve/:id`): Now accepts consent for
+  both pending and active assignments
+- **Decline Logic Fix** (`/api/consent/decline/:id`): Now allows declining both
+  pending and active assignments
 
 **Code Changes**:
+
 ```typescript
 // Before: Only pending assignments
 status: 'pending',
@@ -443,4 +479,6 @@ consentGiven: false
 
 This ensures the dual consent workflow is truly order-independent and robust.
 
-This comprehensive workflow system ensures proper user management, maintains patient privacy, supports healthcare compliance requirements, and provides the flexibility needed for different caregiver types and multi-clinic operations.
+This comprehensive workflow system ensures proper user management, maintains
+patient privacy, supports healthcare compliance requirements, and provides the
+flexibility needed for different caregiver types and multi-clinic operations.

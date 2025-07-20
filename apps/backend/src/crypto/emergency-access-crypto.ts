@@ -8,11 +8,7 @@ import { webcrypto } from 'crypto';
 import { sha256 } from '@noble/hashes/sha256';
 // import { secp256k1 } from '@noble/curves/secp256k1'; // Reserved for future signature verification
 import { prisma } from '../database/prisma-client';
-import { 
-  AccessLevel, 
-  DataCategory, 
-  CryptoAuditEntry
-} from '@parkml/shared';
+import { AccessLevel, DataCategory, CryptoAuditEntry } from '@parkml/shared';
 
 /**
  * Emergency Access Request structure
@@ -71,9 +67,9 @@ export class EmergencyAccessCrypto {
   private emergencyMasterKey!: Uint8Array;
   // private readonly EMERGENCY_KEY_ROTATION_HOURS = 24; // Reserved for future key rotation
   private readonly MIN_APPROVERS = {
-    'critical': 1,  // Life-threatening emergency - single approver
-    'high': 2,      // Urgent medical need - two approvers  
-    'medium': 3     // Administrative emergency - three approvers
+    critical: 1, // Life-threatening emergency - single approver
+    high: 2, // Urgent medical need - two approvers
+    medium: 3, // Administrative emergency - three approvers
   };
 
   constructor() {
@@ -114,8 +110,8 @@ export class EmergencyAccessCrypto {
         isActive: false, // Will be activated after approval
         justification: request.justification,
         urgencyLevel: request.urgencyLevel,
-        organizationId: request.organizationId
-      }
+        organizationId: request.organizationId,
+      },
     });
 
     // Determine approval requirements
@@ -141,9 +137,9 @@ export class EmergencyAccessCrypto {
           accessType: request.accessType,
           reason: request.reason,
           durationHours: request.requestedDurationHours,
-          emergencyAccessId: emergencyAccess.id
+          emergencyAccessId: emergencyAccess.id,
         },
-        timestamp: new Date()
+        timestamp: new Date(),
       },
       success: true,
       ipAddress: '127.0.0.1',
@@ -151,15 +147,15 @@ export class EmergencyAccessCrypto {
       emergencyDetails: {
         requestId: emergencyAccess.id,
         urgencyLevel: request.urgencyLevel,
-        justification: request.justification
+        justification: request.justification,
       },
-      cryptographicProof: await this.generateEmergencyProof(request, emergencyAccess.id)
+      cryptographicProof: await this.generateEmergencyProof(request, emergencyAccess.id),
     });
 
     return {
       requestId: emergencyAccess.id,
       requiresApproval,
-      approversNeeded: requiredApprovers
+      approversNeeded: requiredApprovers,
     };
   }
 
@@ -177,7 +173,7 @@ export class EmergencyAccessCrypto {
 
     // Get the emergency access request
     const emergencyRequest = await prisma.emergencyAccess.findUnique({
-      where: { id: requestId }
+      where: { id: requestId },
     });
 
     if (!emergencyRequest) {
@@ -192,8 +188,8 @@ export class EmergencyAccessCrypto {
     const existingApproval = await prisma.emergencyApproval.findFirst({
       where: {
         emergencyAccessId: requestId,
-        approverId
-      }
+        approverId,
+      },
     });
 
     if (existingApproval) {
@@ -201,11 +197,9 @@ export class EmergencyAccessCrypto {
     }
 
     // Generate digital signature for this approval
-    const approvalSignature = digitalSignature || await this.generateApprovalSignature(
-      requestId,
-      approverId,
-      approvalReason
-    );
+    const approvalSignature =
+      digitalSignature ||
+      (await this.generateApprovalSignature(requestId, approverId, approvalReason));
 
     // Create approval record
     await prisma.emergencyApproval.create({
@@ -215,32 +209,33 @@ export class EmergencyAccessCrypto {
         approverRole,
         approvalReason,
         digitalSignature: approvalSignature,
-        createdAt: new Date()
-      }
+        createdAt: new Date(),
+      },
     });
 
     // Count total approvals
     const approvalCount = await prisma.emergencyApproval.count({
-      where: { emergencyAccessId: requestId }
+      where: { emergencyAccessId: requestId },
     });
 
-    const requiredApprovals = this.MIN_APPROVERS[emergencyRequest.urgencyLevel as keyof typeof this.MIN_APPROVERS];
+    const requiredApprovals =
+      this.MIN_APPROVERS[emergencyRequest.urgencyLevel as keyof typeof this.MIN_APPROVERS];
     const remainingApprovals = Math.max(0, requiredApprovals - approvalCount);
 
     // If sufficient approvals, activate emergency access
     if (approvalCount >= requiredApprovals) {
       const activationKey = await this.activateEmergencyAccess(requestId);
-      
+
       return {
         approved: true,
         activationKey,
-        remainingApprovals: 0
+        remainingApprovals: 0,
       };
     }
 
     return {
       approved: false,
-      remainingApprovals
+      remainingApprovals,
     };
   }
 
@@ -253,7 +248,7 @@ export class EmergencyAccessCrypto {
     // Update emergency access to active
     const emergencyAccess = await prisma.emergencyAccess.update({
       where: { id: requestId },
-      data: { isActive: true }
+      data: { isActive: true },
     });
 
     // Generate emergency encryption key
@@ -275,11 +270,11 @@ export class EmergencyAccessCrypto {
           emergency_access_id: requestId,
           patient_id: emergencyAccess.patientId,
           access_type: emergencyAccess.accessType,
-          urgency: emergencyAccess.urgencyLevel
+          urgency: emergencyAccess.urgencyLevel,
         }),
         expiresAt: emergencyAccess.endTime,
-        isActive: true
-      }
+        isActive: true,
+      },
     });
 
     // Schedule automatic revocation
@@ -304,9 +299,9 @@ export class EmergencyAccessCrypto {
           accessType: emergencyAccess.accessType as any,
           reason: emergencyAccess.reason,
           durationHours: 24,
-          emergencyAccessId: requestId
+          emergencyAccessId: requestId,
         },
-        timestamp: new Date()
+        timestamp: new Date(),
       },
       success: true,
       ipAddress: '127.0.0.1',
@@ -314,9 +309,9 @@ export class EmergencyAccessCrypto {
       emergencyDetails: {
         requestId,
         activatedAt: new Date(),
-        expiresAt: emergencyAccess.endTime
+        expiresAt: emergencyAccess.endTime,
       },
-      cryptographicProof: await this.generateActivationProof(requestId, emergencyKey)
+      cryptographicProof: await this.generateActivationProof(requestId, emergencyKey),
     });
 
     return emergencyKey.activationToken;
@@ -335,12 +330,12 @@ export class EmergencyAccessCrypto {
     // Update emergency access to inactive
     const emergencyAccess = await prisma.emergencyAccess.update({
       where: { id: requestId },
-      data: { 
+      data: {
         isActive: false,
         revokedAt: new Date(),
         revokedBy: revokerId,
-        revocationReason: reason
-      }
+        revocationReason: reason,
+      },
     });
 
     // Deactivate emergency keys
@@ -348,13 +343,13 @@ export class EmergencyAccessCrypto {
       where: {
         keyType: 'emergency',
         attributes: {
-          contains: requestId
+          contains: requestId,
         },
-        isActive: true
+        isActive: true,
       },
       data: {
-        isActive: false
-      }
+        isActive: false,
+      },
     });
 
     // Create revocation audit entry
@@ -372,7 +367,7 @@ export class EmergencyAccessCrypto {
         requesterRole: 'clinic_admin',
         accessLevel: AccessLevel.EMERGENCY_ACCESS,
         dataCategories: Object.values(DataCategory),
-        timestamp: new Date()
+        timestamp: new Date(),
       },
       success: true,
       ipAddress: '127.0.0.1',
@@ -380,9 +375,9 @@ export class EmergencyAccessCrypto {
       emergencyDetails: {
         requestId,
         revokedAt: new Date(),
-        revocationReason: reason
+        revocationReason: reason,
       },
-      cryptographicProof: await this.generateRevocationProof(requestId, revokerId)
+      cryptographicProof: await this.generateRevocationProof(requestId, revokerId),
     });
   }
 
@@ -404,7 +399,9 @@ export class EmergencyAccessCrypto {
     const salt = webcrypto.getRandomValues(new Uint8Array(16));
 
     // Derive emergency key using PBKDF2 with emergency master key
-    const keyData = new TextEncoder().encode(`${patientId}:${requesterId}:${requestId}:${expiresAt.toISOString()}`);
+    const keyData = new TextEncoder().encode(
+      `${patientId}:${requesterId}:${requestId}:${expiresAt.toISOString()}`
+    );
     const derivedKey = sha256(new Uint8Array([...this.emergencyMasterKey, ...salt, ...keyData]));
 
     // Encrypt the key material
@@ -415,12 +412,14 @@ export class EmergencyAccessCrypto {
 
     // Generate activation token for emergency responders
     const activationData = `${requestId}:${Date.now()}:${Math.random().toString(36).substring(2)}`;
-    const activationToken = Buffer.from(sha256(new TextEncoder().encode(activationData))).toString('hex').substring(0, 16);
+    const activationToken = Buffer.from(sha256(new TextEncoder().encode(activationData)))
+      .toString('hex')
+      .substring(0, 16);
 
     return {
       encryptedKey: Buffer.from(encryptedKey).toString('base64'),
       keyDerivationSalt: Buffer.from(salt).toString('base64'),
-      activationToken: activationToken.toUpperCase()
+      activationToken: activationToken.toUpperCase(),
     };
   }
 
@@ -430,7 +429,7 @@ export class EmergencyAccessCrypto {
   private async validateEmergencyRequest(request: EmergencyAccessRequest): Promise<void> {
     // Check if patient exists
     const patient = await prisma.patient.findUnique({
-      where: { id: request.patientId }
+      where: { id: request.patientId },
     });
 
     if (!patient) {
@@ -442,8 +441,8 @@ export class EmergencyAccessCrypto {
       where: {
         patientId: request.patientId,
         isActive: true,
-        endTime: { gt: new Date() }
-      }
+        endTime: { gt: new Date() },
+      },
     });
 
     if (existingAccess) {
@@ -452,21 +451,26 @@ export class EmergencyAccessCrypto {
 
     // Validate duration limits
     const maxDuration = {
-      'critical': 72,   // 3 days max for critical
-      'high': 48,       // 2 days max for high
-      'medium': 24      // 1 day max for medium
+      critical: 72, // 3 days max for critical
+      high: 48, // 2 days max for high
+      medium: 24, // 1 day max for medium
     };
 
     if (request.requestedDurationHours > maxDuration[request.urgencyLevel]) {
-      throw new Error(`Requested duration exceeds maximum for urgency level: ${maxDuration[request.urgencyLevel]} hours`);
+      throw new Error(
+        `Requested duration exceeds maximum for urgency level: ${maxDuration[request.urgencyLevel]} hours`
+      );
     }
 
     // Validate requester permissions
     const requester = await prisma.user.findUnique({
-      where: { id: request.requesterId }
+      where: { id: request.requesterId },
     });
 
-    if (!requester || !['clinic_admin', 'super_admin', 'professional_caregiver'].includes(requester.role)) {
+    if (
+      !requester ||
+      !['clinic_admin', 'super_admin', 'professional_caregiver'].includes(requester.role)
+    ) {
       throw new Error('Insufficient permissions to request emergency access');
     }
   }
@@ -476,7 +480,7 @@ export class EmergencyAccessCrypto {
    */
   private scheduleEmergencyKeyRevocation(requestId: string, expiresAt: Date): void {
     const timeUntilExpiry = expiresAt.getTime() - Date.now();
-    
+
     if (timeUntilExpiry > 0) {
       setTimeout(async () => {
         try {
@@ -514,7 +518,7 @@ export class EmergencyAccessCrypto {
       requesterId: request.requesterId,
       urgencyLevel: request.urgencyLevel,
       reason: request.reason,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     const hash = sha256(new TextEncoder().encode(JSON.stringify(proofData)));
@@ -524,14 +528,11 @@ export class EmergencyAccessCrypto {
   /**
    * Generate activation proof
    */
-  private async generateActivationProof(
-    requestId: string,
-    emergencyKey: any
-  ): Promise<string> {
+  private async generateActivationProof(requestId: string, emergencyKey: any): Promise<string> {
     const proofData = {
       requestId,
       activationToken: emergencyKey.activationToken,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     const hash = sha256(new TextEncoder().encode(JSON.stringify(proofData)));
@@ -541,14 +542,11 @@ export class EmergencyAccessCrypto {
   /**
    * Generate revocation proof
    */
-  private async generateRevocationProof(
-    requestId: string,
-    revokerId: string
-  ): Promise<string> {
+  private async generateRevocationProof(requestId: string, revokerId: string): Promise<string> {
     const proofData = {
       requestId,
       revokerId,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     const hash = sha256(new TextEncoder().encode(JSON.stringify(proofData)));
@@ -577,8 +575,8 @@ export class EmergencyAccessCrypto {
         ipAddress: entry.ipAddress,
         userAgent: entry.userAgent,
         cryptographicProof: entry.cryptographicProof,
-        emergencyDetails: JSON.stringify(entry.emergencyDetails || {})
-      }
+        emergencyDetails: JSON.stringify(entry.emergencyDetails || {}),
+      },
     });
   }
 
@@ -588,7 +586,7 @@ export class EmergencyAccessCrypto {
   public async getActiveEmergencyAccess(organizationId?: string): Promise<any[]> {
     const where: any = {
       isActive: true,
-      endTime: { gt: new Date() }
+      endTime: { gt: new Date() },
     };
 
     if (organizationId) {
@@ -599,13 +597,13 @@ export class EmergencyAccessCrypto {
       where,
       include: {
         patient: {
-          select: { id: true, name: true }
+          select: { id: true, name: true },
         },
         user: {
-          select: { id: true, name: true, role: true }
-        }
+          select: { id: true, name: true, role: true },
+        },
       },
-      orderBy: { startTime: 'desc' }
+      orderBy: { startTime: 'desc' },
     });
   }
 
@@ -619,8 +617,12 @@ export class EmergencyAccessCrypto {
   ): Promise<any[]> {
     const where: any = {
       operation: {
-        in: ['emergency_access_request', 'emergency_access_activation', 'emergency_access_revocation']
-      }
+        in: [
+          'emergency_access_request',
+          'emergency_access_activation',
+          'emergency_access_revocation',
+        ],
+      },
     };
 
     if (patientId) {
@@ -634,7 +636,7 @@ export class EmergencyAccessCrypto {
     return await prisma.cryptoAuditEntry.findMany({
       where,
       orderBy: { timestamp: 'desc' },
-      take: limit
+      take: limit,
     });
   }
 }

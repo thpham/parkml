@@ -1,0 +1,206 @@
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit.com hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false
+
+repos:
+  # ===================================
+  # General file checks
+  # ===================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+      - id: check-toml
+      - id: check-xml
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: destroyed-symlinks
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-executables-have-shebangs
+      - id: debug-statements
+      - id: detect-aws-credentials
+        args: [--allow-missing-credentials]
+      - id: detect-private-key
+
+  # ===================================
+  # Code formatting with Prettier
+  # ===================================
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        types_or: [javascript, jsx, ts, tsx, json, yaml, markdown, css, scss, html]
+        args: [--config, .prettierrc.json]
+        additional_dependencies:
+          - prettier@3.3.3
+          - '@typescript-eslint/parser@8.18.2'
+        exclude: |
+          (?x)^(
+            .*\.min\.(js|css)$|
+            node_modules/.*|
+            dist/.*|
+            build/.*|
+            .*\.bundle\.(js|css)$|
+            apps/.*/prisma/migrations/.*\.sql$
+          )$
+
+  # ===================================
+  # TypeScript and ESLint (using local)
+  # ===================================
+  - repo: local
+    hooks:
+      - id: eslint-backend
+        name: ESLint Backend
+        entry: bash -c 'cd apps/backend && npm run lint -- --max-warnings 10'
+        language: system
+        files: ^apps/backend/.*\.(ts|js)$
+        pass_filenames: false
+
+      - id: eslint-frontend
+        name: ESLint Frontend
+        entry: bash -c 'cd apps/frontend && npm run lint -- --max-warnings 10'
+        language: system
+        files: ^apps/frontend/.*\.(ts|tsx|js|jsx)$
+        pass_filenames: false
+
+  # ===================================
+  # TypeScript compilation checks
+  # ===================================
+  - repo: local
+    hooks:
+      - id: typescript-backend
+        name: TypeScript Check Backend
+        entry: bash -c 'cd apps/backend && npm run typecheck'
+        language: system
+        files: ^apps/backend/.*\.(ts|js)$
+        pass_filenames: false
+
+      - id: typescript-frontend
+        name: TypeScript Check Frontend
+        entry: bash -c 'cd apps/frontend && npm run typecheck'
+        language: system
+        files: ^apps/frontend/.*\.(ts|tsx|js|jsx)$
+        pass_filenames: false
+
+      - id: typescript-shared
+        name: TypeScript Check Shared
+        entry: bash -c 'cd packages/shared && npm run typecheck'
+        language: system
+        files: ^packages/shared/.*\.(ts|js)$
+        pass_filenames: false
+
+  # ===================================
+  # Security and dependency checks
+  # ===================================
+  - repo: local
+    hooks:
+      - id: npm-audit
+        name: NPM Security Audit
+        entry: bash -c 'npm audit --audit-level=moderate'
+        language: system
+        files: ^(package\.json|package-lock\.json|apps/.*/package\.json|packages/.*/package\.json)$
+        pass_filenames: false
+
+      - id: dependency-check
+        name: Check for vulnerable dependencies
+        entry: bash -c 'npx check-audit-level || exit 0'
+        language: system
+        files: ^(package\.json|package-lock\.json)$
+        pass_filenames: false
+
+  # ===================================
+  # Database and Prisma checks
+  # ===================================
+  - repo: local
+    hooks:
+      - id: prisma-validate
+        name: Validate Prisma Schema
+        entry: bash -c 'cd apps/backend && npx prisma validate'
+        language: system
+        files: ^apps/backend/prisma/schema\.prisma$
+        pass_filenames: false
+
+      - id: prisma-format
+        name: Format Prisma Schema
+        entry: bash -c 'cd apps/backend && npx prisma format'
+        language: system
+        files: ^apps/backend/prisma/schema\.prisma$
+        pass_filenames: false
+
+  # ===================================
+  # Custom project-specific checks
+  # ===================================
+  - repo: local
+    hooks:
+      - id: check-env-files
+        name: Check .env files are not committed
+        entry: bash -c 'if git ls-files | grep -E "\.env$|\.env\.local$|\.env\.production$"; then echo "❌ Environment files should not be committed"; exit 1; fi'
+        language: system
+        pass_filenames: false
+
+      - id: validate-translations
+        name: Validate translation files
+        entry: bash -c 'cd apps/frontend && find src/locales -name "*.json" -exec python3 -m json.tool {} \; > /dev/null'
+        language: system
+        files: ^apps/frontend/src/locales/.*\.json$
+        pass_filenames: false
+
+  # ===================================
+  # Commit message validation
+  # ===================================
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.29.1
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+  # ===================================
+  # Documentation checks
+  # ===================================
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.42.0
+    hooks:
+      - id: markdownlint
+        args: [--fix, --config, .markdownlint.json]
+        exclude: |
+          (?x)^(
+            node_modules/.*|
+            .*\.min\..*|
+            apps/.*/dist/.*|
+            apps/backend/prisma/migrations/.*\.md$
+          )$
+
+  # ===================================
+  # Docker and container checks
+  # ===================================
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        args: [--ignore, DL3008, --ignore, DL3009, --ignore, DL3015]
+
+  # ===================================
+  # Shell script checks
+  # ===================================
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        args: [-e, SC1091, -e, SC2148, -e, SC2029]

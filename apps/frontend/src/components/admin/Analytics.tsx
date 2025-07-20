@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import { ApiResponse } from '@parkml/shared';
-import { 
-  BarChart3, 
-  Users, 
-  Building, 
-  Activity, 
+import {
+  BarChart3,
+  Users,
+  Building,
+  Activity,
   AlertTriangle,
   Shield,
-  UserCheck
+  UserCheck,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -73,7 +73,7 @@ const Analytics: React.FC = () => {
 
       const response = await fetch(`/api/analytics/system?${params}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -94,7 +94,7 @@ const Analytics: React.FC = () => {
     try {
       const response = await fetch('/api/analytics/emergency-access', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -130,10 +130,10 @@ const Analytics: React.FC = () => {
 
   const formatAccessType = (type: string) => {
     const typeMap: Record<string, string> = {
-      'medical_emergency': t('analytics.accessTypes.medicalEmergency'),
-      'technical_support': t('analytics.accessTypes.technicalSupport'),
-      'data_recovery': t('analytics.accessTypes.dataRecovery'),
-      'audit_investigation': t('analytics.accessTypes.auditInvestigation')
+      medical_emergency: t('analytics.accessTypes.medicalEmergency'),
+      technical_support: t('analytics.accessTypes.technicalSupport'),
+      data_recovery: t('analytics.accessTypes.dataRecovery'),
+      audit_investigation: t('analytics.accessTypes.auditInvestigation'),
     };
     return typeMap[type] || type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
@@ -166,22 +166,25 @@ const Analytics: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="card-title text-2xl">
-                {isSuperAdmin ? t('analytics.systemDashboardTitle') : t('analytics.organizationDashboardTitle')}
+                {isSuperAdmin
+                  ? t('analytics.systemDashboardTitle')
+                  : t('analytics.organizationDashboardTitle')}
               </h1>
               <p className="text-base-content/70">
-                {isSuperAdmin 
-                  ? t('analytics.systemOverviewSubtitle') 
-                  : `${t('analytics.organizationOverviewSubtitle')} ${user?.organization?.name || t('analytics.filters.yourOrganization')}`
-                }
+                {isSuperAdmin
+                  ? t('analytics.systemOverviewSubtitle')
+                  : `${t('analytics.organizationOverviewSubtitle')} ${user?.organization?.name || t('analytics.filters.yourOrganization')}`}
               </p>
             </div>
             <div className="flex items-center space-x-4">
               <div className="form-control">
-                <label htmlFor="timeRange" className="sr-only">{t('analytics.filters.timeRangeLabel')}</label>
+                <label htmlFor="timeRange" className="sr-only">
+                  {t('analytics.filters.timeRangeLabel')}
+                </label>
                 <select
                   id="timeRange"
                   value={timeRange}
-                  onChange={(e) => setTimeRange(e.target.value)}
+                  onChange={e => setTimeRange(e.target.value)}
                   className="select select-bordered select-sm"
                 >
                   <option value="7">{t('analytics.timeRanges.last7Days')}</option>
@@ -191,15 +194,17 @@ const Analytics: React.FC = () => {
               </div>
               {isSuperAdmin && (
                 <div className="form-control">
-                  <label htmlFor="organization" className="sr-only">{t('analytics.filters.organizationLabel')}</label>
+                  <label htmlFor="organization" className="sr-only">
+                    {t('analytics.filters.organizationLabel')}
+                  </label>
                   <select
                     id="organization"
                     value={selectedOrganization}
-                    onChange={(e) => setSelectedOrganization(e.target.value)}
+                    onChange={e => setSelectedOrganization(e.target.value)}
                     className="select select-bordered select-sm"
                   >
                     <option value="">{t('analytics.allOrganizations')}</option>
-                    {systemStats?.organizations?.map((org) => (
+                    {systemStats?.organizations?.map(org => (
                       <option key={org.id} value={org.id}>
                         {org.name}
                       </option>
@@ -250,45 +255,42 @@ const Analytics: React.FC = () => {
       </div>
 
       {/* Emergency Access Stats */}
-      <div className={`grid grid-cols-1 gap-6 ${isSuperAdmin ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
+      <div
+        className={`grid grid-cols-1 gap-6 ${isSuperAdmin ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}
+      >
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
             <div className="flex items-center justify-between mb-4">
               <h2 className="card-title">{t('analytics.emergencyAccessOverview')}</h2>
               <AlertTriangle className="h-5 w-5 text-error" />
             </div>
-            
+
             <div className="stats stats-horizontal mb-6">
               <div className="stat">
-                <div className="stat-value text-base-content">
-                  {emergencyStats?.total || 0}
-                </div>
+                <div className="stat-value text-base-content">{emergencyStats?.total || 0}</div>
                 <div className="stat-title">{t('analytics.stats.total')}</div>
               </div>
               <div className="stat">
-                <div className="stat-value text-success">
-                  {emergencyStats?.active || 0}
-                </div>
+                <div className="stat-value text-success">{emergencyStats?.active || 0}</div>
                 <div className="stat-title">{t('analytics.stats.active')}</div>
               </div>
               <div className="stat">
-                <div className="stat-value text-error">
-                  {emergencyStats?.expired || 0}
-                </div>
+                <div className="stat-value text-error">{emergencyStats?.expired || 0}</div>
                 <div className="stat-title">{t('analytics.stats.expired')}</div>
               </div>
             </div>
 
             <div className="space-y-2">
               <h3 className="text-sm font-medium">{t('analytics.byType')}</h3>
-              {emergencyStats?.byType && Object.entries(emergencyStats.byType).map(([type, count]) => (
-                <div key={type} className="flex items-center justify-between">
-                  <span className={`badge ${getAccessTypeBadgeColor(type)}`}>
-                    {formatAccessType(type)}
-                  </span>
-                  <span className="text-sm">{count}</span>
-                </div>
-              ))}
+              {emergencyStats?.byType &&
+                Object.entries(emergencyStats.byType).map(([type, count]) => (
+                  <div key={type} className="flex items-center justify-between">
+                    <span className={`badge ${getAccessTypeBadgeColor(type)}`}>
+                      {formatAccessType(type)}
+                    </span>
+                    <span className="text-sm">{count}</span>
+                  </div>
+                ))}
             </div>
           </div>
         </div>
@@ -300,25 +302,25 @@ const Analytics: React.FC = () => {
                 <h2 className="card-title">{t('analytics.emergencyAccessByOrganization')}</h2>
                 <Building className="h-5 w-5 text-primary" />
               </div>
-              
+
               <div className="space-y-3">
-                {emergencyStats?.byOrganization?.map((org) => (
-                  <div key={org.organizationId} className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
+                {emergencyStats?.byOrganization?.map(org => (
+                  <div
+                    key={org.organizationId}
+                    className="flex items-center justify-between p-3 bg-base-200 rounded-lg"
+                  >
                     <div>
-                      <div className="text-sm font-medium">
-                        {org.organizationName}
-                      </div>
+                      <div className="text-sm font-medium">{org.organizationName}</div>
                       <div className="text-xs opacity-70">
                         {t('analytics.emergencyAccessRecords')}
                       </div>
                     </div>
-                    <div className="text-lg font-bold">
-                      {org.count}
-                    </div>
+                    <div className="text-lg font-bold">{org.count}</div>
                   </div>
                 ))}
-                
-                {(!emergencyStats?.byOrganization || emergencyStats.byOrganization.length === 0) && (
+
+                {(!emergencyStats?.byOrganization ||
+                  emergencyStats.byOrganization.length === 0) && (
                   <div className="text-center py-4">
                     <Shield className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm opacity-70">{t('analytics.noEmergencyRecords')}</p>
@@ -335,7 +337,7 @@ const Analytics: React.FC = () => {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
             <h2 className="card-title">{t('analytics.organizationStatistics')}</h2>
-          
+
             <div className="overflow-x-auto">
               <table className="table table-zebra w-full">
                 <thead>
@@ -349,14 +351,12 @@ const Analytics: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {systemStats?.organizations?.map((org) => (
+                  {systemStats?.organizations?.map(org => (
                     <tr key={org.id}>
                       <td>
                         <div className="flex items-center">
                           <Building className="h-5 w-5 opacity-50 mr-3" />
-                          <div className="font-medium">
-                            {org.name}
-                          </div>
+                          <div className="font-medium">{org.name}</div>
                         </div>
                       </td>
                       <td>{org.userCount}</td>
@@ -364,19 +364,17 @@ const Analytics: React.FC = () => {
                       <td>{org.assignmentCount}</td>
                       <td>{org.emergencyAccessCount}</td>
                       <td>
-                        <div className={`badge ${
-                          org.isActive 
-                            ? 'badge-success' 
-                            : 'badge-error'
-                        }`}>
-                          {org.isActive ? t('analytics.status.active') : t('analytics.status.inactive')}
+                        <div className={`badge ${org.isActive ? 'badge-success' : 'badge-error'}`}>
+                          {org.isActive
+                            ? t('analytics.status.active')
+                            : t('analytics.status.inactive')}
                         </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              
+
               {(!systemStats?.organizations || systemStats.organizations.length === 0) && (
                 <div className="text-center py-8">
                   <Building className="h-12 w-12 mx-auto mb-4 opacity-50" />

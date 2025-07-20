@@ -3,15 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { User, ApiResponse, UserStats } from '@parkml/shared';
 import { Avatar } from '../shared';
 import { useTranslation } from '../../hooks/useTranslation';
-import { 
-  Users, 
-  Edit, 
-  UserCheck, 
-  UserX, 
-  Search,
-  ChevronLeft,
-  ChevronRight 
-} from 'lucide-react';
+import { Users, Edit, UserCheck, UserX, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface UserWithStats extends User {
@@ -60,14 +52,12 @@ const UserManagement: React.FC = () => {
       const params = new URLSearchParams({
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
-        ...Object.fromEntries(
-          Object.entries(filters).filter(([_, value]) => value !== '')
-        ),
+        ...Object.fromEntries(Object.entries(filters).filter(([_, value]) => value !== '')),
       });
 
       const response = await fetch(`/api/users?${params}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -93,7 +83,7 @@ const UserManagement: React.FC = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
       });
@@ -122,7 +112,7 @@ const UserManagement: React.FC = () => {
       const response = await fetch(`/api/users/${id}/deactivate`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -145,7 +135,7 @@ const UserManagement: React.FC = () => {
       const response = await fetch(`/api/users/${id}/reactivate`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -191,11 +181,11 @@ const UserManagement: React.FC = () => {
 
   const formatRole = (role: string) => {
     const roleMap: Record<string, string> = {
-      'super_admin': t('users.roles.superAdmin'),
-      'clinic_admin': t('users.roles.clinicAdmin'),
-      'professional_caregiver': t('users.roles.professionalCaregiver'),
-      'family_caregiver': t('users.roles.familyCaregiver'),
-      'patient': t('users.roles.patient'),
+      super_admin: t('users.roles.superAdmin'),
+      clinic_admin: t('users.roles.clinicAdmin'),
+      professional_caregiver: t('users.roles.professionalCaregiver'),
+      family_caregiver: t('users.roles.familyCaregiver'),
+      patient: t('users.roles.patient'),
     };
     return roleMap[role] || role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
@@ -231,7 +221,9 @@ const UserManagement: React.FC = () => {
         <div className="card-body">
           <div className="flex items-center space-x-4">
             <div className="flex-1 form-control">
-              <label htmlFor="search" className="sr-only">{t('users.searchLabel')}</label>
+              <label htmlFor="search" className="sr-only">
+                {t('users.searchLabel')}
+              </label>
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 opacity-50" />
                 <input
@@ -239,35 +231,41 @@ const UserManagement: React.FC = () => {
                   id="search"
                   placeholder={t('users.searchPlaceholder')}
                   value={filters.search}
-                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  onChange={e => handleFilterChange('search', e.target.value)}
                   className="input input-bordered w-full pl-10"
                 />
               </div>
             </div>
-            
+
             <div className="form-control">
-              <label htmlFor="role" className="sr-only">{t('users.filterByRole')}</label>
+              <label htmlFor="role" className="sr-only">
+                {t('users.filterByRole')}
+              </label>
               <select
                 id="role"
                 value={filters.role}
-                onChange={(e) => handleFilterChange('role', e.target.value)}
+                onChange={e => handleFilterChange('role', e.target.value)}
                 className="select select-bordered"
               >
                 <option value="">{t('users.allRoles')}</option>
                 <option value="super_admin">{t('users.roles.superAdmin')}</option>
                 <option value="clinic_admin">{t('users.roles.clinicAdmin')}</option>
-                <option value="professional_caregiver">{t('users.roles.professionalCaregiver')}</option>
+                <option value="professional_caregiver">
+                  {t('users.roles.professionalCaregiver')}
+                </option>
                 <option value="family_caregiver">{t('users.roles.familyCaregiver')}</option>
                 <option value="patient">{t('users.roles.patient')}</option>
               </select>
             </div>
-            
+
             <div className="form-control">
-              <label htmlFor="isActive" className="sr-only">{t('users.filterByStatus')}</label>
+              <label htmlFor="isActive" className="sr-only">
+                {t('users.filterByStatus')}
+              </label>
               <select
                 id="isActive"
                 value={filters.isActive}
-                onChange={(e) => handleFilterChange('isActive', e.target.value)}
+                onChange={e => handleFilterChange('isActive', e.target.value)}
                 className="select select-bordered"
               >
                 <option value="">{t('users.allStatus')}</option>
@@ -283,15 +281,13 @@ const UserManagement: React.FC = () => {
       <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
           <div className="flex items-center justify-between">
-            <h2 className="card-title">
-              {t('users.usersCount', { count: pagination.total })}
-            </h2>
+            <h2 className="card-title">{t('users.usersCount', { count: pagination.total })}</h2>
             <div className="text-sm text-base-content/60">
               {t('users.showingUsers', { showing: users.length, total: pagination.total })}
             </div>
           </div>
         </div>
-        
+
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <span className="loading loading-spinner loading-lg"></span>
@@ -300,9 +296,7 @@ const UserManagement: React.FC = () => {
           <div className="p-6 text-center">
             <Users className="mx-auto h-12 w-12 opacity-50" />
             <h3 className="mt-2 text-sm font-medium">{t('users.noUsersFound')}</h3>
-            <p className="mt-1 text-sm opacity-70">
-              {t('users.noUsersMatchFilters')}
-            </p>
+            <p className="mt-1 text-sm opacity-70">{t('users.noUsersMatchFilters')}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -318,7 +312,7 @@ const UserManagement: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {users.map((userItem) => (
+                {users.map(userItem => (
                   <tr key={userItem.id} className="hover">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -331,17 +325,15 @@ const UserManagement: React.FC = () => {
                           {userItem.name.charAt(0)}
                         </Avatar>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {userItem.name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {userItem.email}
-                          </div>
+                          <div className="text-sm font-medium text-gray-900">{userItem.name}</div>
+                          <div className="text-sm text-gray-500">{userItem.email}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(userItem.role)}`}>
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(userItem.role)}`}
+                      >
                         {formatRole(userItem.role)}
                       </span>
                     </td>
@@ -349,19 +341,20 @@ const UserManagement: React.FC = () => {
                       {userItem.organization?.name || t('users.noOrganization')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        userItem.isActive 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                          userItem.isActive
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
                         {userItem.isActive ? t('users.active') : t('users.inactive')}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {userItem.lastLoginAt 
+                      {userItem.lastLoginAt
                         ? new Date(userItem.lastLoginAt).toLocaleDateString()
-                        : t('users.never')
-                      }
+                        : t('users.never')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
                       <button
@@ -398,7 +391,10 @@ const UserManagement: React.FC = () => {
           <div className="bg-white px-6 py-4 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-700">
-                {t('users.pagination.showingPage', { page: pagination.page, totalPages: pagination.totalPages })}
+                {t('users.pagination.showingPage', {
+                  page: pagination.page,
+                  totalPages: pagination.totalPages,
+                })}
               </div>
               <div className="flex items-center space-x-2">
                 <button
@@ -433,7 +429,7 @@ const UserManagement: React.FC = () => {
       {editingUser && (
         <UserEditForm
           user={editingUser}
-          onSubmit={(formData) => handleUpdateUser(editingUser.id, formData)}
+          onSubmit={formData => handleUpdateUser(editingUser.id, formData)}
           onCancel={() => setEditingUser(null)}
         />
       )}
@@ -477,7 +473,7 @@ const UserEditForm: React.FC<UserEditFormProps> = ({ user, onSubmit, onCancel })
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-medium text-gray-900">{t('users.editUser')}</h3>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700">
@@ -524,7 +520,9 @@ const UserEditForm: React.FC<UserEditFormProps> = ({ user, onSubmit, onCancel })
               >
                 <option value="super_admin">{t('users.roles.superAdmin')}</option>
                 <option value="clinic_admin">{t('users.roles.clinicAdmin')}</option>
-                <option value="professional_caregiver">{t('users.roles.professionalCaregiver')}</option>
+                <option value="professional_caregiver">
+                  {t('users.roles.professionalCaregiver')}
+                </option>
                 <option value="family_caregiver">{t('users.roles.familyCaregiver')}</option>
                 <option value="patient">{t('users.roles.patient')}</option>
               </select>

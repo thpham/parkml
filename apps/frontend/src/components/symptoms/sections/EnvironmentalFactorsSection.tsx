@@ -9,22 +9,22 @@ interface EnvironmentalFactorsSectionProps {
   errors: FieldErrors<Partial<SymptomEntry>>;
 }
 
-const EnvironmentalFactorsSection: React.FC<EnvironmentalFactorsSectionProps> = ({
-  register,
-}) => {
+const EnvironmentalFactorsSection: React.FC<EnvironmentalFactorsSectionProps> = ({ register }) => {
   const { t } = useTranslation('symptoms');
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-medium">{t('environmental.title')}</h2>
-      
+
       <div className="card bg-base-200">
         <div className="card-body">
           <h3 className="card-title text-md">{t('environmental.weatherEnvironment.title')}</h3>
-        
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">
               <label className="label">
-                <span className="label-text">{t('environmental.weatherEnvironment.temperature')}</span>
+                <span className="label-text">
+                  {t('environmental.weatherEnvironment.temperature')}
+                </span>
               </label>
               <input
                 {...register('environmentalFactors.temperature')}
@@ -33,7 +33,7 @@ const EnvironmentalFactorsSection: React.FC<EnvironmentalFactorsSectionProps> = 
                 className="input input-bordered w-full"
               />
             </div>
-            
+
             <div className="form-control">
               <label className="label">
                 <span className="label-text">{t('environmental.weatherEnvironment.humidity')}</span>
@@ -49,14 +49,19 @@ const EnvironmentalFactorsSection: React.FC<EnvironmentalFactorsSectionProps> = 
               </select>
             </div>
           </div>
-        
+
           <div className="form-control mt-4">
             <label className="label">
-              <span className="label-text">{t('environmental.weatherEnvironment.weatherConditions')}</span>
+              <span className="label-text">
+                {t('environmental.weatherEnvironment.weatherConditions')}
+              </span>
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-              {['sunny', 'cloudy', 'rainy', 'hot', 'cold'].map((weather) => (
-                <label key={weather} className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors">
+              {['sunny', 'cloudy', 'rainy', 'hot', 'cold'].map(weather => (
+                <label
+                  key={weather}
+                  className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors"
+                >
                   <input
                     {...register(`environmentalFactors.weather` as any)}
                     type="checkbox"
@@ -68,10 +73,12 @@ const EnvironmentalFactorsSection: React.FC<EnvironmentalFactorsSectionProps> = 
               ))}
             </div>
           </div>
-        
+
           <div className="form-control mt-4">
             <label className="label">
-              <span className="label-text">{t('environmental.weatherEnvironment.environmentalChanges')}</span>
+              <span className="label-text">
+                {t('environmental.weatherEnvironment.environmentalChanges')}
+              </span>
             </label>
             <textarea
               {...register('environmentalFactors.environmentalChanges')}
@@ -80,10 +87,12 @@ const EnvironmentalFactorsSection: React.FC<EnvironmentalFactorsSectionProps> = 
               placeholder={t('placeholders.environmentalChanges')}
             />
           </div>
-        
+
           <div className="form-control mt-4">
             <label className="label">
-              <span className="label-text">{t('environmental.weatherEnvironment.stressfulEvents')}</span>
+              <span className="label-text">
+                {t('environmental.weatherEnvironment.stressfulEvents')}
+              </span>
             </label>
             <textarea
               {...register('environmentalFactors.stressfulEvents')}

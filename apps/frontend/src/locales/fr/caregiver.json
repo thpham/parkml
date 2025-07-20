@@ -45,7 +45,7 @@
     "caregiverSuffix": "Aidant",
     "stats": {
       "totalAssignments": "Total des Affectations",
-      "pendingRequests": "Demandes en Attente", 
+      "pendingRequests": "Demandes en Attente",
       "activeAssignments": "Affectations Actives",
       "patients": "Patients"
     },
@@ -67,7 +67,7 @@
       "started": "Commencé :",
       "consent": "Consentement :",
       "consentStatus": "Consentement",
-      "given": "Donné", 
+      "given": "Donné",
       "pending": "En Attente",
       "active": "Actif",
       "caregiverSuffix": "aidant"
@@ -79,7 +79,7 @@
   },
   "messages": {
     "assignmentAccepted": "Affectation acceptée avec succès",
-    "assignmentDeclined": "Affectation refusée avec succès", 
+    "assignmentDeclined": "Affectation refusée avec succès",
     "updateError": "Échec de la mise à jour de l'affectation",
     "fetchError": "Échec de la récupération des affectations"
   }

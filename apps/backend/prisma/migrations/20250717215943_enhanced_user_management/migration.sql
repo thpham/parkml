@@ -1,13 +1,13 @@
 /*
   Migration: Enhanced User Management System
-  
+
   This migration adds:
   - Organization support for multi-clinic functionality
   - Enhanced caregiver assignment system
   - Invitation system for user management
   - Emergency access system
   - Comprehensive audit logging
-  
+
   Migration handles existing data by creating a default organization.
 */
 

@@ -54,16 +54,20 @@ export const MobileOptimizedCard: React.FC<MobileOptimizedCardProps> = ({
   }
 
   return (
-    <div className={`card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-200 ${className}`}>
+    <div
+      className={`card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-200 ${className}`}
+    >
       <div className={`card-body ${getVariantClasses()}`}>
         {/* Header with title and actions */}
         {(title || actions) && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 space-y-2 sm:space-y-0">
             <div className="flex-1 min-w-0">
               {title && (
-                <h2 className={`card-title ${
-                  variant === 'compact' ? 'text-base sm:text-lg' : 'text-lg sm:text-xl'
-                } truncate`}>
+                <h2
+                  className={`card-title ${
+                    variant === 'compact' ? 'text-base sm:text-lg' : 'text-lg sm:text-xl'
+                  } truncate`}
+                >
                   {title}
                 </h2>
               )}
@@ -73,18 +77,12 @@ export const MobileOptimizedCard: React.FC<MobileOptimizedCardProps> = ({
                 </p>
               )}
             </div>
-            {actions && (
-              <div className="flex flex-wrap gap-2 sm:gap-3 sm:ml-4">
-                {actions}
-              </div>
-            )}
+            {actions && <div className="flex flex-wrap gap-2 sm:gap-3 sm:ml-4">{actions}</div>}
           </div>
         )}
-        
+
         {/* Card content */}
-        <div className="space-y-3 sm:space-y-4">
-          {children}
-        </div>
+        <div className="space-y-3 sm:space-y-4">{children}</div>
       </div>
     </div>
   );

@@ -5,12 +5,7 @@
  */
 
 import { prisma } from '../database/prisma-client';
-import { 
-  AccessLevel, 
-  DataCategory, 
-  EncryptionContext,
-  AccessControlResult
-} from '@parkml/shared';
+import { AccessLevel, DataCategory, EncryptionContext, AccessControlResult } from '@parkml/shared';
 
 /**
  * Access control matrix defining permissions for each role and data category
@@ -26,7 +21,7 @@ const ACCESS_CONTROL_MATRIX: Record<string, Partial<Record<DataCategory, AccessL
     [DataCategory.MEDICATION_DATA]: [AccessLevel.PATIENT_FULL],
     [DataCategory.EMERGENCY_CONTACTS]: [AccessLevel.PATIENT_FULL],
     [DataCategory.SAFETY_INCIDENTS]: [AccessLevel.PATIENT_FULL],
-    [DataCategory.ENVIRONMENTAL_FACTORS]: [AccessLevel.PATIENT_FULL]
+    [DataCategory.ENVIRONMENTAL_FACTORS]: [AccessLevel.PATIENT_FULL],
   },
 
   // Professional caregivers have comprehensive medical access
@@ -39,7 +34,7 @@ const ACCESS_CONTROL_MATRIX: Record<string, Partial<Record<DataCategory, AccessL
     [DataCategory.MEDICATION_DATA]: [AccessLevel.CAREGIVER_PROFESSIONAL],
     [DataCategory.EMERGENCY_CONTACTS]: [AccessLevel.CAREGIVER_PROFESSIONAL],
     [DataCategory.SAFETY_INCIDENTS]: [AccessLevel.CAREGIVER_PROFESSIONAL],
-    [DataCategory.ENVIRONMENTAL_FACTORS]: [AccessLevel.CAREGIVER_PROFESSIONAL]
+    [DataCategory.ENVIRONMENTAL_FACTORS]: [AccessLevel.CAREGIVER_PROFESSIONAL],
   },
 
   // Family caregivers have limited access excluding sensitive medical details
@@ -50,7 +45,7 @@ const ACCESS_CONTROL_MATRIX: Record<string, Partial<Record<DataCategory, AccessL
     [DataCategory.DAILY_ACTIVITIES]: [AccessLevel.CAREGIVER_FAMILY],
     [DataCategory.EMERGENCY_CONTACTS]: [AccessLevel.CAREGIVER_FAMILY],
     [DataCategory.SAFETY_INCIDENTS]: [AccessLevel.CAREGIVER_FAMILY],
-    [DataCategory.ENVIRONMENTAL_FACTORS]: [AccessLevel.CAREGIVER_FAMILY]
+    [DataCategory.ENVIRONMENTAL_FACTORS]: [AccessLevel.CAREGIVER_FAMILY],
     // Note: Excluded AUTONOMIC_SYMPTOMS and MEDICATION_DATA for privacy
   },
 
@@ -64,21 +59,33 @@ const ACCESS_CONTROL_MATRIX: Record<string, Partial<Record<DataCategory, AccessL
     [DataCategory.MEDICATION_DATA]: [AccessLevel.CAREGIVER_PROFESSIONAL],
     [DataCategory.EMERGENCY_CONTACTS]: [AccessLevel.CAREGIVER_PROFESSIONAL],
     [DataCategory.SAFETY_INCIDENTS]: [AccessLevel.CAREGIVER_PROFESSIONAL],
-    [DataCategory.ENVIRONMENTAL_FACTORS]: [AccessLevel.CAREGIVER_PROFESSIONAL]
+    [DataCategory.ENVIRONMENTAL_FACTORS]: [AccessLevel.CAREGIVER_PROFESSIONAL],
   },
 
   // Super admins have system-wide access
   super_admin: {
     [DataCategory.DEMOGRAPHICS]: [AccessLevel.PATIENT_FULL, AccessLevel.CAREGIVER_PROFESSIONAL],
     [DataCategory.MOTOR_SYMPTOMS]: [AccessLevel.PATIENT_FULL, AccessLevel.CAREGIVER_PROFESSIONAL],
-    [DataCategory.NON_MOTOR_SYMPTOMS]: [AccessLevel.PATIENT_FULL, AccessLevel.CAREGIVER_PROFESSIONAL],
-    [DataCategory.AUTONOMIC_SYMPTOMS]: [AccessLevel.PATIENT_FULL, AccessLevel.CAREGIVER_PROFESSIONAL],
+    [DataCategory.NON_MOTOR_SYMPTOMS]: [
+      AccessLevel.PATIENT_FULL,
+      AccessLevel.CAREGIVER_PROFESSIONAL,
+    ],
+    [DataCategory.AUTONOMIC_SYMPTOMS]: [
+      AccessLevel.PATIENT_FULL,
+      AccessLevel.CAREGIVER_PROFESSIONAL,
+    ],
     [DataCategory.DAILY_ACTIVITIES]: [AccessLevel.PATIENT_FULL, AccessLevel.CAREGIVER_PROFESSIONAL],
     [DataCategory.MEDICATION_DATA]: [AccessLevel.PATIENT_FULL, AccessLevel.CAREGIVER_PROFESSIONAL],
-    [DataCategory.EMERGENCY_CONTACTS]: [AccessLevel.PATIENT_FULL, AccessLevel.CAREGIVER_PROFESSIONAL],
+    [DataCategory.EMERGENCY_CONTACTS]: [
+      AccessLevel.PATIENT_FULL,
+      AccessLevel.CAREGIVER_PROFESSIONAL,
+    ],
     [DataCategory.SAFETY_INCIDENTS]: [AccessLevel.PATIENT_FULL, AccessLevel.CAREGIVER_PROFESSIONAL],
-    [DataCategory.ENVIRONMENTAL_FACTORS]: [AccessLevel.PATIENT_FULL, AccessLevel.CAREGIVER_PROFESSIONAL]
-  }
+    [DataCategory.ENVIRONMENTAL_FACTORS]: [
+      AccessLevel.PATIENT_FULL,
+      AccessLevel.CAREGIVER_PROFESSIONAL,
+    ],
+  },
 };
 
 /**
@@ -88,7 +95,7 @@ const EMERGENCY_ACCESS_LEVELS: Record<string, AccessLevel> = {
   medical_emergency: AccessLevel.EMERGENCY_ACCESS,
   technical_support: AccessLevel.CAREGIVER_PROFESSIONAL,
   data_recovery: AccessLevel.CAREGIVER_PROFESSIONAL,
-  audit_investigation: AccessLevel.CAREGIVER_PROFESSIONAL
+  audit_investigation: AccessLevel.CAREGIVER_PROFESSIONAL,
 };
 
 /**
@@ -128,16 +135,15 @@ export class AccessControlEngine {
         granted: false,
         accessibleCategories: [],
         denialReason: 'No valid access relationship found',
-        encryptionKeys: []
+        encryptionKeys: [],
       };
-
     } catch (error) {
       console.error('Access control evaluation error:', error);
       return {
         granted: false,
         accessibleCategories: [],
         denialReason: 'Access control system error',
-        encryptionKeys: []
+        encryptionKeys: [],
       };
     }
   }
@@ -153,8 +159,8 @@ export class AccessControlEngine {
     const patient = await prisma.patient.findFirst({
       where: {
         id: context.patientId,
-        userId: context.requesterId
-      }
+        userId: context.requesterId,
+      },
     });
 
     return !!patient;
@@ -169,7 +175,7 @@ export class AccessControlEngine {
       accessLevel: AccessLevel.PATIENT_FULL,
       accessibleCategories: context.dataCategories,
       encryptionKeys: [`patient_key_${context.requesterId}`],
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
     };
   }
 
@@ -183,7 +189,7 @@ export class AccessControlEngine {
 
     // Verify emergency access record exists and is active
     const emergencyAccess = await prisma.emergencyAccess.findUnique({
-      where: { id: context.emergencyContext.emergencyAccessId }
+      where: { id: context.emergencyContext.emergencyAccessId },
     });
 
     if (!emergencyAccess || !emergencyAccess.isActive) {
@@ -191,7 +197,7 @@ export class AccessControlEngine {
         granted: false,
         accessibleCategories: [],
         denialReason: 'Emergency access not found or inactive',
-        encryptionKeys: []
+        encryptionKeys: [],
       };
     }
 
@@ -201,7 +207,7 @@ export class AccessControlEngine {
         granted: false,
         accessibleCategories: [],
         denialReason: 'Emergency access has expired',
-        encryptionKeys: []
+        encryptionKeys: [],
       };
     }
 
@@ -217,7 +223,9 @@ export class AccessControlEngine {
       accessLevel,
       accessibleCategories,
       encryptionKeys: [`emergency_key_${emergencyAccess.id}`],
-      expiresAt: emergencyAccess.endTime || new Date(Date.now() + context.emergencyContext.durationHours * 60 * 60 * 1000)
+      expiresAt:
+        emergencyAccess.endTime ||
+        new Date(Date.now() + context.emergencyContext.durationHours * 60 * 60 * 1000),
     };
   }
 
@@ -236,11 +244,8 @@ export class AccessControlEngine {
         caregiverId: context.requesterId,
         status: 'active',
         consentGiven: true,
-        OR: [
-          { endDate: null },
-          { endDate: { gt: new Date() } }
-        ]
-      }
+        OR: [{ endDate: null }, { endDate: { gt: new Date() } }],
+      },
     });
 
     if (!assignment) {
@@ -248,14 +253,15 @@ export class AccessControlEngine {
         granted: false,
         accessibleCategories: [],
         denialReason: 'No active caregiver assignment found',
-        encryptionKeys: []
+        encryptionKeys: [],
       };
     }
 
     // Determine access level based on caregiver type
-    const baseAccessLevel = assignment.caregiverType === 'professional' 
-      ? AccessLevel.CAREGIVER_PROFESSIONAL 
-      : AccessLevel.CAREGIVER_FAMILY;
+    const baseAccessLevel =
+      assignment.caregiverType === 'professional'
+        ? AccessLevel.CAREGIVER_PROFESSIONAL
+        : AccessLevel.CAREGIVER_FAMILY;
 
     const accessibleCategories = this.getAccessibleCategories(
       context.requesterRole,
@@ -268,14 +274,16 @@ export class AccessControlEngine {
       accessLevel: baseAccessLevel,
       accessibleCategories,
       encryptionKeys: [`caregiver_key_${assignment.id}`],
-      expiresAt: assignment.endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days default
+      expiresAt: assignment.endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days default
     };
   }
 
   /**
    * Evaluate organizational access for admins
    */
-  private async evaluateOrganizationalAccess(context: EncryptionContext): Promise<AccessControlResult> {
+  private async evaluateOrganizationalAccess(
+    context: EncryptionContext
+  ): Promise<AccessControlResult> {
     if (!['clinic_admin', 'super_admin'].includes(context.requesterRole)) {
       return { granted: false, accessibleCategories: [], encryptionKeys: [] };
     }
@@ -283,11 +291,11 @@ export class AccessControlEngine {
     // Verify user belongs to the same organization as the patient
     const patient = await prisma.patient.findUnique({
       where: { id: context.patientId },
-      include: { user: true }
+      include: { user: true },
     });
 
     const requester = await prisma.user.findUnique({
-      where: { id: context.requesterId }
+      where: { id: context.requesterId },
     });
 
     if (!patient || !requester) {
@@ -295,7 +303,7 @@ export class AccessControlEngine {
         granted: false,
         accessibleCategories: [],
         denialReason: 'Patient or requester not found',
-        encryptionKeys: []
+        encryptionKeys: [],
       };
     }
 
@@ -312,7 +320,7 @@ export class AccessControlEngine {
         accessLevel: AccessLevel.CAREGIVER_PROFESSIONAL,
         accessibleCategories,
         encryptionKeys: [`admin_key_${requester.organizationId}`],
-        expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000) // 8 hours
+        expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000), // 8 hours
       };
     }
 
@@ -322,7 +330,7 @@ export class AccessControlEngine {
         granted: false,
         accessibleCategories: [],
         denialReason: 'Cross-organizational access not permitted',
-        encryptionKeys: []
+        encryptionKeys: [],
       };
     }
 
@@ -337,7 +345,7 @@ export class AccessControlEngine {
       accessLevel: AccessLevel.CAREGIVER_PROFESSIONAL,
       accessibleCategories,
       encryptionKeys: [`org_admin_key_${requester.organizationId}`],
-      expiresAt: new Date(Date.now() + 4 * 60 * 60 * 1000) // 4 hours
+      expiresAt: new Date(Date.now() + 4 * 60 * 60 * 1000), // 4 hours
     };
   }
 
@@ -373,8 +381,8 @@ export class AccessControlEngine {
         delegatorId: patientUserId,
         delegateeId: caregiverUserId,
         isRevoked: false,
-        validUntil: { gt: new Date() }
-      }
+        validUntil: { gt: new Date() },
+      },
     });
 
     if (!delegation) {
@@ -398,11 +406,8 @@ export class AccessControlEngine {
         userId,
         organizationId,
         isActive: true,
-        OR: [
-          { expiresAt: null },
-          { expiresAt: { gt: new Date() } }
-        ]
-      }
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+      },
     });
 
     return keys.map(key => key.id);
@@ -429,14 +434,14 @@ export class AccessControlEngine {
           requesterRole: context.requesterRole,
           accessLevel: context.accessLevel,
           granted: result.granted,
-          denialReason: result.denialReason
+          denialReason: result.denialReason,
         }),
         success: result.granted,
         errorMessage: result.denialReason,
         ipAddress,
         userAgent,
-        cryptographicProof: this.generateAccessProof(context, result)
-      }
+        cryptographicProof: this.generateAccessProof(context, result),
+      },
     });
   }
 
@@ -449,7 +454,7 @@ export class AccessControlEngine {
       requesterId: context.requesterId,
       timestamp: context.timestamp,
       granted: result.granted,
-      accessLevel: result.accessLevel
+      accessLevel: result.accessLevel,
     };
 
     // In a real implementation, this would be a proper cryptographic signature

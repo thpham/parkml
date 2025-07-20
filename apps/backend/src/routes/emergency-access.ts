@@ -1,18 +1,19 @@
 import { Router } from 'express';
 import { prisma } from '../database/prisma-client';
 import { ApiResponse } from '@parkml/shared';
-import { 
-  authenticateToken, 
+import {
+  authenticateToken,
   requireClinicAdmin,
   logUserActivity,
-  AuthenticatedRequest 
+  AuthenticatedRequest,
 } from '../middleware/auth';
 import { EmergencyAccessCleanupService } from '../services/emergency-access-cleanup';
 
 const router = Router();
 
 // Request emergency access to patient data
-router.post('/request', 
+router.post(
+  '/request',
   authenticateToken,
   logUserActivity('REQUEST_EMERGENCY_ACCESS', 'emergency_access'),
   async (req: AuthenticatedRequest, res) => {
@@ -44,10 +45,10 @@ router.post('/request',
             select: {
               id: true,
               name: true,
-              isActive: true
-            }
-          }
-        }
+              isActive: true,
+            },
+          },
+        },
       });
 
       if (!patient) {
@@ -62,10 +63,11 @@ router.post('/request',
       // Super admins can access any patient
       // Clinic admins can access patients in their organization
       // Professional caregivers can access patients in their organization
-      const canRequestAccess = 
+      const canRequestAccess =
         req.user.role === 'super_admin' ||
         (req.user.role === 'clinic_admin' && patient.organizationId === req.user.organizationId) ||
-        (req.user.role === 'professional_caregiver' && patient.organizationId === req.user.organizationId);
+        (req.user.role === 'professional_caregiver' &&
+          patient.organizationId === req.user.organizationId);
 
       if (!canRequestAccess) {
         const response: ApiResponse = {
@@ -82,9 +84,9 @@ router.post('/request',
           patientId,
           isActive: true,
           endTime: {
-            gt: new Date()
-          }
-        }
+            gt: new Date(),
+          },
+        },
       });
 
       if (existingAccess) {
@@ -108,7 +110,7 @@ router.post('/request',
           accessType,
           startTime,
           endTime,
-          isActive: true
+          isActive: true,
         },
         include: {
           user: {
@@ -116,10 +118,10 @@ router.post('/request',
               id: true,
               name: true,
               email: true,
-              role: true
-            }
-          }
-        }
+              role: true,
+            },
+          },
+        },
       });
 
       // Log the emergency access request
@@ -136,11 +138,11 @@ router.post('/request',
             accessType,
             duration,
             startTime: startTime.toISOString(),
-            endTime: endTime.toISOString()
+            endTime: endTime.toISOString(),
           }),
           ipAddress: req.ip,
-          userAgent: req.get('User-Agent')
-        }
+          userAgent: req.get('User-Agent'),
+        },
       });
 
       const response: ApiResponse = {
@@ -154,8 +156,8 @@ router.post('/request',
           endTime: emergencyAccess.endTime,
           isActive: emergencyAccess.isActive,
           user: emergencyAccess.user,
-          createdAt: emergencyAccess.createdAt
-        }
+          createdAt: emergencyAccess.createdAt,
+        },
       };
 
       res.status(201).json(response);
@@ -171,142 +173,139 @@ router.post('/request',
 );
 
 // Get emergency access records (admin only)
-router.get('/', 
-  authenticateToken,
-  requireClinicAdmin,
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      if (!req.user) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'User not authenticated',
-        };
-        return res.status(401).json(response);
-      }
-
-      const { page = 1, limit = 50, patientId, userId, isActive, startDate, endDate } = req.query;
-
-      // Build where clause
-      const whereClause: any = {};
-
-      // Organization filtering for clinic admins
-      if (req.user.role === 'clinic_admin') {
-        // Clinic admins should see emergency access for patients in their organization
-        whereClause.patient = {
-          organizationId: req.user.organizationId
-        };
-      }
-
-      // Patient filtering
-      if (patientId) {
-        whereClause.patientId = patientId;
-      }
-
-      // User filtering
-      if (userId) {
-        whereClause.userId = userId;
-      }
-
-      // Active status filtering
-      if (isActive !== undefined) {
-        whereClause.isActive = isActive === 'true';
-      }
-
-      // Date range filtering
-      if (startDate || endDate) {
-        whereClause.createdAt = {};
-        if (startDate) {
-          whereClause.createdAt.gte = new Date(startDate as string);
-        }
-        if (endDate) {
-          whereClause.createdAt.lte = new Date(endDate as string);
-        }
-      }
-
-      // Calculate pagination
-      const skip = (Number(page) - 1) * Number(limit);
-
-      const [emergencyAccesses, totalCount] = await Promise.all([
-        prisma.emergencyAccess.findMany({
-          where: whereClause,
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-                organizationId: true,
-                organization: {
-                  select: {
-                    id: true,
-                    name: true
-                  }
-                }
-              }
-            },
-            patient: {
-              select: {
-                id: true,
-                name: true,
-                dateOfBirth: true,
-                diagnosisDate: true,
-                organizationId: true,
-                organization: {
-                  select: {
-                    id: true,
-                    name: true
-                  }
-                }
-              }
-            }
-          },
-          orderBy: { createdAt: 'desc' },
-          skip,
-          take: Number(limit)
-        }),
-        prisma.emergencyAccess.count({ where: whereClause })
-      ]);
-
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          emergencyAccesses: emergencyAccesses.map(access => ({
-            id: access.id,
-            patientId: access.patientId,
-            reason: access.reason,
-            accessType: access.accessType,
-            startTime: access.startTime,
-            endTime: access.endTime,
-            isActive: access.isActive,
-            user: access.user,
-            patient: (access as any).patient,
-            createdAt: access.createdAt,
-            updatedAt: access.updatedAt
-          })),
-          pagination: {
-            page: Number(page),
-            limit: Number(limit),
-            total: totalCount,
-            totalPages: Math.ceil(totalCount / Number(limit))
-          }
-        }
-      };
-
-      res.json(response);
-    } catch (error) {
-      console.error('Get emergency access error:', error);
+router.get('/', authenticateToken, requireClinicAdmin, async (req: AuthenticatedRequest, res) => {
+  try {
+    if (!req.user) {
       const response: ApiResponse = {
         success: false,
-        error: 'Internal server error',
+        error: 'User not authenticated',
       };
-      res.status(500).json(response);
+      return res.status(401).json(response);
     }
+
+    const { page = 1, limit = 50, patientId, userId, isActive, startDate, endDate } = req.query;
+
+    // Build where clause
+    const whereClause: any = {};
+
+    // Organization filtering for clinic admins
+    if (req.user.role === 'clinic_admin') {
+      // Clinic admins should see emergency access for patients in their organization
+      whereClause.patient = {
+        organizationId: req.user.organizationId,
+      };
+    }
+
+    // Patient filtering
+    if (patientId) {
+      whereClause.patientId = patientId;
+    }
+
+    // User filtering
+    if (userId) {
+      whereClause.userId = userId;
+    }
+
+    // Active status filtering
+    if (isActive !== undefined) {
+      whereClause.isActive = isActive === 'true';
+    }
+
+    // Date range filtering
+    if (startDate || endDate) {
+      whereClause.createdAt = {};
+      if (startDate) {
+        whereClause.createdAt.gte = new Date(startDate as string);
+      }
+      if (endDate) {
+        whereClause.createdAt.lte = new Date(endDate as string);
+      }
+    }
+
+    // Calculate pagination
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [emergencyAccesses, totalCount] = await Promise.all([
+      prisma.emergencyAccess.findMany({
+        where: whereClause,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+              organizationId: true,
+              organization: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+          patient: {
+            select: {
+              id: true,
+              name: true,
+              dateOfBirth: true,
+              diagnosisDate: true,
+              organizationId: true,
+              organization: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: Number(limit),
+      }),
+      prisma.emergencyAccess.count({ where: whereClause }),
+    ]);
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        emergencyAccesses: emergencyAccesses.map(access => ({
+          id: access.id,
+          patientId: access.patientId,
+          reason: access.reason,
+          accessType: access.accessType,
+          startTime: access.startTime,
+          endTime: access.endTime,
+          isActive: access.isActive,
+          user: access.user,
+          patient: (access as any).patient,
+          createdAt: access.createdAt,
+          updatedAt: access.updatedAt,
+        })),
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total: totalCount,
+          totalPages: Math.ceil(totalCount / Number(limit)),
+        },
+      },
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Get emergency access error:', error);
+    const response: ApiResponse = {
+      success: false,
+      error: 'Internal server error',
+    };
+    res.status(500).json(response);
   }
-);
+});
 
 // Get emergency access by ID
-router.get('/:id', 
+router.get(
+  '/:id',
   authenticateToken,
   requireClinicAdmin,
   async (req: AuthenticatedRequest, res) => {
@@ -334,12 +333,12 @@ router.get('/:id',
               organization: {
                 select: {
                   id: true,
-                  name: true
-                }
-              }
-            }
-          }
-        }
+                  name: true,
+                },
+              },
+            },
+          },
+        },
       });
 
       if (!emergencyAccess) {
@@ -351,8 +350,10 @@ router.get('/:id',
       }
 
       // Check authorization
-      if (req.user.role === 'clinic_admin' && 
-          emergencyAccess.user.organizationId !== req.user.organizationId) {
+      if (
+        req.user.role === 'clinic_admin' &&
+        emergencyAccess.user.organizationId !== req.user.organizationId
+      ) {
         const response: ApiResponse = {
           success: false,
           error: 'Access denied to emergency access record from different organization',
@@ -372,8 +373,8 @@ router.get('/:id',
           isActive: emergencyAccess.isActive,
           user: emergencyAccess.user,
           createdAt: emergencyAccess.createdAt,
-          updatedAt: emergencyAccess.updatedAt
-        }
+          updatedAt: emergencyAccess.updatedAt,
+        },
       };
 
       res.json(response);
@@ -389,7 +390,8 @@ router.get('/:id',
 );
 
 // Revoke emergency access
-router.post('/:id/revoke', 
+router.post(
+  '/:id/revoke',
   authenticateToken,
   requireClinicAdmin,
   logUserActivity('REVOKE_EMERGENCY_ACCESS', 'emergency_access'),
@@ -416,10 +418,10 @@ router.post('/:id/revoke',
               name: true,
               email: true,
               role: true,
-              organizationId: true
-            }
-          }
-        }
+              organizationId: true,
+            },
+          },
+        },
       });
 
       if (!emergencyAccess) {
@@ -431,8 +433,10 @@ router.post('/:id/revoke',
       }
 
       // Check authorization
-      if (req.user.role === 'clinic_admin' && 
-          emergencyAccess.user.organizationId !== req.user.organizationId) {
+      if (
+        req.user.role === 'clinic_admin' &&
+        emergencyAccess.user.organizationId !== req.user.organizationId
+      ) {
         const response: ApiResponse = {
           success: false,
           error: 'Access denied to emergency access record from different organization',
@@ -454,7 +458,7 @@ router.post('/:id/revoke',
         where: { id },
         data: {
           isActive: false,
-          endTime: new Date()
+          endTime: new Date(),
         },
         include: {
           user: {
@@ -463,10 +467,10 @@ router.post('/:id/revoke',
               name: true,
               email: true,
               role: true,
-              organizationId: true
-            }
-          }
-        }
+              organizationId: true,
+            },
+          },
+        },
       });
 
       // Log the revocation
@@ -481,11 +485,11 @@ router.post('/:id/revoke',
             originalUserId: emergencyAccess.userId,
             patientId: emergencyAccess.patientId,
             reason: reason || 'Manual revocation',
-            revokedAt: new Date().toISOString()
+            revokedAt: new Date().toISOString(),
           }),
           ipAddress: req.ip,
-          userAgent: req.get('User-Agent')
-        }
+          userAgent: req.get('User-Agent'),
+        },
       });
 
       const response: ApiResponse = {
@@ -500,8 +504,8 @@ router.post('/:id/revoke',
           isActive: updatedAccess.isActive,
           user: updatedAccess.user,
           createdAt: updatedAccess.createdAt,
-          updatedAt: updatedAccess.updatedAt
-        }
+          updatedAt: updatedAccess.updatedAt,
+        },
       };
 
       res.json(response);
@@ -517,61 +521,61 @@ router.post('/:id/revoke',
 );
 
 // Check if user has active emergency access to patient
-router.get('/check/:patientId', 
-  authenticateToken,
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      if (!req.user) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'User not authenticated',
-        };
-        return res.status(401).json(response);
-      }
-
-      const { patientId } = req.params;
-
-      // Check for active emergency access
-      const emergencyAccess = await prisma.emergencyAccess.findFirst({
-        where: {
-          userId: req.user.userId,
-          patientId,
-          isActive: true,
-          endTime: {
-            gt: new Date()
-          }
-        }
-      });
-
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          hasAccess: !!emergencyAccess,
-          access: emergencyAccess ? {
-            id: emergencyAccess.id,
-            reason: emergencyAccess.reason,
-            accessType: emergencyAccess.accessType,
-            startTime: emergencyAccess.startTime,
-            endTime: emergencyAccess.endTime,
-            createdAt: emergencyAccess.createdAt
-          } : null
-        }
-      };
-
-      res.json(response);
-    } catch (error) {
-      console.error('Check emergency access error:', error);
+router.get('/check/:patientId', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    if (!req.user) {
       const response: ApiResponse = {
         success: false,
-        error: 'Internal server error',
+        error: 'User not authenticated',
       };
-      res.status(500).json(response);
+      return res.status(401).json(response);
     }
+
+    const { patientId } = req.params;
+
+    // Check for active emergency access
+    const emergencyAccess = await prisma.emergencyAccess.findFirst({
+      where: {
+        userId: req.user.userId,
+        patientId,
+        isActive: true,
+        endTime: {
+          gt: new Date(),
+        },
+      },
+    });
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        hasAccess: !!emergencyAccess,
+        access: emergencyAccess
+          ? {
+              id: emergencyAccess.id,
+              reason: emergencyAccess.reason,
+              accessType: emergencyAccess.accessType,
+              startTime: emergencyAccess.startTime,
+              endTime: emergencyAccess.endTime,
+              createdAt: emergencyAccess.createdAt,
+            }
+          : null,
+      },
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Check emergency access error:', error);
+    const response: ApiResponse = {
+      success: false,
+      error: 'Internal server error',
+    };
+    res.status(500).json(response);
   }
-);
+});
 
 // Emergency access statistics (admin only)
-router.get('/stats/summary', 
+router.get(
+  '/stats/summary',
   authenticateToken,
   requireClinicAdmin,
   async (req: AuthenticatedRequest, res) => {
@@ -593,7 +597,7 @@ router.get('/stats/summary',
       if (req.user.role === 'clinic_admin') {
         // Clinic admins should see stats for patients in their organization
         whereClause.patient = {
-          organizationId: req.user.organizationId
+          organizationId: req.user.organizationId,
         };
       }
 
@@ -611,37 +615,37 @@ router.get('/stats/summary',
       // Get statistics
       const [totalAccess, activeAccess, accessByType, accessByUser] = await Promise.all([
         prisma.emergencyAccess.count({
-          where: whereClause
+          where: whereClause,
         }),
         prisma.emergencyAccess.count({
           where: {
             ...whereClause,
             isActive: true,
             endTime: {
-              gt: new Date()
-            }
-          }
+              gt: new Date(),
+            },
+          },
         }),
         prisma.emergencyAccess.groupBy({
           by: ['accessType'],
           where: whereClause,
           _count: {
-            id: true
-          }
+            id: true,
+          },
         }),
         prisma.emergencyAccess.groupBy({
           by: ['userId'],
           where: whereClause,
           _count: {
-            id: true
+            id: true,
           },
           orderBy: {
             _count: {
-              id: 'desc'
-            }
+              id: 'desc',
+            },
           },
-          take: 10
-        })
+          take: 10,
+        }),
       ]);
 
       // Format statistics
@@ -655,22 +659,22 @@ router.get('/stats/summary',
       const topUsers = await prisma.user.findMany({
         where: {
           id: {
-            in: topUserIds
-          }
+            in: topUserIds,
+          },
         },
         select: {
           id: true,
           name: true,
           email: true,
-          role: true
-        }
+          role: true,
+        },
       });
 
       const topUsersWithCounts = accessByUser.map(stat => {
         const user = topUsers.find(u => u.id === stat.userId);
         return {
           user,
-          count: stat._count.id
+          count: stat._count.id,
         };
       });
 
@@ -680,15 +684,15 @@ router.get('/stats/summary',
           summary: {
             totalAccess,
             activeAccess,
-            expiredAccess: totalAccess - activeAccess
+            expiredAccess: totalAccess - activeAccess,
           },
           accessByType: accessByTypeFormatted,
           topUsers: topUsersWithCounts,
           period: {
             startDate: startDate || 'all time',
-            endDate: endDate || 'now'
-          }
-        }
+            endDate: endDate || 'now',
+          },
+        },
       };
 
       res.json(response);
@@ -704,21 +708,22 @@ router.get('/stats/summary',
 );
 
 // Manual cleanup endpoint (admin only)
-router.post('/cleanup', 
+router.post(
+  '/cleanup',
   authenticateToken,
   requireClinicAdmin,
   async (_req: AuthenticatedRequest, res) => {
     try {
       const result = await EmergencyAccessCleanupService.cleanupExpiredAccess();
-      
+
       const response: ApiResponse = {
         success: true,
         data: {
           message: 'Emergency access cleanup completed',
           cleaned: result.cleaned,
           active: result.active,
-          total: result.total
-        }
+          total: result.total,
+        },
       };
 
       res.json(response);
@@ -734,16 +739,17 @@ router.post('/cleanup',
 );
 
 // System-wide emergency access statistics (admin only)
-router.get('/stats/system', 
+router.get(
+  '/stats/system',
   authenticateToken,
   requireClinicAdmin,
   async (_req: AuthenticatedRequest, res) => {
     try {
       const stats = await EmergencyAccessCleanupService.getEmergencyAccessStats();
-      
+
       const response: ApiResponse = {
         success: true,
-        data: stats
+        data: stats,
       };
 
       res.json(response);

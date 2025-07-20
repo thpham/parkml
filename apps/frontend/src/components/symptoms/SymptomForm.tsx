@@ -39,12 +39,42 @@ const SymptomForm: React.FC<SymptomFormProps> = ({ patientId, onSubmit }) => {
   });
 
   const sections = [
-    { id: 'motor', title: t('categories.motorSymptoms'), shortTitle: t('categories.motorSymptomsShort') || t('categories.motorSymptoms'), icon: '🏃' },
-    { id: 'non-motor', title: t('categories.nonMotorSymptoms'), shortTitle: t('categories.nonMotorSymptomsShort') || t('categories.nonMotorSymptoms'), icon: '🧠' },
-    { id: 'autonomic', title: t('categories.autonomicSymptoms'), shortTitle: t('categories.autonomicSymptomsShort') || t('categories.autonomicSymptoms'), icon: '❤️' },
-    { id: 'daily', title: t('categories.dailyActivities'), shortTitle: t('categories.dailyActivitiesShort') || t('categories.dailyActivities'), icon: '🏠' },
-    { id: 'environmental', title: t('categories.environmentalFactors'), shortTitle: t('categories.environmentalFactorsShort') || t('categories.environmentalFactors'), icon: '🌤️' },
-    { id: 'safety', title: t('categories.safetyIncidents'), shortTitle: t('categories.safetyIncidentsShort') || t('categories.safetyIncidents'), icon: '⚠️' },
+    {
+      id: 'motor',
+      title: t('categories.motorSymptoms'),
+      shortTitle: t('categories.motorSymptomsShort') || t('categories.motorSymptoms'),
+      icon: '🏃',
+    },
+    {
+      id: 'non-motor',
+      title: t('categories.nonMotorSymptoms'),
+      shortTitle: t('categories.nonMotorSymptomsShort') || t('categories.nonMotorSymptoms'),
+      icon: '🧠',
+    },
+    {
+      id: 'autonomic',
+      title: t('categories.autonomicSymptoms'),
+      shortTitle: t('categories.autonomicSymptomsShort') || t('categories.autonomicSymptoms'),
+      icon: '❤️',
+    },
+    {
+      id: 'daily',
+      title: t('categories.dailyActivities'),
+      shortTitle: t('categories.dailyActivitiesShort') || t('categories.dailyActivities'),
+      icon: '🏠',
+    },
+    {
+      id: 'environmental',
+      title: t('categories.environmentalFactors'),
+      shortTitle: t('categories.environmentalFactorsShort') || t('categories.environmentalFactors'),
+      icon: '🌤️',
+    },
+    {
+      id: 'safety',
+      title: t('categories.safetyIncidents'),
+      shortTitle: t('categories.safetyIncidentsShort') || t('categories.safetyIncidents'),
+      icon: '⚠️',
+    },
   ];
 
   const submitForm = async (data: Partial<SymptomEntry>) => {
@@ -59,7 +89,7 @@ const SymptomForm: React.FC<SymptomFormProps> = ({ patientId, onSubmit }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(data),
       });
@@ -90,7 +120,9 @@ const SymptomForm: React.FC<SymptomFormProps> = ({ patientId, onSubmit }) => {
       case 'daily':
         return <DailyActivitiesSection register={register} control={control} errors={errors} />;
       case 'environmental':
-        return <EnvironmentalFactorsSection register={register} control={control} errors={errors} />;
+        return (
+          <EnvironmentalFactorsSection register={register} control={control} errors={errors} />
+        );
       case 'safety':
         return <SafetyIncidentsSection register={register} control={control} errors={errors} />;
       default:
@@ -110,11 +142,15 @@ const SymptomForm: React.FC<SymptomFormProps> = ({ patientId, onSubmit }) => {
           <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 opacity-90">
             <div className="flex items-center">
               <User className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
-              <span className="text-sm sm:text-base truncate">{t('patientId')}: {patientId}</span>
+              <span className="text-sm sm:text-base truncate">
+                {t('patientId')}: {patientId}
+              </span>
             </div>
             <div className="flex items-center">
               <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
-              <span className="text-sm sm:text-base">{t('form.date', { ns: 'common' })}: {new Date().toLocaleDateString()}</span>
+              <span className="text-sm sm:text-base">
+                {t('form.date', { ns: 'common' })}: {new Date().toLocaleDateString()}
+              </span>
             </div>
           </div>
         </div>
@@ -124,8 +160,11 @@ const SymptomForm: React.FC<SymptomFormProps> = ({ patientId, onSubmit }) => {
           <div className="px-2 sm:px-6 py-2 sm:py-0">
             {/* Mobile: Horizontal Scrollable Pills */}
             <div className="sm:hidden">
-              <div className="flex gap-2 overflow-x-auto pb-2" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgb(203 213 225) transparent' }}>
-                {sections.map((section) => (
+              <div
+                className="flex gap-2 overflow-x-auto pb-2"
+                style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgb(203 213 225) transparent' }}
+              >
+                {sections.map(section => (
                   <button
                     key={section.id}
                     onClick={() => setActiveSection(section.id)}
@@ -143,11 +182,11 @@ const SymptomForm: React.FC<SymptomFormProps> = ({ patientId, onSubmit }) => {
                 ))}
               </div>
             </div>
-            
+
             {/* Desktop: Traditional Tabs */}
             <div className="hidden sm:block">
               <div className="tabs tabs-bordered overflow-x-auto">
-                {sections.map((section) => (
+                {sections.map(section => (
                   <button
                     key={section.id}
                     onClick={() => setActiveSection(section.id)}

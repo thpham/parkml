@@ -10,7 +10,7 @@ const DEFAULT_PROFESSIONAL_PERMISSIONS = {
   generate_reports: true,
   set_reminders: true,
   communicate_all: true,
-  emergency_contact: true
+  emergency_contact: true,
 };
 
 const DEFAULT_FAMILY_PERMISSIONS = {
@@ -18,12 +18,12 @@ const DEFAULT_FAMILY_PERMISSIONS = {
   edit_symptoms: true,
   view_reports: true,
   receive_notifications: true,
-  communicate_professional: true
+  communicate_professional: true,
 };
 
 async function main() {
   console.log('🌱 Starting database seed...');
-  
+
   // Check if database is already seeded
   const existingUsers = await prisma.user.count();
   if (existingUsers > 0) {
@@ -34,7 +34,7 @@ async function main() {
 
   // Create organizations first
   console.log('🏢 Creating organizations...');
-  
+
   await prisma.organization.upsert({
     where: { id: 'default_org' },
     update: {},
@@ -55,7 +55,7 @@ async function main() {
     create: {
       id: 'neurology_clinic',
       name: 'Neurology Specialists Clinic',
-      description: 'Specialized clinic for neurological conditions including Parkinson\'s disease',
+      description: "Specialized clinic for neurological conditions including Parkinson's disease",
       address: '456 Neurology Blvd, Medical City, HC 12346',
       phone: '+1-555-NEURO',
       email: 'contact@neuroclinic.org',
@@ -365,7 +365,8 @@ async function main() {
       patientId: patient1.id,
       userId: professionalCaregiver1.id,
       accessType: 'medical_emergency',
-      reason: 'Patient experienced severe symptoms and required immediate data access for treatment',
+      reason:
+        'Patient experienced severe symptoms and required immediate data access for treatment',
       startTime: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
       endTime: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
       isActive: true,
@@ -401,7 +402,7 @@ async function main() {
   console.log('✅ Created emergency access records');
 
   console.log('🎉 Database seed completed!\n');
-  
+
   // Show test credentials
   console.log('📋 Test accounts created:');
   console.log('');
@@ -431,7 +432,9 @@ async function main() {
   console.log('   🏠 Home Health Care Services (home_health_care)');
   console.log('');
   console.log('📊 DATABASE STATISTICS:');
-  console.log('   👥 Users: 12 (1 super admin, 2 clinic admins, 3 professionals, 3 family, 3 patients)');
+  console.log(
+    '   👥 Users: 12 (1 super admin, 2 clinic admins, 3 professionals, 3 family, 3 patients)'
+  );
   console.log('   🏢 Organizations: 3');
   console.log('   🤒 Patients: 3');
   console.log('   🔗 Caregiver Assignments: 6 (5 active, 1 pending)');
@@ -443,7 +446,7 @@ main()
   .then(async () => {
     await prisma.$disconnect();
   })
-  .catch(async (e) => {
+  .catch(async e => {
     console.error('❌ Seed failed:', e);
     await prisma.$disconnect();
     process.exit(1);

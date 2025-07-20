@@ -9,18 +9,16 @@ interface SafetyIncidentsSectionProps {
   errors: FieldErrors<Partial<SymptomEntry>>;
 }
 
-const SafetyIncidentsSection: React.FC<SafetyIncidentsSectionProps> = ({
-  register,
-}) => {
+const SafetyIncidentsSection: React.FC<SafetyIncidentsSectionProps> = ({ register }) => {
   const { t } = useTranslation('symptoms');
   return (
     <div className="space-y-6">
       <h2 className="text-lg font-medium">{t('safety.title')}</h2>
-      
+
       <div className="card bg-base-200">
         <div className="card-body">
           <h3 className="card-title text-md">{t('safety.incidentReport.title')}</h3>
-        
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">
               <label className="label">
@@ -34,11 +32,13 @@ const SafetyIncidentsSection: React.FC<SafetyIncidentsSectionProps> = ({
                 <option value="fall">{t('safety.incidentTypes.fall')}</option>
                 <option value="near_fall">{t('safety.incidentTypes.nearFall')}</option>
                 <option value="choking">{t('safety.incidentTypes.choking')}</option>
-                <option value="medication_error">{t('safety.incidentTypes.medicationError')}</option>
+                <option value="medication_error">
+                  {t('safety.incidentTypes.medicationError')}
+                </option>
                 <option value="other">{t('safety.incidentTypes.other')}</option>
               </select>
             </div>
-            
+
             <div className="form-control">
               <label className="label">
                 <span className="label-text">{t('safety.incidentReport.timeOfIncident')}</span>
@@ -50,7 +50,7 @@ const SafetyIncidentsSection: React.FC<SafetyIncidentsSectionProps> = ({
               />
             </div>
           </div>
-        
+
           <div className="form-control mt-4">
             <label className="label">
               <span className="label-text">{t('safety.incidentReport.location')}</span>
@@ -62,7 +62,7 @@ const SafetyIncidentsSection: React.FC<SafetyIncidentsSectionProps> = ({
               placeholder={t('placeholders.incidentLocation')}
             />
           </div>
-        
+
           <div className="form-control mt-4">
             <label className="label">
               <span className="label-text">{t('safety.incidentReport.circumstances')}</span>
@@ -74,7 +74,7 @@ const SafetyIncidentsSection: React.FC<SafetyIncidentsSectionProps> = ({
               placeholder={t('placeholders.incidentCircumstances')}
             />
           </div>
-        
+
           <div className="form-control mt-4">
             <label className="label">
               <span className="label-text">{t('safety.incidentReport.injuryLevel')}</span>
@@ -84,8 +84,11 @@ const SafetyIncidentsSection: React.FC<SafetyIncidentsSectionProps> = ({
                 { value: 'none', label: t('safety.injuryLevels.none') },
                 { value: 'minor', label: t('safety.injuryLevels.minor') },
                 { value: 'significant', label: t('safety.injuryLevels.significant') },
-              ].map((injury) => (
-                <label key={injury.value} className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors">
+              ].map(injury => (
+                <label
+                  key={injury.value}
+                  className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors"
+                >
                   <input
                     {...register('safetyIncidents.0.injury')}
                     type="radio"
@@ -97,7 +100,7 @@ const SafetyIncidentsSection: React.FC<SafetyIncidentsSectionProps> = ({
               ))}
             </div>
           </div>
-        
+
           <div className="form-control mt-4">
             <label className="label">
               <span className="label-text">{t('safety.incidentReport.additionalNotes')}</span>

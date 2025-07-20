@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Shield, 
-  Key, 
-  Smartphone, 
-  AlertTriangle, 
-  Clock,
-  Eye
-} from 'lucide-react';
+import { Shield, Key, Smartphone, AlertTriangle, Clock, Eye } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 
 // Security sub-components
@@ -34,7 +27,7 @@ const SecuritySection: React.FC<SecuritySectionProps> = () => {
     passkeyCount: 0,
     lastPasswordChange: null,
     recentLoginAttempts: 0,
-    securityScore: 65
+    securityScore: 65,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [activeSubSection, setActiveSubSection] = useState<string | null>(null);
@@ -46,30 +39,31 @@ const SecuritySection: React.FC<SecuritySectionProps> = () => {
   const loadSecurityStatus = async () => {
     try {
       setIsLoading(true);
-      
+
       // Fetch comprehensive security status from single endpoint
       const response = await fetch('/api/security/status', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('parkml_token')}`,
+        },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         const statusData = data.data;
-        
+
         setSecurityStatus({
           passwordStrength: statusData.passwordStrength || 'medium',
           twoFactorEnabled: statusData.twoFactorEnabled || false,
           passkeyCount: statusData.passkeyCount || 0,
-          lastPasswordChange: statusData.lastPasswordChange ? new Date(statusData.lastPasswordChange) : null,
+          lastPasswordChange: statusData.lastPasswordChange
+            ? new Date(statusData.lastPasswordChange)
+            : null,
           recentLoginAttempts: statusData.recentLoginAttempts || 0,
-          securityScore: statusData.securityScore || 65
+          securityScore: statusData.securityScore || 65,
         });
       } else {
         throw new Error('Failed to load security status');
       }
-      
     } catch (error) {
       console.error('Failed to load security status:', error);
       // Fallback to default values
@@ -79,7 +73,7 @@ const SecuritySection: React.FC<SecuritySectionProps> = () => {
         passkeyCount: 0,
         lastPasswordChange: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
         recentLoginAttempts: 0,
-        securityScore: 40
+        securityScore: 40,
       });
     } finally {
       setIsLoading(false);
@@ -119,12 +113,12 @@ const SecuritySection: React.FC<SecuritySectionProps> = () => {
             <h2 className="text-xl font-semibold text-base-content mb-2">
               {t('profile:security.title')}
             </h2>
-            <p className="text-base-content/60">
-              {t('profile:security.description')}
-            </p>
+            <p className="text-base-content/60">{t('profile:security.description')}</p>
           </div>
           <div className="text-right">
-            <div className={`text-2xl font-bold ${getSecurityScoreColor(securityStatus.securityScore)}`}>
+            <div
+              className={`text-2xl font-bold ${getSecurityScoreColor(securityStatus.securityScore)}`}
+            >
               {Math.min(securityStatus.securityScore, 100)}%
             </div>
             <div className="text-sm text-base-content/60">
@@ -135,10 +129,13 @@ const SecuritySection: React.FC<SecuritySectionProps> = () => {
 
         {/* Security Score Progress */}
         <div className="w-full bg-base-300 rounded-full h-2">
-          <div 
+          <div
             className={`h-2 rounded-full transition-all duration-500 ${
-              securityStatus.securityScore >= 90 ? 'bg-success' :
-              securityStatus.securityScore >= 70 ? 'bg-warning' : 'bg-error'
+              securityStatus.securityScore >= 90
+                ? 'bg-success'
+                : securityStatus.securityScore >= 70
+                  ? 'bg-warning'
+                  : 'bg-error'
             }`}
             style={{ width: `${Math.min(securityStatus.securityScore, 100)}%` }}
           ></div>
@@ -153,10 +150,15 @@ const SecuritySection: React.FC<SecuritySectionProps> = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-medium text-sm">{t('security:password.title')}</h3>
-                <p className={`text-xs capitalize ${
-                  securityStatus.passwordStrength === 'strong' ? 'text-success' :
-                  securityStatus.passwordStrength === 'medium' ? 'text-warning' : 'text-error'
-                }`}>
+                <p
+                  className={`text-xs capitalize ${
+                    securityStatus.passwordStrength === 'strong'
+                      ? 'text-success'
+                      : securityStatus.passwordStrength === 'medium'
+                        ? 'text-warning'
+                        : 'text-error'
+                  }`}
+                >
                   {t(`security:password.strength.${securityStatus.passwordStrength}`)}
                 </p>
               </div>
@@ -171,8 +173,12 @@ const SecuritySection: React.FC<SecuritySectionProps> = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-medium text-sm">{t('security:twoFactor.title')}</h3>
-                <p className={`text-xs ${securityStatus.twoFactorEnabled ? 'text-success' : 'text-error'}`}>
-                  {securityStatus.twoFactorEnabled ? t('security:status.enabled') : t('security:status.disabled')}
+                <p
+                  className={`text-xs ${securityStatus.twoFactorEnabled ? 'text-success' : 'text-error'}`}
+                >
+                  {securityStatus.twoFactorEnabled
+                    ? t('security:status.enabled')
+                    : t('security:status.disabled')}
                 </p>
               </div>
               <Smartphone className="h-5 w-5 text-base-content/60" />
@@ -243,17 +249,18 @@ const SecuritySection: React.FC<SecuritySectionProps> = () => {
                 <div>
                   <h3 className="font-medium">{t('security:password.change')}</h3>
                   <p className="text-sm text-base-content/60">
-                    {securityStatus.lastPasswordChange 
-                      ? t('security:password.lastChanged', { 
-                          date: securityStatus.lastPasswordChange.toLocaleDateString() 
+                    {securityStatus.lastPasswordChange
+                      ? t('security:password.lastChanged', {
+                          date: securityStatus.lastPasswordChange.toLocaleDateString(),
                         })
-                      : t('security:password.neverChanged')
-                    }
+                      : t('security:password.neverChanged')}
                   </p>
                 </div>
               </div>
               <button
-                onClick={() => setActiveSubSection(activeSubSection === 'password' ? null : 'password')}
+                onClick={() =>
+                  setActiveSubSection(activeSubSection === 'password' ? null : 'password')
+                }
                 className="btn btn-outline btn-sm"
               >
                 {activeSubSection === 'password' ? t('common:cancel') : t('common:change')}
@@ -282,26 +289,25 @@ const SecuritySection: React.FC<SecuritySectionProps> = () => {
               </div>
               <div className="flex items-center space-x-2">
                 {securityStatus.twoFactorEnabled && (
-                  <div className="badge badge-success badge-sm">
-                    {t('security:status.enabled')}
-                  </div>
+                  <div className="badge badge-success badge-sm">{t('security:status.enabled')}</div>
                 )}
                 <button
                   onClick={() => setActiveSubSection(activeSubSection === '2fa' ? null : '2fa')}
                   className={`btn btn-sm ${securityStatus.twoFactorEnabled ? 'btn-outline' : 'btn-primary'}`}
                 >
-                  {securityStatus.twoFactorEnabled 
-                    ? (activeSubSection === '2fa' ? t('common:cancel') : t('security:twoFactor.manage'))
-                    : t('security:twoFactor.setupButton')
-                  }
+                  {securityStatus.twoFactorEnabled
+                    ? activeSubSection === '2fa'
+                      ? t('common:cancel')
+                      : t('security:twoFactor.manage')
+                    : t('security:twoFactor.setupButton')}
                 </button>
               </div>
             </div>
             {activeSubSection === '2fa' && (
               <div className="mt-4 pt-4 border-t border-base-300">
-                <TwoFactorSetup 
+                <TwoFactorSetup
                   isEnabled={securityStatus.twoFactorEnabled}
-                  onStatusChange={(enabled) => {
+                  onStatusChange={enabled => {
                     setSecurityStatus(prev => ({ ...prev, twoFactorEnabled: enabled }));
                     // Reload full security status to update score
                     loadSecurityStatus();
@@ -327,17 +333,21 @@ const SecuritySection: React.FC<SecuritySectionProps> = () => {
                 </div>
               </div>
               <button
-                onClick={() => setActiveSubSection(activeSubSection === 'passkeys' ? null : 'passkeys')}
+                onClick={() =>
+                  setActiveSubSection(activeSubSection === 'passkeys' ? null : 'passkeys')
+                }
                 className="btn btn-outline btn-sm"
               >
-                {activeSubSection === 'passkeys' ? t('common:cancel') : t('security:passkeys.manage')}
+                {activeSubSection === 'passkeys'
+                  ? t('common:cancel')
+                  : t('security:passkeys.manage')}
               </button>
             </div>
             {activeSubSection === 'passkeys' && (
               <div className="mt-4 pt-4 border-t border-base-300">
-                <PasskeyManager 
+                <PasskeyManager
                   passkeyCount={securityStatus.passkeyCount}
-                  onPasskeyCountChange={(count) => {
+                  onPasskeyCountChange={count => {
                     setSecurityStatus(prev => ({ ...prev, passkeyCount: count }));
                     // Reload full security status to update score
                     loadSecurityStatus();

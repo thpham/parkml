@@ -6,14 +6,14 @@
 import { webcrypto } from 'crypto';
 import { sha256 } from '@noble/hashes/sha256';
 import { secp256k1 } from '@noble/curves/secp256k1';
-import { 
-  ABEPolicy, 
-  AccessLevel, 
-  DataCategory, 
-  EncryptionContext, 
+import {
+  ABEPolicy,
+  AccessLevel,
+  DataCategory,
+  EncryptionContext,
   EncryptedDataContainer,
   AccessControlResult,
-  EncryptionMetadata 
+  EncryptionMetadata,
 } from '@parkml/shared';
 
 /**
@@ -36,10 +36,10 @@ export class ABEMasterAuthority {
   private generateMasterKeys(): void {
     // Generate master secret key using cryptographically secure random
     this.masterSecretKey = webcrypto.getRandomValues(new Uint8Array(32));
-    
+
     // Derive master public key from secret key using secp256k1
     this.masterPublicKey = secp256k1.getPublicKey(this.masterSecretKey, true);
-    
+
     console.log('🔑 ABE Master keys generated');
   }
 
@@ -53,7 +53,7 @@ export class ABEMasterAuthority {
 
     const orgAuthority = new OrganizationAuthority(organizationId, this.masterSecretKey);
     this.organizationAuthorities.set(organizationId, orgAuthority);
-    
+
     console.log(`🏢 Created organization authority for: ${organizationId}`);
     return orgAuthority;
   }
@@ -89,7 +89,7 @@ export class OrganizationAuthority {
   constructor(organizationId: string, masterSecretKey: Uint8Array) {
     this.organizationId = organizationId;
     this.attributeKeys = new Map();
-    
+
     // Derive organization authority key from master secret
     const orgData = new TextEncoder().encode(organizationId);
     this.authorityKey = sha256(new Uint8Array([...masterSecretKey, ...orgData]));
@@ -105,7 +105,7 @@ export class OrganizationAuthority {
 
     const attrData = new TextEncoder().encode(attribute);
     const attributeKey = sha256(new Uint8Array([...this.authorityKey, ...attrData]));
-    
+
     this.attributeKeys.set(attribute, attributeKey);
     return attributeKey;
   }
@@ -115,7 +115,7 @@ export class OrganizationAuthority {
    */
   public generateUserSecretKey(userId: string, attributes: string[]): UserSecretKey {
     const userKeys = new Map<string, Uint8Array>();
-    
+
     for (const attribute of attributes) {
       const attributeKey = this.generateAttributeKey(attribute);
       const userData = new TextEncoder().encode(`${userId}:${attribute}`);
@@ -178,11 +178,8 @@ export class UserSecretKey {
       userId: this.userId,
       organizationId: this.organizationId,
       attributeKeys: Object.fromEntries(
-        Array.from(this.attributeKeys.entries()).map(([attr, key]) => [
-          attr,
-          Array.from(key)
-        ])
-      )
+        Array.from(this.attributeKeys.entries()).map(([attr, key]) => [attr, Array.from(key)])
+      ),
     };
     return JSON.stringify(keyData);
   }
@@ -195,7 +192,7 @@ export class UserSecretKey {
     const attributeKeys = new Map<string, Uint8Array>(
       Object.entries(keyData.attributeKeys).map(([attr, keyArray]: [string, any]) => [
         attr,
-        new Uint8Array(keyArray)
+        new Uint8Array(keyArray),
       ])
     );
     return new UserSecretKey(keyData.userId, attributeKeys, keyData.organizationId);
@@ -219,23 +216,19 @@ export class ABECrypto {
    * Encrypt data using ABE with specified policy
    */
   public async encrypt(
-    data: string, 
-    policy: ABEPolicy, 
+    data: string,
+    policy: ABEPolicy,
     organizationId: string
   ): Promise<EncryptedDataContainer> {
     // Generate symmetric key for actual data encryption
     const dataKey = webcrypto.getRandomValues(new Uint8Array(32));
-    
+
     // Encrypt data with AES-GCM
     const iv = webcrypto.getRandomValues(new Uint8Array(12));
-    const cryptoKey = await webcrypto.subtle.importKey(
-      'raw',
-      dataKey,
-      { name: 'AES-GCM' },
-      false,
-      ['encrypt']
-    );
-    
+    const cryptoKey = await webcrypto.subtle.importKey('raw', dataKey, { name: 'AES-GCM' }, false, [
+      'encrypt',
+    ]);
+
     const encodedData = new TextEncoder().encode(data);
     const encryptedData = await webcrypto.subtle.encrypt(
       { name: 'AES-GCM', iv },
@@ -245,7 +238,7 @@ export class ABECrypto {
 
     // Encrypt the data key using ABE
     const encryptedDataKey = await this.encryptDataKey(dataKey, policy, organizationId);
-    
+
     // Create encrypted container
     const container: EncryptedDataContainer = {
       dataId: this.generateDataId(),
@@ -254,7 +247,7 @@ export class ABECrypto {
       abePolicy: policy,
       metadata: this.createEncryptionMetadata(data, policy, organizationId),
       signature: '', // Will be set after signing
-      version: '1.0'
+      version: '1.0',
     };
 
     // Sign the container for integrity
@@ -272,7 +265,7 @@ export class ABECrypto {
     context: EncryptionContext
   ): Promise<string> {
     // Verify container signature
-    if (!await this.verifyContainer(container)) {
+    if (!(await this.verifyContainer(container))) {
       throw new Error('Container signature verification failed');
     }
 
@@ -283,19 +276,21 @@ export class ABECrypto {
     }
 
     // Decode encrypted payload
-    const { encryptedData, iv, encryptedDataKey } = this.decodeEncryptedPayload(container.ciphertext);
+    const { encryptedData, iv, encryptedDataKey } = this.decodeEncryptedPayload(
+      container.ciphertext
+    );
 
     // Decrypt data key using ABE
-    const dataKey = await this.decryptDataKey(encryptedDataKey, userSecretKey, container.abePolicy!);
+    const dataKey = await this.decryptDataKey(
+      encryptedDataKey,
+      userSecretKey,
+      container.abePolicy!
+    );
 
     // Decrypt data with AES-GCM
-    const cryptoKey = await webcrypto.subtle.importKey(
-      'raw',
-      dataKey,
-      { name: 'AES-GCM' },
-      false,
-      ['decrypt']
-    );
+    const cryptoKey = await webcrypto.subtle.importKey('raw', dataKey, { name: 'AES-GCM' }, false, [
+      'decrypt',
+    ]);
 
     const decryptedData = await webcrypto.subtle.decrypt(
       { name: 'AES-GCM', iv },
@@ -316,15 +311,20 @@ export class ABECrypto {
     organizationId: string,
     expirationHours?: number
   ): ABEPolicy {
-    const attributes = this.generateAttributes(patientId, dataCategories, accessLevel, organizationId);
+    const attributes = this.generateAttributes(
+      patientId,
+      dataCategories,
+      accessLevel,
+      organizationId
+    );
     const policyExpression = this.generatePolicyExpression(attributes, accessLevel);
-    
+
     const policy: ABEPolicy = {
       attributes,
       policy: policyExpression,
       dataCategories,
       accessLevel,
-      organizationId
+      organizationId,
     };
 
     if (expirationHours) {
@@ -348,7 +348,7 @@ export class ABECrypto {
         granted: false,
         accessibleCategories: [],
         denialReason: 'Policy has expired',
-        encryptionKeys: []
+        encryptionKeys: [],
       };
     }
 
@@ -361,18 +361,20 @@ export class ABECrypto {
         granted: false,
         accessibleCategories: [],
         denialReason: 'Insufficient attributes for policy',
-        encryptionKeys: []
+        encryptionKeys: [],
       };
     }
 
     // Check organization context
-    if (userSecretKey['organizationId'] !== policy.organizationId && 
-        !userAttributes.includes('role:super_admin')) {
+    if (
+      userSecretKey['organizationId'] !== policy.organizationId &&
+      !userAttributes.includes('role:super_admin')
+    ) {
       return {
         granted: false,
         accessibleCategories: [],
         denialReason: 'Organization mismatch',
-        encryptionKeys: []
+        encryptionKeys: [],
       };
     }
 
@@ -388,7 +390,7 @@ export class ABECrypto {
       accessLevel: policy.accessLevel,
       accessibleCategories,
       encryptionKeys: [userSecretKey.serialize()],
-      expiresAt: policy.expiration
+      expiresAt: policy.expiration,
     };
   }
 
@@ -426,13 +428,13 @@ export class ABECrypto {
     // In a full implementation, this would use proper ABE schemes like CP-ABE
     const policyHash = sha256(new TextEncoder().encode(policy.policy));
     const encryptionKey = sha256(new Uint8Array([...policyHash, ...dataKey]));
-    
+
     // XOR encryption (simplified for demo - use proper ABE in production)
     const encrypted = new Uint8Array(dataKey.length);
     for (let i = 0; i < dataKey.length; i++) {
       encrypted[i] = dataKey[i] ^ encryptionKey[i % encryptionKey.length];
     }
-    
+
     return Buffer.from(encrypted).toString('base64');
   }
 
@@ -444,18 +446,18 @@ export class ABECrypto {
     // Simplified ABE decryption
     const policyHash = sha256(new TextEncoder().encode(policy.policy));
     const encrypted = Buffer.from(encryptedDataKey, 'base64');
-    
+
     // Generate decryption key from user attributes
     const userAttrs = userSecretKey.getAttributes().join(',');
     const decryptionSeed = sha256(new TextEncoder().encode(userAttrs));
     const decryptionKey = sha256(new Uint8Array([...policyHash, ...decryptionSeed]));
-    
+
     // XOR decryption
     const decrypted = new Uint8Array(encrypted.length);
     for (let i = 0; i < encrypted.length; i++) {
       decrypted[i] = encrypted[i] ^ decryptionKey[i % decryptionKey.length];
     }
-    
+
     return decrypted;
   }
 
@@ -465,11 +467,7 @@ export class ABECrypto {
     accessLevel: AccessLevel,
     organizationId: string
   ): string[] {
-    const attributes = [
-      `patient:${patientId}`,
-      `org:${organizationId}`,
-      `access:${accessLevel}`
-    ];
+    const attributes = [`patient:${patientId}`, `org:${organizationId}`, `access:${accessLevel}`];
 
     dataCategories.forEach(category => {
       attributes.push(`data:${category}`);
@@ -480,7 +478,7 @@ export class ABECrypto {
 
   private generatePolicyExpression(attributes: string[], accessLevel: AccessLevel): string {
     const baseExpression = attributes.join(' AND ');
-    
+
     switch (accessLevel) {
       case AccessLevel.PATIENT_FULL:
         return `${baseExpression} AND role:patient`;
@@ -501,11 +499,7 @@ export class ABECrypto {
     userRole: string,
     patientIds: string[]
   ): string[] {
-    const attributes = [
-      `user:${userId}`,
-      `org:${organizationId}`,
-      `role:${userRole}`
-    ];
+    const attributes = [`user:${userId}`, `org:${organizationId}`, `role:${userRole}`];
 
     // Add patient assignments for caregivers
     patientIds.forEach(patientId => {
@@ -524,20 +518,21 @@ export class ABECrypto {
     switch (accessLevel) {
       case AccessLevel.PATIENT_FULL:
         return policyCategories; // Patients have access to all their data
-      
+
       case AccessLevel.CAREGIVER_PROFESSIONAL:
-        return policyCategories.filter(cat => 
-          cat !== DataCategory.EMERGENCY_CONTACTS || requesterRole === 'professional_caregiver'
+        return policyCategories.filter(
+          cat =>
+            cat !== DataCategory.EMERGENCY_CONTACTS || requesterRole === 'professional_caregiver'
         );
-      
+
       case AccessLevel.CAREGIVER_FAMILY:
-        return policyCategories.filter(cat => 
-          ![DataCategory.MEDICATION_DATA, DataCategory.EMERGENCY_CONTACTS].includes(cat)
+        return policyCategories.filter(
+          cat => ![DataCategory.MEDICATION_DATA, DataCategory.EMERGENCY_CONTACTS].includes(cat)
         );
-      
+
       case AccessLevel.EMERGENCY_ACCESS:
         return [DataCategory.EMERGENCY_CONTACTS, DataCategory.MEDICATION_DATA];
-      
+
       default:
         return [];
     }
@@ -555,7 +550,7 @@ export class ABECrypto {
     const payload = {
       data: Buffer.from(encryptedData).toString('base64'),
       iv: Buffer.from(iv).toString('base64'),
-      key: encryptedDataKey
+      key: encryptedDataKey,
     };
     return JSON.stringify(payload);
   }
@@ -569,7 +564,7 @@ export class ABECrypto {
     return {
       encryptedData: Buffer.from(payload.data, 'base64').buffer,
       iv: new Uint8Array(Buffer.from(payload.iv, 'base64')),
-      encryptedDataKey: payload.key
+      encryptedDataKey: payload.key,
     };
   }
 
@@ -578,8 +573,10 @@ export class ABECrypto {
     policy: ABEPolicy,
     organizationId: string
   ): EncryptionMetadata {
-    const originalHash = Buffer.from(sha256(new TextEncoder().encode(originalData))).toString('hex');
-    
+    const originalHash = Buffer.from(sha256(new TextEncoder().encode(originalData))).toString(
+      'hex'
+    );
+
     return {
       dataCategory: policy.dataCategories[0], // Primary category
       patientId: policy.attributes.find(attr => attr.startsWith('patient:'))?.split(':')[1] || '',
@@ -588,7 +585,7 @@ export class ABECrypto {
       keyId: 'abe_key', // Simplified
       originalSize: originalData.length,
       encryptedSize: 0, // Will be updated
-      originalHash
+      originalHash,
     };
   }
 
@@ -597,9 +594,9 @@ export class ABECrypto {
       dataId: container.dataId,
       ciphertext: container.ciphertext,
       algorithm: container.algorithm,
-      metadata: container.metadata
+      metadata: container.metadata,
     });
-    
+
     const hash = sha256(new TextEncoder().encode(containerData));
     return Buffer.from(hash).toString('hex');
   }
@@ -607,9 +604,9 @@ export class ABECrypto {
   private async verifyContainer(container: EncryptedDataContainer): Promise<boolean> {
     const expectedSignature = await this.signContainer({
       ...container,
-      signature: '' // Remove signature for verification
+      signature: '', // Remove signature for verification
     });
-    
+
     return container.signature === expectedSignature;
   }
 }
@@ -626,19 +623,19 @@ export class PolicyEvaluator {
     // Simplified policy evaluation - in production, use a proper policy language parser
     const normalizedPolicy = policyExpression.toLowerCase();
     const userAttrSet = new Set(userAttributes.map(attr => attr.toLowerCase()));
-    
+
     // Handle AND operations
     if (normalizedPolicy.includes(' and ')) {
       const conditions = normalizedPolicy.split(' and ').map(c => c.trim());
       return conditions.every(condition => this.evaluateCondition(condition, userAttrSet));
     }
-    
+
     // Handle OR operations
     if (normalizedPolicy.includes(' or ')) {
       const conditions = normalizedPolicy.split(' or ').map(c => c.trim());
       return conditions.some(condition => this.evaluateCondition(condition, userAttrSet));
     }
-    
+
     // Single condition
     return this.evaluateCondition(normalizedPolicy, userAttrSet);
   }
@@ -646,7 +643,7 @@ export class PolicyEvaluator {
   private evaluateCondition(condition: string, userAttributes: Set<string>): boolean {
     // Remove parentheses and trim
     const cleanCondition = condition.replace(/[()]/g, '').trim();
-    
+
     // Check if user has the required attribute
     return userAttributes.has(cleanCondition);
   }

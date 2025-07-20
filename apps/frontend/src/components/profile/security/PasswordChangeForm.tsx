@@ -22,12 +22,12 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
-    confirm: false
+    confirm: false,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState<PasswordStrength>({
@@ -37,7 +37,7 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
     hasUppercase: false,
     hasLowercase: false,
     hasNumbers: false,
-    hasSpecialChars: false
+    hasSpecialChars: false,
   });
 
   const analyzePasswordStrength = (password: string): PasswordStrength => {
@@ -46,10 +46,10 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
     const hasLowercase = /[a-z]/.test(password);
     const hasNumbers = /\d/.test(password);
     const hasSpecialChars = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-    
+
     const criteria = [hasMinLength, hasUppercase, hasLowercase, hasNumbers, hasSpecialChars];
     const score = criteria.filter(Boolean).length;
-    
+
     const feedback = [];
     if (!hasMinLength) feedback.push(t('security:password.requirements.minLength'));
     if (!hasUppercase) feedback.push(t('security:password.requirements.uppercase'));
@@ -64,13 +64,13 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
       hasUppercase,
       hasLowercase,
       hasNumbers,
-      hasSpecialChars
+      hasSpecialChars,
     };
   };
 
   const handlePasswordChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     if (field === 'newPassword') {
       setPasswordStrength(analyzePasswordStrength(value));
     }
@@ -93,7 +93,7 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (formData.newPassword !== formData.confirmPassword) {
       toast.error(t('security:password.errors.passwordMismatch'));
       return;
@@ -109,13 +109,13 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
       const response = await fetch('/api/auth/change-password', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${localStorage.getItem('parkml_token')}`,
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           currentPassword: formData.currentPassword,
-          newPassword: formData.newPassword
-        })
+          newPassword: formData.newPassword,
+        }),
       });
 
       if (response.ok) {
@@ -153,7 +153,7 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
             <input
               type={showPasswords.current ? 'text' : 'password'}
               value={formData.currentPassword}
-              onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+              onChange={e => handlePasswordChange('currentPassword', e.target.value)}
               className="input input-bordered flex-1"
               placeholder={t('security:password.currentPlaceholder')}
               required
@@ -163,11 +163,7 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
               onClick={() => togglePasswordVisibility('current')}
               className="btn btn-square btn-outline"
             >
-              {showPasswords.current ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
+              {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
         </div>
@@ -184,7 +180,7 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
             <input
               type={showPasswords.new ? 'text' : 'password'}
               value={formData.newPassword}
-              onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+              onChange={e => handlePasswordChange('newPassword', e.target.value)}
               className="input input-bordered flex-1"
               placeholder={t('security:password.newPlaceholder')}
               required
@@ -194,32 +190,33 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
               onClick={() => togglePasswordVisibility('new')}
               className="btn btn-square btn-outline"
             >
-              {showPasswords.new ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
+              {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-          
+
           {/* Password Strength Indicator */}
           {formData.newPassword && (
             <div className="mt-2 space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span>{t('security:password.strengthLabel')}</span>
-                <span className={`font-medium ${
-                  passwordStrength.score >= 80 ? 'text-success' :
-                  passwordStrength.score >= 60 ? 'text-warning' : 'text-error'
-                }`}>
+                <span
+                  className={`font-medium ${
+                    passwordStrength.score >= 80
+                      ? 'text-success'
+                      : passwordStrength.score >= 60
+                        ? 'text-warning'
+                        : 'text-error'
+                  }`}
+                >
                   {getPasswordStrengthLabel(passwordStrength.score)}
                 </span>
               </div>
-              <progress 
+              <progress
                 className={`progress w-full ${getPasswordStrengthColor(passwordStrength.score)}`}
-                value={passwordStrength.score} 
+                value={passwordStrength.score}
                 max={100}
               ></progress>
-              
+
               {/* Requirements Checklist */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
                 {[
@@ -227,15 +224,24 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
                   { key: 'hasUppercase', label: t('security:password.requirements.uppercase') },
                   { key: 'hasLowercase', label: t('security:password.requirements.lowercase') },
                   { key: 'hasNumbers', label: t('security:password.requirements.numbers') },
-                  { key: 'hasSpecialChars', label: t('security:password.requirements.specialChars') }
-                ].map((req) => (
+                  {
+                    key: 'hasSpecialChars',
+                    label: t('security:password.requirements.specialChars'),
+                  },
+                ].map(req => (
                   <div key={req.key} className="flex items-center space-x-1">
                     {passwordStrength[req.key as keyof PasswordStrength] ? (
                       <CheckCircle className="h-3 w-3 text-success" />
                     ) : (
                       <AlertCircle className="h-3 w-3 text-base-content/40" />
                     )}
-                    <span className={passwordStrength[req.key as keyof PasswordStrength] ? 'text-success' : 'text-base-content/60'}>
+                    <span
+                      className={
+                        passwordStrength[req.key as keyof PasswordStrength]
+                          ? 'text-success'
+                          : 'text-base-content/60'
+                      }
+                    >
                       {req.label}
                     </span>
                   </div>
@@ -257,10 +263,11 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
             <input
               type={showPasswords.confirm ? 'text' : 'password'}
               value={formData.confirmPassword}
-              onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+              onChange={e => handlePasswordChange('confirmPassword', e.target.value)}
               className={`input input-bordered flex-1 ${
-                formData.confirmPassword && formData.newPassword !== formData.confirmPassword 
-                  ? 'input-error' : ''
+                formData.confirmPassword && formData.newPassword !== formData.confirmPassword
+                  ? 'input-error'
+                  : ''
               }`}
               placeholder={t('security:password.confirmPlaceholder')}
               required
@@ -270,16 +277,14 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
               onClick={() => togglePasswordVisibility('confirm')}
               className="btn btn-square btn-outline"
             >
-              {showPasswords.confirm ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
+              {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
           {formData.confirmPassword && formData.newPassword !== formData.confirmPassword && (
             <label className="label">
-              <span className="label-text-alt text-error">{t('security:password.errors.passwordMismatch')}</span>
+              <span className="label-text-alt text-error">
+                {t('security:password.errors.passwordMismatch')}
+              </span>
             </label>
           )}
         </div>
@@ -303,9 +308,9 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
         <button
           type="submit"
           disabled={
-            isLoading || 
-            !formData.currentPassword || 
-            !formData.newPassword || 
+            isLoading ||
+            !formData.currentPassword ||
+            !formData.newPassword ||
             !formData.confirmPassword ||
             formData.newPassword !== formData.confirmPassword ||
             passwordStrength.score < 60
@@ -315,11 +320,7 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ onSuccess }) =>
           {isLoading && <span className="loading loading-spinner loading-sm"></span>}
           {t('security:password.change')}
         </button>
-        <button
-          type="button"
-          onClick={onSuccess}
-          className="btn btn-outline"
-        >
+        <button type="button" onClick={onSuccess} className="btn btn-outline">
           {t('common:cancel')}
         </button>
       </div>

@@ -2,31 +2,41 @@
 
 ## Overview
 
-The Cryptographic Emergency Access System extends the basic emergency access with advanced cryptographic features, including multi-signature approval workflows, time-bounded cryptographic keys, and comprehensive audit trails. This system ensures secure emergency access while maintaining the highest levels of security and compliance.
+The Cryptographic Emergency Access System extends the basic emergency access
+with advanced cryptographic features, including multi-signature approval
+workflows, time-bounded cryptographic keys, and comprehensive audit trails. This
+system ensures secure emergency access while maintaining the highest levels of
+security and compliance.
 
 ## Architecture
 
 ### Core Components
 
-1. **Multi-Signature Approval Engine**: Validates multiple approvals based on urgency level
-2. **Cryptographic Key Management**: Generates and manages time-bounded emergency keys
-3. **Digital Signature Validation**: Authenticates approvals using cryptographic signatures
-4. **Temporal Access Control**: Enforces time-bounded access with automatic expiration
-5. **Comprehensive Audit System**: Creates tamper-proof audit trails for all activities
+1. **Multi-Signature Approval Engine**: Validates multiple approvals based on
+   urgency level
+2. **Cryptographic Key Management**: Generates and manages time-bounded
+   emergency keys
+3. **Digital Signature Validation**: Authenticates approvals using cryptographic
+   signatures
+4. **Temporal Access Control**: Enforces time-bounded access with automatic
+   expiration
+5. **Comprehensive Audit System**: Creates tamper-proof audit trails for all
+   activities
 
 ### Urgency-Based Approval Matrix
 
-| Urgency Level | Approvers Required | Typical Duration | Use Cases |
-|---------------|-------------------|------------------|-----------|
-| **Critical** | 1 | 2 hours | Life-threatening emergencies |
-| **High** | 2 | 8 hours | Urgent medical decisions |
-| **Medium** | 3 | 24 hours | Administrative emergencies |
+| Urgency Level | Approvers Required | Typical Duration | Use Cases                    |
+| ------------- | ------------------ | ---------------- | ---------------------------- |
+| **Critical**  | 1                  | 2 hours          | Life-threatening emergencies |
+| **High**      | 2                  | 8 hours          | Urgent medical decisions     |
+| **Medium**    | 3                  | 24 hours         | Administrative emergencies   |
 
 ## API Endpoints
 
 ### Base URL: `/api/emergency-access-crypto`
 
 #### 1. Request Emergency Access
+
 ```http
 POST /request
 ```
@@ -35,6 +45,7 @@ POST /request
 **Authorization**: `professional_caregiver`, `clinic_admin`, `super_admin`
 
 **Request Body**:
+
 ```json
 {
   "patientId": "patient_123",
@@ -47,6 +58,7 @@ POST /request
 ```
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -65,6 +77,7 @@ POST /request
 ```
 
 #### 2. Approve Emergency Access
+
 ```http
 POST /:requestId/approve
 ```
@@ -73,6 +86,7 @@ POST /:requestId/approve
 **Authorization**: `clinic_admin`, `super_admin`
 
 **Request Body**:
+
 ```json
 {
   "approvalReason": "Verified emergency situation with attending physician",
@@ -82,6 +96,7 @@ POST /:requestId/approve
 ```
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -108,6 +123,7 @@ POST /:requestId/approve
 ```
 
 #### 3. Revoke Emergency Access
+
 ```http
 POST /:requestId/revoke
 ```
@@ -116,6 +132,7 @@ POST /:requestId/revoke
 **Authorization**: `clinic_admin`, `super_admin`
 
 **Request Body**:
+
 ```json
 {
   "revocationReason": "Emergency resolved, access no longer needed",
@@ -124,11 +141,13 @@ POST /:requestId/revoke
 ```
 
 #### 4. Get Emergency Access Status
+
 ```http
 GET /:requestId
 ```
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -161,21 +180,25 @@ GET /:requestId
 ```
 
 #### 5. List Active Emergency Access
+
 ```http
 GET /active
 ```
 
 **Query Parameters**:
+
 - `organizationId`: Filter by organization
 - `urgencyLevel`: Filter by urgency level
 - `limit`: Number of records (default: 20)
 
 #### 6. Validate Emergency Access Token
+
 ```http
 POST /validate
 ```
 
 **Request Body**:
+
 ```json
 {
   "emergencyAccessToken": "emergency_token_xyz789",
@@ -185,6 +208,7 @@ POST /validate
 ```
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -192,7 +216,11 @@ POST /validate
     "valid": true,
     "accessLevel": "emergency_access",
     "timeRemaining": "1 hour 15 minutes",
-    "allowedCategories": ["DEMOGRAPHICS", "MEDICATION_DATA", "EMERGENCY_CONTACTS"],
+    "allowedCategories": [
+      "DEMOGRAPHICS",
+      "MEDICATION_DATA",
+      "EMERGENCY_CONTACTS"
+    ],
     "restrictions": [],
     "auditId": "audit_entry_789"
   }
@@ -200,17 +228,20 @@ POST /validate
 ```
 
 #### 7. Emergency Access Audit Trail
+
 ```http
 GET /audit
 ```
 
 **Query Parameters**:
+
 - `requestId`: Filter by specific request
 - `patientId`: Filter by patient
 - `startDate` / `endDate`: Date range filter
 - `action`: Filter by action type
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -315,7 +346,8 @@ The emergency access system integrates with data access through:
 
 ```typescript
 // Example middleware usage
-app.use('/api/patients', 
+app.use(
+  '/api/patients',
   authenticateToken,
   requireEmergencyAccessOrPermission(['DEMOGRAPHICS']),
   patientRoutes
@@ -352,6 +384,7 @@ GET /api/emergency-access-crypto/status
 ```
 
 Returns:
+
 - Active emergency access count
 - Recent activity summary
 - Security alerts
@@ -376,7 +409,7 @@ EMERGENCY_AUDIT_RETENTION_DAYS=2555
 const APPROVAL_REQUIREMENTS = {
   critical: { approvers: 1, maxDuration: 2 },
   high: { approvers: 2, maxDuration: 8 },
-  medium: { approvers: 3, maxDuration: 24 }
+  medium: { approvers: 3, maxDuration: 24 },
 };
 ```
 
@@ -425,8 +458,13 @@ const APPROVAL_REQUIREMENTS = {
 
 ## Conclusion
 
-The Cryptographic Emergency Access System provides enterprise-grade security for emergency medical situations while maintaining comprehensive audit trails and regulatory compliance. The multi-signature approval workflows, time-bounded cryptographic keys, and tamper-proof audit trails ensure that emergency access is both secure and accountable.
+The Cryptographic Emergency Access System provides enterprise-grade security for
+emergency medical situations while maintaining comprehensive audit trails and
+regulatory compliance. The multi-signature approval workflows, time-bounded
+cryptographic keys, and tamper-proof audit trails ensure that emergency access
+is both secure and accountable.
 
 ---
 
-*This documentation is part of the ParkML cryptographic security documentation suite.*
+_This documentation is part of the ParkML cryptographic security documentation
+suite._

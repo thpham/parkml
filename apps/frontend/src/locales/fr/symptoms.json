@@ -53,14 +53,14 @@
   },
   "severityLevels": {
     "1": "1 - À peine perceptible",
-    "2": "2 - Léger", 
+    "2": "2 - Léger",
     "3": "3 - Modéré",
     "4": "4 - Marqué",
     "5": "5 - Sévère"
   },
   "locations": {
     "rightHand": "Main droite",
-    "leftHand": "Main gauche", 
+    "leftHand": "Main gauche",
     "rightLeg": "Jambe droite",
     "leftLeg": "Jambe gauche",
     "head": "Tête",
@@ -116,7 +116,7 @@
     },
     "urinationTypes": {
       "normal": "Normale",
-      "frequent": "Fréquente", 
+      "frequent": "Fréquente",
       "urgent": "Urgente",
       "incontinence": "Incontinence"
     },
@@ -138,7 +138,7 @@
     "medicationCompliance": {
       "title": "Observance Médicamenteuse",
       "morning": "Médicaments du Matin",
-      "afternoon": "Médicaments de l'Après-midi", 
+      "afternoon": "Médicaments de l'Après-midi",
       "evening": "Médicaments du Soir",
       "sideEffects": "Effets Secondaires Observés"
     },
@@ -201,7 +201,7 @@
     "alertnessLevels": {
       "selectLevel": "Sélectionner le niveau de vigilance",
       "alert": "Vigilant",
-      "drowsy": "Somnolent", 
+      "drowsy": "Somnolent",
       "confused": "Confus",
       "disoriented": "Désorienté"
     },

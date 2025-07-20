@@ -1,11 +1,11 @@
 /**
  * Homomorphic Encryption Analytics Engine
- * 
+ *
  * Enables privacy-preserving computation on encrypted medical data using
  * Microsoft SEAL homomorphic encryption library. Supports statistical
  * analysis, aggregations, and machine learning operations on encrypted
  * patient data without revealing individual patient information.
- * 
+ *
  * Key Features:
  * - Privacy-preserving statistical computations
  * - Encrypted data aggregations
@@ -54,17 +54,17 @@ export enum ComputationType {
   VARIANCE = 'variance',
   CORRELATION = 'correlation',
   REGRESSION = 'regression',
-  AGGREGATION = 'aggregation'
+  AGGREGATION = 'aggregation',
 }
 
 /**
  * Privacy levels for computations
  */
 export enum PrivacyLevel {
-  BASIC = 'basic',              // Standard homomorphic encryption
+  BASIC = 'basic', // Standard homomorphic encryption
   DIFFERENTIAL = 'differential', // Differential privacy added
-  K_ANONYMOUS = 'k_anonymous',   // K-anonymity guarantees
-  FEDERATED = 'federated'        // Federated learning approach
+  K_ANONYMOUS = 'k_anonymous', // K-anonymity guarantees
+  FEDERATED = 'federated', // Federated learning approach
 }
 
 /**
@@ -119,26 +119,32 @@ export class HomomorphicAnalytics {
     try {
       // Ensure SEAL is initialized
       await WASMCryptoLoader.initializeSEAL();
-      
+
       // Create homomorphic context for analytics
       this.heContext = WASMCryptoLoader.createHomomorphicContext('tc128');
-      
+
       // Generate keys for homomorphic operations
       const keys = WASMCryptoLoader.generateHomomorphicKeys(this.heContext);
-      
+
       // Store keys (in production, these would be securely managed)
       this.heContext.publicKey = this.heContext.seal.PublicKey();
       this.heContext.publicKey.load(this.heContext.context, keys.publicKey);
-      
+
       this.heContext.secretKey = this.heContext.seal.SecretKey();
       this.heContext.secretKey.load(this.heContext.context, keys.secretKey);
-      
+
       this.heContext.relinKeys = this.heContext.seal.RelinKeys();
       this.heContext.relinKeys.load(this.heContext.context, keys.relinKeys);
-      
+
       // Update encryptor and decryptor
-      this.heContext.encryptor = this.heContext.seal.Encryptor(this.heContext.context, this.heContext.publicKey);
-      this.heContext.decryptor = this.heContext.seal.Decryptor(this.heContext.context, this.heContext.secretKey);
+      this.heContext.encryptor = this.heContext.seal.Encryptor(
+        this.heContext.context,
+        this.heContext.publicKey
+      );
+      this.heContext.decryptor = this.heContext.seal.Decryptor(
+        this.heContext.context,
+        this.heContext.secretKey
+      );
 
       this.isInitialized = true;
       console.log('✅ Homomorphic Analytics Engine initialized');
@@ -156,7 +162,9 @@ export class HomomorphicAnalytics {
       await this.initialize();
     }
 
-    console.log(`🔢 Submitting ${request.computationType} computation for ${request.dataCategories.join(', ')}`);
+    console.log(
+      `🔢 Submitting ${request.computationType} computation for ${request.dataCategories.join(', ')}`
+    );
 
     // Validate request
     await this.validateComputationRequest(request);
@@ -170,8 +178,8 @@ export class HomomorphicAnalytics {
         cohortCriteria: JSON.stringify(request.cohortCriteria),
         requesterId: request.requesterId,
         purpose: request.purpose,
-        status: 'pending'
-      }
+        status: 'pending',
+      },
     });
 
     // Process computation asynchronously
@@ -185,7 +193,7 @@ export class HomomorphicAnalytics {
       dataCategories: request.dataCategories,
       computationType: request.computationType,
       purpose: request.purpose,
-      privacyLevel: request.privacyLevel
+      privacyLevel: request.privacyLevel,
     });
 
     return computation.id;
@@ -194,21 +202,31 @@ export class HomomorphicAnalytics {
   /**
    * Process homomorphic computation asynchronously
    */
-  private async processComputationAsync(computationId: string, request: HomomorphicComputationRequest): Promise<void> {
+  private async processComputationAsync(
+    computationId: string,
+    request: HomomorphicComputationRequest
+  ): Promise<void> {
     try {
       console.log(`🔢 Processing computation ${computationId}`);
 
       // Update status to running
       await prisma.homomorphicComputation.update({
         where: { id: computationId },
-        data: { status: 'running' }
+        data: { status: 'running' },
       });
 
       // Get encrypted patient data based on cohort criteria
-      const encryptedData = await this.getEncryptedCohortData(request.cohortCriteria, request.dataCategories);
+      const encryptedData = await this.getEncryptedCohortData(
+        request.cohortCriteria,
+        request.dataCategories
+      );
 
       // Perform homomorphic computation
-      const result = await this.performHomomorphicComputation(request.computationType, encryptedData, request.privacyLevel);
+      const result = await this.performHomomorphicComputation(
+        request.computationType,
+        encryptedData,
+        request.privacyLevel
+      );
 
       // Store encrypted result
       await prisma.homomorphicComputation.update({
@@ -216,8 +234,8 @@ export class HomomorphicAnalytics {
         data: {
           status: 'completed',
           encryptedResult: JSON.stringify(result),
-          computedAt: new Date()
-        }
+          computedAt: new Date(),
+        },
       });
 
       // Create completion audit entry
@@ -229,7 +247,7 @@ export class HomomorphicAnalytics {
         computationType: request.computationType,
         purpose: request.purpose,
         privacyLevel: request.privacyLevel,
-        sampleSize: encryptedData.length
+        sampleSize: encryptedData.length,
       });
 
       console.log(`✅ Computation ${computationId} completed successfully`);
@@ -241,8 +259,8 @@ export class HomomorphicAnalytics {
         where: { id: computationId },
         data: {
           status: 'failed',
-          errorMessage: error instanceof Error ? error.message : 'Unknown error'
-        }
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        },
       });
     }
   }
@@ -255,7 +273,9 @@ export class HomomorphicAnalytics {
     encryptedData: number[][],
     privacyLevel: PrivacyLevel
   ): Promise<ComputationResult> {
-    console.log(`🔢 Performing ${computationType} computation on ${encryptedData.length} encrypted records`);
+    console.log(
+      `🔢 Performing ${computationType} computation on ${encryptedData.length} encrypted records`
+    );
 
     const results: number[] = [];
 
@@ -290,7 +310,7 @@ export class HomomorphicAnalytics {
         // Compute multiple statistics
         results.push(
           await this.computeHomomorphicSum(encryptedData),
-          await this.computeHomomorphicSum(encryptedData) / encryptedData.length,
+          (await this.computeHomomorphicSum(encryptedData)) / encryptedData.length,
           encryptedData.length,
           await this.computeHomomorphicVariance(encryptedData)
         );
@@ -301,9 +321,10 @@ export class HomomorphicAnalytics {
     }
 
     // Apply differential privacy if requested
-    const finalResults = privacyLevel === PrivacyLevel.DIFFERENTIAL 
-      ? this.applyDifferentialPrivacy(results, encryptedData.length)
-      : results;
+    const finalResults =
+      privacyLevel === PrivacyLevel.DIFFERENTIAL
+        ? this.applyDifferentialPrivacy(results, encryptedData.length)
+        : results;
 
     return {
       id: `comp_${Date.now()}`,
@@ -315,8 +336,8 @@ export class HomomorphicAnalytics {
         computedAt: new Date(),
         privacyLevel,
         dataCategories: [],
-        cohortSize: encryptedData.length
-      }
+        cohortSize: encryptedData.length,
+      },
     };
   }
 
@@ -342,7 +363,7 @@ export class HomomorphicAnalytics {
   private async computeHomomorphicVariance(encryptedData: number[][]): Promise<number> {
     if (encryptedData.length === 0) return 0;
 
-    const mean = await this.computeHomomorphicSum(encryptedData) / encryptedData.length;
+    const mean = (await this.computeHomomorphicSum(encryptedData)) / encryptedData.length;
     let variance = 0;
 
     for (const record of encryptedData) {
@@ -417,7 +438,7 @@ export class HomomorphicAnalytics {
 
     // Build cohort query
     const whereClause: any = {
-      isActive: true
+      isActive: true,
     };
 
     if (cohortCriteria.organizationIds?.length) {
@@ -427,7 +448,7 @@ export class HomomorphicAnalytics {
     if (cohortCriteria.diagnosisDateRange) {
       whereClause.diagnosisDate = {
         gte: cohortCriteria.diagnosisDateRange.start,
-        lte: cohortCriteria.diagnosisDateRange.end
+        lte: cohortCriteria.diagnosisDateRange.end,
       };
     }
 
@@ -437,9 +458,9 @@ export class HomomorphicAnalytics {
       include: {
         symptomEntries: {
           orderBy: { entryDate: 'desc' },
-          take: 10 // Last 10 entries per patient
-        }
-      }
+          take: 10, // Last 10 entries per patient
+        },
+      },
     });
 
     console.log(`📊 Found ${patients.length} patients in cohort`);
@@ -468,17 +489,20 @@ export class HomomorphicAnalytics {
 
     try {
       // Parse symptom data
-      const motorSymptoms = typeof entry.motorSymptoms === 'string' 
-        ? JSON.parse(entry.motorSymptoms) 
-        : entry.motorSymptoms;
+      const motorSymptoms =
+        typeof entry.motorSymptoms === 'string'
+          ? JSON.parse(entry.motorSymptoms)
+          : entry.motorSymptoms;
 
-      const nonMotorSymptoms = typeof entry.nonMotorSymptoms === 'string'
-        ? JSON.parse(entry.nonMotorSymptoms)
-        : entry.nonMotorSymptoms;
+      const nonMotorSymptoms =
+        typeof entry.nonMotorSymptoms === 'string'
+          ? JSON.parse(entry.nonMotorSymptoms)
+          : entry.nonMotorSymptoms;
 
-      const autonomicSymptoms = typeof entry.autonomicSymptoms === 'string'
-        ? JSON.parse(entry.autonomicSymptoms)
-        : entry.autonomicSymptoms;
+      const autonomicSymptoms =
+        typeof entry.autonomicSymptoms === 'string'
+          ? JSON.parse(entry.autonomicSymptoms)
+          : entry.autonomicSymptoms;
 
       // Extract numerical features based on data categories
       if (dataCategories.includes(DataCategory.MOTOR_SYMPTOMS)) {
@@ -522,7 +546,7 @@ export class HomomorphicAnalytics {
    */
   public async getComputationResult(computationId: string, requesterId: string): Promise<any> {
     const computation = await prisma.homomorphicComputation.findUnique({
-      where: { id: computationId }
+      where: { id: computationId },
     });
 
     if (!computation) {
@@ -547,7 +571,7 @@ export class HomomorphicAnalytics {
       createdAt: computation.createdAt,
       purpose: computation.purpose,
       dataCategories: JSON.parse(computation.dataCategories),
-      cohortCriteria: JSON.parse(computation.cohortCriteria)
+      cohortCriteria: JSON.parse(computation.cohortCriteria),
     };
   }
 
@@ -556,7 +580,7 @@ export class HomomorphicAnalytics {
    */
   public async listComputations(requesterId: string, organizationId?: string): Promise<any[]> {
     const where: any = { requesterId };
-    
+
     if (organizationId) {
       where.organizationId = organizationId;
     }
@@ -564,7 +588,7 @@ export class HomomorphicAnalytics {
     const computations = await prisma.homomorphicComputation.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      take: 50
+      take: 50,
     });
 
     return computations.map(comp => ({
@@ -575,7 +599,7 @@ export class HomomorphicAnalytics {
       dataCategories: JSON.parse(comp.dataCategories),
       createdAt: comp.createdAt,
       computedAt: comp.computedAt,
-      hasResult: !!comp.encryptedResult
+      hasResult: !!comp.encryptedResult,
     }));
   }
 
@@ -585,7 +609,7 @@ export class HomomorphicAnalytics {
   private async validateComputationRequest(request: HomomorphicComputationRequest): Promise<void> {
     // Check if requester has appropriate permissions
     const requester = await prisma.user.findUnique({
-      where: { id: request.requesterId }
+      where: { id: request.requesterId },
     });
 
     if (!requester) {
@@ -620,12 +644,16 @@ export class HomomorphicAnalytics {
     privacyLevel: PrivacyLevel;
     sampleSize?: number;
   }): Promise<void> {
-    const proof = sha256(new TextEncoder().encode(JSON.stringify({
-      operation: entry.operation,
-      userId: entry.userId,
-      computationType: entry.computationType,
-      timestamp: Date.now()
-    })));
+    const proof = sha256(
+      new TextEncoder().encode(
+        JSON.stringify({
+          operation: entry.operation,
+          userId: entry.userId,
+          computationType: entry.computationType,
+          timestamp: Date.now(),
+        })
+      )
+    );
 
     await prisma.cryptoAuditEntry.create({
       data: {
@@ -640,13 +668,13 @@ export class HomomorphicAnalytics {
           privacyLevel: entry.privacyLevel,
           sampleSize: entry.sampleSize,
           homomorphicEncryption: true,
-          timestamp: new Date()
+          timestamp: new Date(),
         }),
         success: true,
         ipAddress: '127.0.0.1',
         userAgent: 'homomorphic-analytics-engine',
-        cryptographicProof: Buffer.from(proof).toString('hex')
-      }
+        cryptographicProof: Buffer.from(proof).toString('hex'),
+      },
     });
   }
 }

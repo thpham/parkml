@@ -2,10 +2,7 @@
   "name": "parkml",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
     "dev": "concurrently \"npm run dev --workspace=apps/backend\" \"npm run dev --workspace=apps/frontend\" --names \"backend,frontend\" --prefix-colors \"blue,green\"",
     "dev:backend": "npm run dev --workspace=apps/backend",
@@ -21,18 +18,51 @@
     "lint": "npm run lint --workspaces",
     "lint:backend": "npm run lint --workspace=apps/backend",
     "lint:frontend": "npm run lint --workspace=apps/frontend",
+    "lint:fix": "npm run lint:fix --workspaces",
+    "lint:fix:backend": "npm run lint --workspace=apps/backend -- --fix",
+    "lint:fix:frontend": "npm run lint --workspace=apps/frontend -- --fix",
     "typecheck": "npm run typecheck --workspaces",
     "typecheck:backend": "npm run typecheck --workspace=apps/backend",
     "typecheck:frontend": "npm run typecheck --workspace=apps/frontend",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md,yaml,yml}\" --ignore-path .prettierignore",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,scss,md,yaml,yml}\" --ignore-path .prettierignore",
+    "quality": "npm run typecheck && npm run lint && npm run format:check",
+    "quality:fix": "npm run typecheck && npm run lint:fix && npm run format",
+    "security:audit": "npm audit --audit-level=moderate",
+    "security:check": "npm run security:audit --workspaces",
+    "pre-commit": "npm run quality",
+    "pre-push": "npm run quality && npm run test && npm run build",
+    "validate": "npm run typecheck && npm run lint && npm run test && npm run build",
     "clean": "rm -rf apps/*/dist packages/*/dist apps/*/node_modules packages/*/node_modules node_modules",
-    "reset": "npm run clean && npm install"
+    "reset": "npm run clean && npm install",
+    "setup:pre-commit": "pre-commit install",
+    "setup:hooks": "pre-commit install --hook-type pre-commit --hook-type pre-push --hook-type commit-msg"
   },
   "devDependencies": {
     "@types/node": "^22.10.6",
     "typescript": "^5.7.3",
-    "concurrently": "^9.1.0"
+    "concurrently": "^9.1.0",
+    "prettier": "^3.3.3",
+    "eslint": "^8.57.1",
+    "@typescript-eslint/parser": "^7.18.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "eslint-plugin-security": "^3.0.1",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react-refresh": "^0.4.16",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-import-resolver-typescript": "^3.6.3",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0"
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
   }
 }

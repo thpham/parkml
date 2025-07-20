@@ -116,19 +116,15 @@ export const Avatar: React.FC<AvatarProps> = ({
   };
 
   return (
-    <div 
-      className={`avatar ${className}`}
-      role="img"
-      aria-label={ariaLabel}
-    >
-      <div 
+    <div className={`avatar ${className}`} role="img" aria-label={ariaLabel}>
+      <div
         className={`
-          ${sizeClasses[size]} 
-          ${getColorClass()} 
+          ${sizeClasses[size]}
+          ${getColorClass()}
           ${getTextSize()}
-          rounded-full 
+          rounded-full
           shrink-0
-          transition-colors 
+          transition-colors
           duration-200
           select-none
         `}
@@ -137,16 +133,18 @@ export const Avatar: React.FC<AvatarProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           textAlign: 'center',
-          lineHeight: '1'
+          lineHeight: '1',
         }}
       >
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          width: '100%',
-          height: '100%'
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            height: '100%',
+          }}
+        >
           {variant === 'icon' && React.isValidElement(children)
             ? React.cloneElement(children as React.ReactElement, {
                 className: `${getIconSize()} ${(children as React.ReactElement).props.className || ''}`,

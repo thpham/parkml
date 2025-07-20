@@ -1,7 +1,10 @@
 # Enhanced User Management System - Database Schema
 
 ## Overview
-This document outlines the enhanced database schema for the ParkML user management system, supporting multi-clinic organizations, different caregiver types, patient invitations, and emergency access.
+
+This document outlines the enhanced database schema for the ParkML user
+management system, supporting multi-clinic organizations, different caregiver
+types, patient invitations, and emergency access.
 
 ## Enhanced Database Schema
 
@@ -263,11 +266,13 @@ enum ProgressionType {
 ## Key Features of Enhanced Schema
 
 ### 1. **Multi-Clinic Support**
+
 - `Organization` model for managing multiple clinics
 - Users and patients belong to specific organizations
 - Organization-specific settings and configurations
 
 ### 2. **Enhanced User Roles**
+
 - `super_admin`: Platform-wide administration
 - `clinic_admin`: Clinic-specific administration
 - `professional_caregiver`: Healthcare staff
@@ -275,6 +280,7 @@ enum ProgressionType {
 - `patient`: Data owners
 
 ### 3. **Flexible Caregiver Assignment**
+
 - `CaregiverAssignment` model replaces simple junction tables
 - Supports different caregiver types (professional/family)
 - Assignment status tracking (pending, active, inactive, declined)
@@ -282,32 +288,38 @@ enum ProgressionType {
 - Time-limited assignments
 
 ### 4. **Invitation System**
+
 - `Invitation` model for user onboarding
 - Secure token-based invitation links
 - Role-specific invitations
 - Expiration and status tracking
 
 ### 5. **Emergency Access**
+
 - `EmergencyAccess` model for audit-compliant emergency data access
 - Reason tracking and time limits
 - Different emergency access types
 - Approval workflow support
 
 ### 6. **Comprehensive Audit System**
+
 - `AuditLog` model for all system actions
 - User action tracking
 - Resource-specific audit trails
 - IP address and user agent logging
 
 ### 7. **Enhanced Privacy Controls**
+
 - Patient-specific privacy settings
 - Granular permission controls in caregiver assignments
 - Emergency contact management
 
 ## Migration Strategy
 
-1. **Phase 1**: Add new tables (Organization, CaregiverAssignment, Invitation, EmergencyAccess, AuditLog)
-2. **Phase 2**: Migrate existing data from junction tables to new CaregiverAssignment model
+1. **Phase 1**: Add new tables (Organization, CaregiverAssignment, Invitation,
+   EmergencyAccess, AuditLog)
+2. **Phase 2**: Migrate existing data from junction tables to new
+   CaregiverAssignment model
 3. **Phase 3**: Update application code to use new schema
 4. **Phase 4**: Remove old junction tables
 

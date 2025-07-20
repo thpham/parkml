@@ -26,21 +26,21 @@ export default defineConfig({
         manualChunks: {
           // React and core dependencies
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          
+
           // Form handling
-          'forms': ['react-hook-form'],
-          
+          forms: ['react-hook-form'],
+
           // UI components and styling
           'ui-vendor': ['lucide-react', 'react-hot-toast'],
-          
+
           // Authentication and security
           'auth-vendor': ['@simplewebauthn/browser'],
-          
+
           // Internationalization
-          'i18n': ['react-i18next', 'i18next', 'i18next-browser-languagedetector'],
-          
+          i18n: ['react-i18next', 'i18next', 'i18next-browser-languagedetector'],
+
           // QR code libraries
-          'qr': ['qrcode.react', 'react-qr-code'],
+          qr: ['qrcode.react', 'react-qr-code'],
         },
       },
     },

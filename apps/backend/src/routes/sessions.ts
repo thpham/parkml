@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import { SessionManagerService } from '../services/SessionManagerService';
 import { SecurityAuditService } from '../services/SecurityAuditService';
-import { authenticateSession, logoutSession, logoutAllOtherSessions } from '../middleware/sessionAuth';
+import {
+  authenticateSession,
+  logoutSession,
+  logoutAllOtherSessions,
+} from '../middleware/sessionAuth';
 import type { SessionAuthenticatedRequest } from '../middleware/sessionAuth';
 import { ApiResponse } from '@parkml/shared';
 
@@ -66,20 +70,23 @@ router.get('/statistics', authenticateSession, async (req: SessionAuthenticatedR
     const statistics = await SessionManagerService.getSessionStatistics();
 
     // Log admin access to session statistics
-    await SecurityAuditService.logSecurityEvent({
-      userId: req.user.userId,
-      organizationId: req.user.organizationId,
-      action: 'admin_session_statistics_access',
-      resourceType: 'session',
-      status: 'success',
-      riskLevel: 'low',
-      details: {
-        totalActiveSessions: statistics.totalActiveSessions,
-        sessionsLast24h: statistics.sessionsLast24h,
-        timestamp: new Date().toISOString()
+    await SecurityAuditService.logSecurityEvent(
+      {
+        userId: req.user.userId,
+        organizationId: req.user.organizationId,
+        action: 'admin_session_statistics_access',
+        resourceType: 'session',
+        status: 'success',
+        riskLevel: 'low',
+        details: {
+          totalActiveSessions: statistics.totalActiveSessions,
+          sessionsLast24h: statistics.sessionsLast24h,
+          timestamp: new Date().toISOString(),
+        },
+        sessionId: req.user.sessionId,
       },
-      sessionId: req.user.sessionId
-    }, req);
+      req
+    );
 
     const response: ApiResponse = {
       success: true,
@@ -136,7 +143,11 @@ router.delete('/:sessionId', authenticateSession, async (req: SessionAuthenticat
     }
 
     // Terminate the session
-    const terminated = await SessionManagerService.terminateSessionById(sessionId, 'user_requested', req);
+    const terminated = await SessionManagerService.terminateSessionById(
+      sessionId,
+      'user_requested',
+      req
+    );
 
     if (!terminated) {
       const response: ApiResponse = {
@@ -146,21 +157,24 @@ router.delete('/:sessionId', authenticateSession, async (req: SessionAuthenticat
       return res.status(400).json(response);
     }
 
-    await SecurityAuditService.logSecurityEvent({
-      userId: req.user.userId,
-      organizationId: req.user.organizationId,
-      action: 'session_terminated',
-      resourceType: 'session',
-      resourceId: sessionId,
-      status: 'success',
-      riskLevel: 'low',
-      details: {
-        terminatedSessionId: sessionId,
-        terminationReason: 'user_requested',
-        timestamp: new Date().toISOString()
+    await SecurityAuditService.logSecurityEvent(
+      {
+        userId: req.user.userId,
+        organizationId: req.user.organizationId,
+        action: 'session_terminated',
+        resourceType: 'session',
+        resourceId: sessionId,
+        status: 'success',
+        riskLevel: 'low',
+        details: {
+          terminatedSessionId: sessionId,
+          terminationReason: 'user_requested',
+          timestamp: new Date().toISOString(),
+        },
+        sessionId: req.user.sessionId,
       },
-      sessionId: req.user.sessionId
-    }, req);
+      req
+    );
 
     const response: ApiResponse = {
       success: true,
@@ -181,23 +195,28 @@ router.delete('/:sessionId', authenticateSession, async (req: SessionAuthenticat
 /**
  * Logout from current session
  */
-router.post('/logout', authenticateSession, logoutSession, async (_req: SessionAuthenticatedRequest, res) => {
-  try {
-    const response: ApiResponse = {
-      success: true,
-      data: { message: 'Logged out successfully' },
-    };
+router.post(
+  '/logout',
+  authenticateSession,
+  logoutSession,
+  async (_req: SessionAuthenticatedRequest, res) => {
+    try {
+      const response: ApiResponse = {
+        success: true,
+        data: { message: 'Logged out successfully' },
+      };
 
-    res.json(response);
-  } catch (error) {
-    console.error('Logout error:', error);
-    const response: ApiResponse = {
-      success: false,
-      error: 'Logout failed',
-    };
-    res.status(500).json(response);
+      res.json(response);
+    } catch (error) {
+      console.error('Logout error:', error);
+      const response: ApiResponse = {
+        success: false,
+        error: 'Logout failed',
+      };
+      res.status(500).json(response);
+    }
   }
-});
+);
 
 /**
  * Logout from all other sessions (keep current)
@@ -222,27 +241,30 @@ router.post('/logout-all', authenticateSession, async (req: SessionAuthenticated
       req
     );
 
-    await SecurityAuditService.logSecurityEvent({
-      userId: req.user.userId,
-      organizationId: req.user.organizationId,
-      action: 'logout_all_sessions',
-      resourceType: 'session',
-      status: 'success',
-      riskLevel: 'medium',
-      details: {
-        terminatedSessionsCount: terminatedCount,
-        includeCurrentSession: true,
-        timestamp: new Date().toISOString()
+    await SecurityAuditService.logSecurityEvent(
+      {
+        userId: req.user.userId,
+        organizationId: req.user.organizationId,
+        action: 'logout_all_sessions',
+        resourceType: 'session',
+        status: 'success',
+        riskLevel: 'medium',
+        details: {
+          terminatedSessionsCount: terminatedCount,
+          includeCurrentSession: true,
+          timestamp: new Date().toISOString(),
+        },
+        sessionId: req.user.sessionId,
       },
-      sessionId: req.user.sessionId
-    }, req);
+      req
+    );
 
     const response: ApiResponse = {
       success: true,
       data: {
         message: `Successfully logged out from all ${terminatedCount} sessions`,
-        terminatedSessions: terminatedCount
-      }
+        terminatedSessions: terminatedCount,
+      },
     };
 
     res.json(response);
@@ -275,27 +297,30 @@ router.get('/audit-logs', authenticateSession, async (req: SessionAuthenticatedR
     const securityStats = await SecurityAuditService.getUserSecurityStats(req.user.userId);
 
     // Log access to security audit logs
-    await SecurityAuditService.logSecurityEvent({
-      userId: req.user.userId,
-      organizationId: req.user.organizationId,
-      action: 'security_audit_access',
-      resourceType: 'audit_log',
-      status: 'success',
-      riskLevel: 'low',
-      details: {
-        pageAccessed: page,
-        filterAction: action,
-        timestamp: new Date().toISOString()
+    await SecurityAuditService.logSecurityEvent(
+      {
+        userId: req.user.userId,
+        organizationId: req.user.organizationId,
+        action: 'security_audit_access',
+        resourceType: 'audit_log',
+        status: 'success',
+        riskLevel: 'low',
+        details: {
+          pageAccessed: page,
+          filterAction: action,
+          timestamp: new Date().toISOString(),
+        },
+        sessionId: req.user.sessionId,
       },
-      sessionId: req.user.sessionId
-    }, req);
+      req
+    );
 
     const response: ApiResponse = {
       success: true,
-      data: { 
+      data: {
         securityStats,
         // Note: You'd implement pagination and filtering in SecurityAuditService
-        auditLogs: [] // Placeholder - would need to implement getUserAuditLogs
+        auditLogs: [], // Placeholder - would need to implement getUserAuditLogs
       },
     };
 
@@ -334,26 +359,29 @@ router.post('/cleanup', authenticateSession, async (req: SessionAuthenticatedReq
 
     const cleanedCount = await SessionManagerService.cleanupExpiredSessions();
 
-    await SecurityAuditService.logSecurityEvent({
-      userId: req.user.userId,
-      organizationId: req.user.organizationId,
-      action: 'session_cleanup_executed',
-      resourceType: 'session',
-      status: 'success',
-      riskLevel: 'low',
-      details: {
-        cleanedSessionsCount: cleanedCount,
-        executedBy: req.user.userId,
-        timestamp: new Date().toISOString()
+    await SecurityAuditService.logSecurityEvent(
+      {
+        userId: req.user.userId,
+        organizationId: req.user.organizationId,
+        action: 'session_cleanup_executed',
+        resourceType: 'session',
+        status: 'success',
+        riskLevel: 'low',
+        details: {
+          cleanedSessionsCount: cleanedCount,
+          executedBy: req.user.userId,
+          timestamp: new Date().toISOString(),
+        },
+        sessionId: req.user.sessionId,
       },
-      sessionId: req.user.sessionId
-    }, req);
+      req
+    );
 
     const response: ApiResponse = {
       success: true,
-      data: { 
+      data: {
         message: `Cleaned up ${cleanedCount} expired sessions`,
-        cleanedSessions: cleanedCount 
+        cleanedSessions: cleanedCount,
       },
     };
 

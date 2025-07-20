@@ -30,30 +30,30 @@ const Dashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch patients
       const patientsResponse = await fetch('/api/patients', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
-      
+
       if (patientsResponse.ok) {
         const patientsData = await patientsResponse.json();
         if (patientsData.success) {
           setPatients(patientsData.data);
         }
       }
-      
+
       // Fetch recent entries if there are patients
       if (patients.length > 0) {
         const patientId = patients[0].id;
         const entriesResponse = await fetch(`/api/symptom-entries?patientId=${patientId}&limit=5`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
-        
+
         if (entriesResponse.ok) {
           const entriesData = await entriesResponse.json();
           if (entriesData.success) {
@@ -74,21 +74,21 @@ const Dashboard: React.FC = () => {
       toast.error(t('errors.onlyPatients'));
       return;
     }
-    
+
     const name = prompt(t('prompts.enterName'));
     const dateOfBirth = prompt(t('prompts.enterBirthDate'));
     const diagnosisDate = prompt(t('prompts.enterDiagnosisDate'));
-    
+
     if (!name || !dateOfBirth || !diagnosisDate) {
       return;
     }
-    
+
     try {
       const response = await fetch('/api/patients', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           name,
@@ -96,9 +96,9 @@ const Dashboard: React.FC = () => {
           diagnosisDate,
         }),
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         toast.success(t('success.patientCreated'));
         fetchDashboardData();
@@ -126,20 +126,22 @@ const Dashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="card-title text-2xl">
-                {user?.role === 'patient' ? t('types.patientDashboard') : 
-                 user?.role === 'family_caregiver' ? t('types.familyCaregiverDashboard') : 
-                 t('types.professionalCaregiverDashboard')}
+                {user?.role === 'patient'
+                  ? t('types.patientDashboard')
+                  : user?.role === 'family_caregiver'
+                    ? t('types.familyCaregiverDashboard')
+                    : t('types.professionalCaregiverDashboard')}
               </h1>
               <p className="text-base-content/70">
-                {t('greeting.welcomeBack', { name: user?.name || '', role: user?.role?.replace('_', ' ') || '' })}
+                {t('greeting.welcomeBack', {
+                  name: user?.name || '',
+                  role: user?.role?.replace('_', ' ') || '',
+                })}
               </p>
             </div>
-            
+
             {user?.role === 'patient' && patients.length === 0 && (
-              <button
-                onClick={handleCreatePatient}
-                className="btn btn-primary"
-              >
+              <button onClick={handleCreatePatient} className="btn btn-primary">
                 <Plus className="h-4 w-4" />
                 {t('greeting.createPatientRecord')}
               </button>
@@ -149,7 +151,9 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className={`grid grid-cols-1 gap-6 ${user?.role === 'patient' ? 'md:grid-cols-3' : 'md:grid-cols-4'}`}>
+      <div
+        className={`grid grid-cols-1 gap-6 ${user?.role === 'patient' ? 'md:grid-cols-3' : 'md:grid-cols-4'}`}
+      >
         {user?.role !== 'patient' && (
           <div className="stats shadow">
             <div className="stat">
@@ -179,9 +183,11 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="stat-title">{t('stats.thisMonth')}</div>
             <div className="stat-value text-accent">
-              {recentEntries.filter(entry => 
-                new Date(entry.entryDate).getMonth() === new Date().getMonth()
-              ).length}
+              {
+                recentEntries.filter(
+                  entry => new Date(entry.entryDate).getMonth() === new Date().getMonth()
+                ).length
+              }
             </div>
           </div>
         </div>
@@ -204,22 +210,21 @@ const Dashboard: React.FC = () => {
             {user?.role === 'patient' ? t('greeting.myProfile') : t('greeting.assignedPatients')}
           </h2>
         </div>
-        
+
         <div className="card-body">
           {patients.length === 0 ? (
             <div className="text-center py-8">
               <Users className="mx-auto h-12 w-12 opacity-50" />
               <h3 className="mt-2 text-sm font-medium">{t('noPatients.title')}</h3>
               <p className="mt-1 text-sm opacity-70">
-                {user?.role === 'patient' 
+                {user?.role === 'patient'
                   ? t('noPatients.createRecord')
-                  : t('noPatients.noneAssigned')
-                }
+                  : t('noPatients.noneAssigned')}
               </p>
             </div>
           ) : (
             <div className="space-y-4">
-              {patients.map((patient) => (
+              {patients.map(patient => (
                 <div key={patient.id} className="card bg-base-200 shadow">
                   <div className="card-body">
                     <div className="flex items-center justify-between">
@@ -233,11 +238,10 @@ const Dashboard: React.FC = () => {
                           {patient.name.charAt(0)}
                         </Avatar>
                         <div className="ml-4">
-                          <div className="text-sm font-medium">
-                            {patient.name}
-                          </div>
+                          <div className="text-sm font-medium">{patient.name}</div>
                           <div className="text-sm opacity-70">
-                            {t('greeting.diagnosed')}: {new Date(patient.diagnosisDate).toLocaleDateString()}
+                            {t('greeting.diagnosed')}:{' '}
+                            {new Date(patient.diagnosisDate).toLocaleDateString()}
                           </div>
                         </div>
                       </div>

@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Shield, 
-  Plus, 
-  Trash2, 
-  Smartphone, 
-  Monitor, 
+import {
+  Shield,
+  Plus,
+  Trash2,
+  Smartphone,
+  Monitor,
   Tablet,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
 } from 'lucide-react';
 import { useTranslation } from '../../../hooks/useTranslation';
 import toast from 'react-hot-toast';
@@ -27,9 +27,7 @@ interface PasskeyCredential {
   isActive: boolean;
 }
 
-const PasskeyManager: React.FC<PasskeyManagerProps> = ({ 
-  onPasskeyCountChange 
-}) => {
+const PasskeyManager: React.FC<PasskeyManagerProps> = ({ onPasskeyCountChange }) => {
   const { t } = useTranslation(['security', 'common']);
   const [passkeys, setPasskeys] = useState<PasskeyCredential[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,15 +44,15 @@ const PasskeyManager: React.FC<PasskeyManagerProps> = ({
     if (isLoading || loadingRef.current) {
       return;
     }
-    
+
     loadingRef.current = true;
-    
+
     try {
       setIsLoading(true);
       const response = await fetch('/api/security/passkeys', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('parkml_token')}`,
+        },
       });
 
       if (response.ok) {
@@ -85,10 +83,10 @@ const PasskeyManager: React.FC<PasskeyManagerProps> = ({
       const beginResponse = await fetch('/api/security/passkeys/register/begin', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${localStorage.getItem('parkml_token')}`,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ deviceName: newDeviceName })
+        body: JSON.stringify({ deviceName: newDeviceName }),
       });
 
       if (!beginResponse.ok) {
@@ -106,13 +104,13 @@ const PasskeyManager: React.FC<PasskeyManagerProps> = ({
       const finishResponse = await fetch('/api/security/passkeys/register/complete', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${localStorage.getItem('parkml_token')}`,
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           attestationResponse: credential,
-          deviceName: newDeviceName
-        })
+          deviceName: newDeviceName,
+        }),
       });
 
       if (finishResponse.ok) {
@@ -148,8 +146,8 @@ const PasskeyManager: React.FC<PasskeyManagerProps> = ({
       const response = await fetch(`/api/security/passkeys/${passkeyId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('parkml_token')}`,
+        },
       });
 
       if (response.ok) {
@@ -237,7 +235,7 @@ const PasskeyManager: React.FC<PasskeyManagerProps> = ({
                 <input
                   type="text"
                   value={newDeviceName}
-                  onChange={(e) => setNewDeviceName(e.target.value)}
+                  onChange={e => setNewDeviceName(e.target.value)}
                   placeholder={t('security:passkeys.deviceNamePlaceholder')}
                   className="input input-bordered"
                   maxLength={50}
@@ -246,7 +244,7 @@ const PasskeyManager: React.FC<PasskeyManagerProps> = ({
                   <span className="label-text-alt">{t('security:passkeys.deviceNameHint')}</span>
                 </label>
               </div>
-              
+
               <div className="flex space-x-2">
                 <button
                   onClick={registerPasskey}
@@ -284,7 +282,7 @@ const PasskeyManager: React.FC<PasskeyManagerProps> = ({
         </div>
       ) : (
         <div className="space-y-3">
-          {passkeys.map((passkey) => {
+          {passkeys.map(passkey => {
             const DeviceIcon = getDeviceIcon(passkey.deviceType);
             return (
               <div key={passkey.id} className="card bg-base-200 border border-base-300">
@@ -306,14 +304,12 @@ const PasskeyManager: React.FC<PasskeyManagerProps> = ({
                             </span>
                           )}
                           {!passkey.lastUsedAt && (
-                            <span className="text-warning">
-                              {t('security:passkeys.neverUsed')}
-                            </span>
+                            <span className="text-warning">{t('security:passkeys.neverUsed')}</span>
                           )}
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
                       {passkey.isActive ? (
                         <div className="badge badge-success badge-sm">
@@ -325,7 +321,7 @@ const PasskeyManager: React.FC<PasskeyManagerProps> = ({
                           {t('security:status.inactive')}
                         </div>
                       )}
-                      
+
                       <button
                         onClick={() => deletePasskey(passkey.id, passkey.deviceName)}
                         className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10"

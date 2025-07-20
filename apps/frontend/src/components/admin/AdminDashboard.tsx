@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
-import { 
-  Users, 
-  Building, 
-  UserPlus, 
-  AlertTriangle, 
+import {
+  Users,
+  Building,
+  UserPlus,
+  AlertTriangle,
   BarChart3,
   Shield,
-  Activity
+  Activity,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -33,7 +33,7 @@ const AdminDashboard: React.FC = () => {
     totalOrganizations: 0,
     pendingAssignments: 0,
     activeEmergencyAccess: 0,
-    recentActivity: 0
+    recentActivity: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -49,21 +49,23 @@ const AdminDashboard: React.FC = () => {
 
       // Fetch users count
       const usersResponse = await fetch('/api/users', {
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       // Fetch patients count
       const patientsResponse = await fetch('/api/patients', {
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       // Fetch assignments for pending count
       const assignmentsResponse = await fetch('/api/assignments', {
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       // Process responses
-      let totalUsers = 0, totalPatients = 0, pendingAssignments = 0;
+      let totalUsers = 0,
+        totalPatients = 0,
+        pendingAssignments = 0;
 
       if (usersResponse.ok) {
         const userData = await usersResponse.json();
@@ -82,7 +84,9 @@ const AdminDashboard: React.FC = () => {
       if (assignmentsResponse.ok) {
         const assignmentData = await assignmentsResponse.json();
         if (assignmentData.success) {
-          pendingAssignments = assignmentData.data.filter((a: any) => a.status === 'pending').length;
+          pendingAssignments = assignmentData.data.filter(
+            (a: any) => a.status === 'pending'
+          ).length;
         }
       }
 
@@ -92,9 +96,8 @@ const AdminDashboard: React.FC = () => {
         totalOrganizations: 3, // From seed data
         pendingAssignments,
         activeEmergencyAccess: 2, // Placeholder - would fetch from emergency access API
-        recentActivity: 15 // Placeholder - would fetch from audit logs
+        recentActivity: 15, // Placeholder - would fetch from audit logs
       });
-
     } catch (error) {
       console.error('Error fetching admin stats:', error);
       toast.error(t('dashboard.loadError'));
@@ -107,10 +110,10 @@ const AdminDashboard: React.FC = () => {
     return (
       <div className="text-center py-12">
         <Shield className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">{t('messages.accessDenied', { ns: 'common' })}</h3>
-        <p className="mt-1 text-sm text-gray-500">
-          {t('dashboard.accessDeniedMessage')}
-        </p>
+        <h3 className="mt-2 text-sm font-medium text-gray-900">
+          {t('messages.accessDenied', { ns: 'common' })}
+        </h3>
+        <p className="mt-1 text-sm text-gray-500">{t('dashboard.accessDeniedMessage')}</p>
       </div>
     );
   }
@@ -131,13 +134,14 @@ const AdminDashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="card-title text-2xl">
-                {isSuperAdmin ? t('dashboard.systemAdministrationTitle') : t('dashboard.clinicAdministrationTitle')}
+                {isSuperAdmin
+                  ? t('dashboard.systemAdministrationTitle')
+                  : t('dashboard.clinicAdministrationTitle')}
               </h1>
               <p className="text-base-content/70">
-                {isSuperAdmin 
-                  ? t('dashboard.systemOverviewSubtitle') 
-                  : `${t('dashboard.organizationManagementSubtitle')} ${user?.organization?.name || t('misc.yourClinic')}`
-                }
+                {isSuperAdmin
+                  ? t('dashboard.systemOverviewSubtitle')
+                  : `${t('dashboard.organizationManagementSubtitle')} ${user?.organization?.name || t('misc.yourClinic')}`}
               </p>
             </div>
             <div className="flex items-center space-x-2">
@@ -177,9 +181,7 @@ const AdminDashboard: React.FC = () => {
             <div className="stat-figure text-secondary">
               <Building className="h-8 w-8" />
             </div>
-            <div className="stat-title">
-              {t('stats.organizations')}
-            </div>
+            <div className="stat-title">{t('stats.organizations')}</div>
             <div className="stat-value text-secondary">{stats.totalOrganizations}</div>
           </div>
         )}
@@ -188,9 +190,7 @@ const AdminDashboard: React.FC = () => {
           <div className="stat-figure text-warning">
             <UserPlus className="h-8 w-8" />
           </div>
-          <div className="stat-title">
-            {t('stats.pendingAssignments')}
-          </div>
+          <div className="stat-title">{t('stats.pendingAssignments')}</div>
           <div className="stat-value text-warning">{stats.pendingAssignments}</div>
         </div>
 
@@ -198,9 +198,7 @@ const AdminDashboard: React.FC = () => {
           <div className="stat-figure text-error">
             <AlertTriangle className="h-8 w-8" />
           </div>
-          <div className="stat-title">
-            {t('stats.emergencyAccess')}
-          </div>
+          <div className="stat-title">{t('stats.emergencyAccess')}</div>
           <div className="stat-value text-error">{stats.activeEmergencyAccess}</div>
         </div>
 
@@ -208,9 +206,7 @@ const AdminDashboard: React.FC = () => {
           <div className="stat-figure text-info">
             <Activity className="h-8 w-8" />
           </div>
-          <div className="stat-title">
-            {t('stats.recentActivity')}
-          </div>
+          <div className="stat-title">{t('stats.recentActivity')}</div>
           <div className="stat-value text-info">{stats.recentActivity}</div>
         </div>
       </div>
@@ -228,7 +224,9 @@ const AdminDashboard: React.FC = () => {
               <div className="text-left">
                 <div className="font-medium text-base-content">{t('actions.userManagement')}</div>
                 <div className="text-sm text-base-content/60">
-                  {isSuperAdmin ? t('actions.userManagementDescriptionSuper') : t('actions.userManagementDescriptionClinic')}
+                  {isSuperAdmin
+                    ? t('actions.userManagementDescriptionSuper')
+                    : t('actions.userManagementDescriptionClinic')}
                 </div>
               </div>
             </button>
@@ -241,7 +239,9 @@ const AdminDashboard: React.FC = () => {
                 <Building className="h-8 w-8 text-secondary mr-3" />
                 <div className="text-left">
                   <div className="font-medium text-base-content">{t('actions.organizations')}</div>
-                  <div className="text-sm text-base-content/60">{t('actions.organizationsDescription')}</div>
+                  <div className="text-sm text-base-content/60">
+                    {t('actions.organizationsDescription')}
+                  </div>
                 </div>
               </button>
             )}
@@ -254,7 +254,9 @@ const AdminDashboard: React.FC = () => {
               <div className="text-left">
                 <div className="font-medium text-base-content">{t('actions.assignments')}</div>
                 <div className="text-sm text-base-content/60">
-                  {isSuperAdmin ? t('actions.assignmentsDescriptionSuper') : t('actions.assignmentsDescriptionClinic')}
+                  {isSuperAdmin
+                    ? t('actions.assignmentsDescriptionSuper')
+                    : t('actions.assignmentsDescriptionClinic')}
                 </div>
               </div>
             </button>
@@ -266,7 +268,9 @@ const AdminDashboard: React.FC = () => {
               <AlertTriangle className="h-8 w-8 text-error mr-3" />
               <div className="text-left">
                 <div className="font-medium text-base-content">{t('actions.emergencyAccess')}</div>
-                <div className="text-sm text-base-content/60">{t('actions.emergencyAccessDescription')}</div>
+                <div className="text-sm text-base-content/60">
+                  {t('actions.emergencyAccessDescription')}
+                </div>
               </div>
             </button>
 
@@ -278,7 +282,9 @@ const AdminDashboard: React.FC = () => {
               <div className="text-left">
                 <div className="font-medium text-base-content">{t('actions.analytics')}</div>
                 <div className="text-sm text-base-content/60">
-                  {isSuperAdmin ? t('actions.analyticsDescriptionSuper') : t('actions.analyticsDescriptionClinic')}
+                  {isSuperAdmin
+                    ? t('actions.analyticsDescriptionSuper')
+                    : t('actions.analyticsDescriptionClinic')}
                 </div>
               </div>
             </button>
@@ -291,7 +297,8 @@ const AdminDashboard: React.FC = () => {
                 <UserPlus className="h-8 w-8 mr-3" />
                 <div className="text-left">
                   <div className="font-medium">
-                    {stats.pendingAssignments} {t('stats.pendingAssignments')}{stats.pendingAssignments > 1 ? 's' : ''}
+                    {stats.pendingAssignments} {t('stats.pendingAssignments')}
+                    {stats.pendingAssignments > 1 ? 's' : ''}
                   </div>
                   <div className="text-sm opacity-80">{t('alerts.requiresAttention')}</div>
                 </div>
@@ -324,11 +331,13 @@ const AdminDashboard: React.FC = () => {
             <div className="flex items-center justify-between p-3 bg-success/10 rounded-lg">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-success rounded-full mr-3"></div>
-                <span className="text-sm font-medium text-success">{t('system.databaseConnection')}</span>
+                <span className="text-sm font-medium text-success">
+                  {t('system.databaseConnection')}
+                </span>
               </div>
               <span className="text-sm text-success/80">{t('system.healthy')}</span>
             </div>
-            
+
             <div className="flex items-center justify-between p-3 bg-success/10 rounded-lg">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-success rounded-full mr-3"></div>
@@ -336,11 +345,13 @@ const AdminDashboard: React.FC = () => {
               </div>
               <span className="text-sm text-success/80">{t('system.operational')}</span>
             </div>
-            
+
             <div className="flex items-center justify-between p-3 bg-info/10 rounded-lg">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-info rounded-full mr-3"></div>
-                <span className="text-sm font-medium text-info">{t('system.emergencyAccessCleanup')}</span>
+                <span className="text-sm font-medium text-info">
+                  {t('system.emergencyAccessCleanup')}
+                </span>
               </div>
               <span className="text-sm text-info/80">{t('system.running')}</span>
             </div>

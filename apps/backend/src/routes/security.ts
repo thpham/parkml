@@ -6,10 +6,7 @@ import { ApiResponse } from '@parkml/shared';
 import { authenticator } from '@otplib/preset-default';
 import QRCode from 'qrcode';
 import crypto from 'crypto';
-import {
-  generateRegistrationOptions,
-  verifyRegistrationResponse,
-} from '@simplewebauthn/server';
+import { generateRegistrationOptions, verifyRegistrationResponse } from '@simplewebauthn/server';
 
 // Debug TOTP configuration on startup
 
@@ -22,14 +19,17 @@ interface ChallengeData {
 const challengeStore = new Map<string, ChallengeData>();
 
 // Clean up expired challenges every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [userId, data] of challengeStore.entries()) {
-    if (data.expiresAt < now) {
-      challengeStore.delete(userId);
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [userId, data] of challengeStore.entries()) {
+      if (data.expiresAt < now) {
+        challengeStore.delete(userId);
+      }
     }
-  }
-}, 5 * 60 * 1000);
+  },
+  5 * 60 * 1000
+);
 
 // Extended AuthenticatedRequest with session support
 interface AuthenticatedRequestWithSession extends AuthenticatedRequest {
@@ -45,20 +45,20 @@ export async function cleanup2FASetups() {
   try {
     const SETUP_EXPIRY_SECONDS = 60;
     const expiryTime = new Date(Date.now() - SETUP_EXPIRY_SECONDS * 1000);
-    
+
     const expiredSetups = await prisma.twoFactorAuth.deleteMany({
       where: {
         isEnabled: false,
         createdAt: {
-          lt: expiryTime
-        }
-      }
+          lt: expiryTime,
+        },
+      },
     });
-    
+
     if (expiredSetups.count > 0) {
       // Cleanup completed
     }
-    
+
     return expiredSetups.count;
   } catch (error) {
     console.error('Error cleaning up expired 2FA setups:', error);
@@ -90,8 +90,8 @@ router.get('/2fa/status', authenticateToken, async (req: AuthenticatedRequest, r
       select: {
         isEnabled: true,
         setupCompletedAt: true,
-        lastUsedAt: true
-      }
+        lastUsedAt: true,
+      },
     });
 
     res.json({
@@ -99,10 +99,9 @@ router.get('/2fa/status', authenticateToken, async (req: AuthenticatedRequest, r
       data: {
         isEnabled: twoFactorAuth?.isEnabled || false,
         setupCompletedAt: twoFactorAuth?.setupCompletedAt,
-        lastUsedAt: twoFactorAuth?.lastUsedAt
-      }
+        lastUsedAt: twoFactorAuth?.lastUsedAt,
+      },
     } as ApiResponse);
-
   } catch (error) {
     console.error('2FA status check error:', error);
     res.status(500).json({
@@ -124,7 +123,7 @@ router.post('/2fa/setup', authenticateToken, async (req: AuthenticatedRequest, r
 
     // Check if 2FA is already enabled
     const existingTwoFactor = await prisma.twoFactorAuth.findUnique({
-      where: { userId: req.user.userId }
+      where: { userId: req.user.userId },
     });
 
     if (existingTwoFactor?.isEnabled) {
@@ -140,15 +139,13 @@ router.post('/2fa/setup', authenticateToken, async (req: AuthenticatedRequest, r
       const SETUP_EXPIRY_SECONDS = 60;
       const setupAge = Date.now() - existingTwoFactor.createdAt.getTime();
       const setupAgeSeconds = setupAge / 1000;
-      
-      
+
       if (setupAgeSeconds > SETUP_EXPIRY_SECONDS) {
-        
         // Delete expired setup (use deleteMany to avoid error if record doesn't exist)
         await prisma.twoFactorAuth.deleteMany({
-          where: { userId: req.user.userId }
+          where: { userId: req.user.userId },
         });
-        
+
         // Log security event
         await prisma.securityAuditLog.create({
           data: {
@@ -160,26 +157,25 @@ router.post('/2fa/setup', authenticateToken, async (req: AuthenticatedRequest, r
             userAgent: req.get('User-Agent') || 'Unknown',
             status: 'success',
             riskLevel: 'low',
-            details: JSON.stringify({ expiredAfterSeconds: setupAgeSeconds.toFixed(1) })
-          }
+            details: JSON.stringify({ expiredAfterSeconds: setupAgeSeconds.toFixed(1) }),
+          },
         });
-        
+
         // Continue to create new setup below
       } else {
-        
         // Parse existing backup codes
         const backupCodes = JSON.parse(existingTwoFactor.backupCodes || '[]');
-        
+
         // Recreate TOTP URL from existing secret
         const user = await prisma.user.findUnique({
           where: { id: req.user.userId },
-          select: { email: true }
+          select: { email: true },
         });
-        
+
         const issuer = 'ParkML';
         const label = `${issuer}:${user?.email}`;
         const totpUrl = `otpauth://totp/${encodeURIComponent(label)}?secret=${existingTwoFactor.secret}&issuer=${encodeURIComponent(issuer)}`;
-        
+
         return res.json({
           success: true,
           data: {
@@ -187,8 +183,8 @@ router.post('/2fa/setup', authenticateToken, async (req: AuthenticatedRequest, r
             qrCodeUrl: totpUrl,
             qrCodeDataUrl: existingTwoFactor.qrCodeUrl || '',
             backupCodes,
-            manualEntryKey: existingTwoFactor.secret
-          }
+            manualEntryKey: existingTwoFactor.secret,
+          },
         } as ApiResponse);
       }
     }
@@ -196,7 +192,7 @@ router.post('/2fa/setup', authenticateToken, async (req: AuthenticatedRequest, r
     // Get user info for QR code
     const user = await prisma.user.findUnique({
       where: { id: req.user.userId },
-      select: { email: true, name: true }
+      select: { email: true, name: true },
     });
 
     if (!user) {
@@ -208,7 +204,7 @@ router.post('/2fa/setup', authenticateToken, async (req: AuthenticatedRequest, r
 
     // Generate TOTP secret
     const secret = authenticator.generateSecret();
-    
+
     // Create TOTP URL for QR code
     const issuer = 'ParkML';
     const label = `${issuer}:${user.email}`;
@@ -216,10 +212,9 @@ router.post('/2fa/setup', authenticateToken, async (req: AuthenticatedRequest, r
 
     // Generate QR code
     const qrCodeDataUrl = await QRCode.toDataURL(totpUrl);
-    
 
     // Generate backup codes
-    const backupCodes = Array.from({ length: 8 }, () => 
+    const backupCodes = Array.from({ length: 8 }, () =>
       crypto.randomBytes(4).toString('hex').toUpperCase()
     );
 
@@ -231,15 +226,15 @@ router.post('/2fa/setup', authenticateToken, async (req: AuthenticatedRequest, r
         qrCodeUrl: qrCodeDataUrl,
         backupCodes: JSON.stringify(backupCodes),
         isEnabled: false,
-        setupCompletedAt: null
+        setupCompletedAt: null,
       },
       create: {
         userId: req.user.userId,
         secret,
         qrCodeUrl: qrCodeDataUrl,
         backupCodes: JSON.stringify(backupCodes),
-        isEnabled: false
-      }
+        isEnabled: false,
+      },
     });
 
     // Log security audit
@@ -252,8 +247,8 @@ router.post('/2fa/setup', authenticateToken, async (req: AuthenticatedRequest, r
         ipAddress: req.ip,
         userAgent: req.get('User-Agent') || 'Unknown',
         status: 'success',
-        riskLevel: 'low'
-      }
+        riskLevel: 'low',
+      },
     });
 
     res.json({
@@ -263,27 +258,26 @@ router.post('/2fa/setup', authenticateToken, async (req: AuthenticatedRequest, r
         qrCodeUrl: totpUrl,
         qrCodeDataUrl: qrCodeDataUrl,
         backupCodes,
-        manualEntryKey: secret
-      }
+        manualEntryKey: secret,
+      },
     } as ApiResponse);
-
   } catch (error) {
     console.error('2FA setup error:', error);
-    
+
     // If there's an error, try to clean up any incomplete setup and let user restart
     if (req.user) {
       try {
         await prisma.twoFactorAuth.deleteMany({
-          where: { 
+          where: {
             userId: req.user.userId,
-            isEnabled: false 
-          }
+            isEnabled: false,
+          },
         });
       } catch (cleanupError) {
         console.error('Error during cleanup:', cleanupError);
       }
     }
-    
+
     res.status(500).json({
       success: false,
       error: 'Failed to initialize 2FA setup. Please try again.',
@@ -303,12 +297,11 @@ router.delete('/2fa/setup', authenticateToken, async (req: AuthenticatedRequest,
 
     // Delete any incomplete 2FA setup
     const deletedSetup = await prisma.twoFactorAuth.deleteMany({
-      where: { 
+      where: {
         userId: req.user.userId,
-        isEnabled: false 
-      }
+        isEnabled: false,
+      },
     });
-
 
     // Log security event
     await prisma.securityAuditLog.create({
@@ -321,18 +314,17 @@ router.delete('/2fa/setup', authenticateToken, async (req: AuthenticatedRequest,
         userAgent: req.get('User-Agent') || 'Unknown',
         status: 'success',
         riskLevel: 'low',
-        details: JSON.stringify({ deletedCount: deletedSetup.count })
-      }
+        details: JSON.stringify({ deletedCount: deletedSetup.count }),
+      },
     });
 
     res.json({
       success: true,
       data: {
         message: 'Incomplete 2FA setup cleaned up successfully',
-        deletedCount: deletedSetup.count
-      }
+        deletedCount: deletedSetup.count,
+      },
     } as ApiResponse);
-
   } catch (error) {
     console.error('2FA cleanup error:', error);
     res.status(500).json({
@@ -354,7 +346,6 @@ router.post('/2fa/verify', authenticateToken, async (req: AuthenticatedRequest, 
 
     const { token } = req.body;
 
-
     if (!token) {
       return res.status(400).json({
         success: false,
@@ -364,7 +355,7 @@ router.post('/2fa/verify', authenticateToken, async (req: AuthenticatedRequest, 
 
     // Get 2FA setup
     const twoFactorAuth = await prisma.twoFactorAuth.findUnique({
-      where: { userId: req.user.userId }
+      where: { userId: req.user.userId },
     });
 
     if (!twoFactorAuth) {
@@ -379,14 +370,13 @@ router.post('/2fa/verify', authenticateToken, async (req: AuthenticatedRequest, 
       const SETUP_EXPIRY_SECONDS = 60;
       const setupAge = Date.now() - twoFactorAuth.updatedAt.getTime();
       const setupAgeSeconds = setupAge / 1000;
-      
+
       if (setupAgeSeconds > SETUP_EXPIRY_SECONDS) {
-        
         // Delete expired setup (use deleteMany to avoid error if record doesn't exist)
         await prisma.twoFactorAuth.deleteMany({
-          where: { userId: req.user.userId }
+          where: { userId: req.user.userId },
         });
-        
+
         // Log security event
         await prisma.securityAuditLog.create({
           data: {
@@ -398,10 +388,10 @@ router.post('/2fa/verify', authenticateToken, async (req: AuthenticatedRequest, 
             userAgent: req.get('User-Agent') || 'Unknown',
             status: 'failed',
             riskLevel: 'medium',
-            details: JSON.stringify({ expiredAfterSeconds: setupAgeSeconds.toFixed(1) })
-          }
+            details: JSON.stringify({ expiredAfterSeconds: setupAgeSeconds.toFixed(1) }),
+          },
         });
-        
+
         return res.status(400).json({
           success: false,
           error: 'Setup expired. Please restart the 2FA setup process.',
@@ -420,17 +410,17 @@ router.post('/2fa/verify', authenticateToken, async (req: AuthenticatedRequest, 
     // Create a temporary authenticator instance with window tolerance
     const tempAuth = authenticator.clone();
     tempAuth.options = { ...tempAuth.options, window: 2 };
-    
-    const isValid = tempAuth.verify({ 
-      token, 
-      secret: twoFactorAuth.secret
+
+    const isValid = tempAuth.verify({
+      token,
+      secret: twoFactorAuth.secret,
     });
 
     if (!isValid) {
       // Increment failed attempts
       await prisma.twoFactorAuth.update({
         where: { userId: req.user.userId },
-        data: { failedAttempts: { increment: 1 } }
+        data: { failedAttempts: { increment: 1 } },
       });
 
       // Log failed verification
@@ -443,8 +433,8 @@ router.post('/2fa/verify', authenticateToken, async (req: AuthenticatedRequest, 
           ipAddress: req.ip,
           userAgent: req.get('User-Agent') || 'Unknown',
           status: 'failed',
-          riskLevel: 'medium'
-        }
+          riskLevel: 'medium',
+        },
       });
 
       return res.status(400).json({
@@ -461,15 +451,15 @@ router.post('/2fa/verify', authenticateToken, async (req: AuthenticatedRequest, 
           isEnabled: true,
           setupCompletedAt: new Date(),
           lastUsedAt: new Date(),
-          failedAttempts: 0
-        }
+          failedAttempts: 0,
+        },
       }),
       // Update user security score
       prisma.user.update({
         where: { id: req.user.userId },
         data: {
-          securityScore: { increment: 15 } // Boost for enabling 2FA
-        }
+          securityScore: { increment: 15 }, // Boost for enabling 2FA
+        },
       }),
       // Log successful enablement
       prisma.securityAuditLog.create({
@@ -481,26 +471,27 @@ router.post('/2fa/verify', authenticateToken, async (req: AuthenticatedRequest, 
           ipAddress: req.ip,
           userAgent: req.get('User-Agent') || 'Unknown',
           status: 'success',
-          riskLevel: 'low'
-        }
-      })
+          riskLevel: 'low',
+        },
+      }),
     ]);
 
     // Get the updated 2FA setup with backup codes to return to frontend
     const updatedTwoFactorAuth = await prisma.twoFactorAuth.findUnique({
-      where: { userId: req.user.userId }
+      where: { userId: req.user.userId },
     });
 
-    const backupCodes = updatedTwoFactorAuth?.backupCodes ? JSON.parse(updatedTwoFactorAuth.backupCodes) : [];
+    const backupCodes = updatedTwoFactorAuth?.backupCodes
+      ? JSON.parse(updatedTwoFactorAuth.backupCodes)
+      : [];
 
     res.json({
       success: true,
       data: {
         message: '2FA enabled successfully',
-        backupCodes // Include backup codes in response so frontend can display them immediately
-      }
+        backupCodes, // Include backup codes in response so frontend can display them immediately
+      },
     } as ApiResponse);
-
   } catch (error) {
     console.error('2FA verification error:', error);
     res.status(500).json({
@@ -531,7 +522,7 @@ router.post('/2fa/disable', authenticateToken, async (req: AuthenticatedRequest,
 
     // Get 2FA setup
     const twoFactorAuth = await prisma.twoFactorAuth.findUnique({
-      where: { userId: req.user.userId }
+      where: { userId: req.user.userId },
     });
 
     if (!twoFactorAuth?.isEnabled) {
@@ -552,16 +543,17 @@ router.post('/2fa/disable', authenticateToken, async (req: AuthenticatedRequest,
       // Verify backup code
       const backupCodes = JSON.parse(twoFactorAuth.backupCodes || '[]');
       const usedCodes = JSON.parse(twoFactorAuth.recoveryCodesUsed || '[]');
-      
-      isValid = backupCodes.includes(backupCode.toUpperCase()) && 
-                !usedCodes.includes(backupCode.toUpperCase());
-      
+
+      isValid =
+        backupCodes.includes(backupCode.toUpperCase()) &&
+        !usedCodes.includes(backupCode.toUpperCase());
+
       if (isValid) {
         // Mark backup code as used
         usedCodes.push(backupCode.toUpperCase());
         await prisma.twoFactorAuth.update({
           where: { userId: req.user.userId },
-          data: { recoveryCodesUsed: JSON.stringify(usedCodes) }
+          data: { recoveryCodesUsed: JSON.stringify(usedCodes) },
         });
       }
     }
@@ -577,8 +569,8 @@ router.post('/2fa/disable', authenticateToken, async (req: AuthenticatedRequest,
           ipAddress: req.ip,
           userAgent: req.get('User-Agent') || 'Unknown',
           status: 'failed',
-          riskLevel: 'high'
-        }
+          riskLevel: 'high',
+        },
       });
 
       return res.status(400).json({
@@ -591,23 +583,23 @@ router.post('/2fa/disable', authenticateToken, async (req: AuthenticatedRequest,
     await prisma.$transaction([
       prisma.twoFactorAuth.update({
         where: { userId: req.user.userId },
-        data: { 
+        data: {
           isEnabled: false,
-          secret: '',                // Clear TOTP secret
-          backupCodes: null,         // Clear backup codes
-          recoveryCodesUsed: '[]',   // Reset used codes tracking
-          lastUsedAt: null,          // Clear usage tracking
-          qrCodeUrl: null,           // Clear QR code
-          setupCompletedAt: null,    // Clear setup timestamp
-          failedAttempts: 0          // Reset failed attempts
-        }
+          secret: '', // Clear TOTP secret
+          backupCodes: null, // Clear backup codes
+          recoveryCodesUsed: '[]', // Reset used codes tracking
+          lastUsedAt: null, // Clear usage tracking
+          qrCodeUrl: null, // Clear QR code
+          setupCompletedAt: null, // Clear setup timestamp
+          failedAttempts: 0, // Reset failed attempts
+        },
       }),
       // Update user security score
       prisma.user.update({
         where: { id: req.user.userId },
         data: {
-          securityScore: { decrement: 15 } // Penalty for disabling 2FA
-        }
+          securityScore: { decrement: 15 }, // Penalty for disabling 2FA
+        },
       }),
       // Log successful disablement
       prisma.securityAuditLog.create({
@@ -619,18 +611,17 @@ router.post('/2fa/disable', authenticateToken, async (req: AuthenticatedRequest,
           ipAddress: req.ip,
           userAgent: req.get('User-Agent') || 'Unknown',
           status: 'success',
-          riskLevel: 'medium'
-        }
-      })
+          riskLevel: 'medium',
+        },
+      }),
     ]);
 
     res.json({
       success: true,
       data: {
-        message: '2FA disabled successfully'
-      }
+        message: '2FA disabled successfully',
+      },
     } as ApiResponse);
-
   } catch (error) {
     console.error('2FA disable error:', error);
     res.status(500).json({
@@ -641,318 +632,330 @@ router.post('/2fa/disable', authenticateToken, async (req: AuthenticatedRequest,
 });
 
 // Regenerate backup codes
-router.post('/2fa/backup-codes/regenerate', authenticateToken, async (req: AuthenticatedRequest, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'User not authenticated',
-      } as ApiResponse);
-    }
-
-    const { token } = req.body;
-
-    if (!token) {
-      return res.status(400).json({
-        success: false,
-        error: 'Verification token is required',
-      } as ApiResponse);
-    }
-
-    // Get 2FA setup
-    const twoFactorAuth = await prisma.twoFactorAuth.findUnique({
-      where: { userId: req.user.userId }
-    });
-
-    if (!twoFactorAuth?.isEnabled) {
-      return res.status(400).json({
-        success: false,
-        error: '2FA is not enabled',
-      } as ApiResponse);
-    }
-
-    // Verify TOTP token with time window tolerance
-    const tempAuth = authenticator.clone();
-    tempAuth.options = { ...tempAuth.options, window: 2 };
-    const isValid = tempAuth.verify({ token, secret: twoFactorAuth.secret });
-
-    if (!isValid) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid verification code',
-      } as ApiResponse);
-    }
-
-    // Generate new backup codes
-    const newBackupCodes = Array.from({ length: 8 }, () => 
-      crypto.randomBytes(4).toString('hex').toUpperCase()
-    );
-
-    // Update backup codes
-    await prisma.$transaction([
-      prisma.twoFactorAuth.update({
-        where: { userId: req.user.userId },
-        data: {
-          backupCodes: JSON.stringify(newBackupCodes),
-          recoveryCodesUsed: '[]' // Reset used codes
-        }
-      }),
-      // Log backup codes regeneration
-      prisma.securityAuditLog.create({
-        data: {
-          userId: req.user.userId,
-          action: '2fa_backup_codes_regenerated',
-          resourceType: '2fa',
-          resourceId: req.user.userId,
-          ipAddress: req.ip,
-          userAgent: req.get('User-Agent') || 'Unknown',
-          status: 'success',
-          riskLevel: 'low'
-        }
-      })
-    ]);
-
-    res.json({
-      success: true,
-      data: {
-        backupCodes: newBackupCodes
+router.post(
+  '/2fa/backup-codes/regenerate',
+  authenticateToken,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not authenticated',
+        } as ApiResponse);
       }
-    } as ApiResponse);
 
-  } catch (error) {
-    console.error('Backup codes regeneration error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error',
-    } as ApiResponse);
+      const { token } = req.body;
+
+      if (!token) {
+        return res.status(400).json({
+          success: false,
+          error: 'Verification token is required',
+        } as ApiResponse);
+      }
+
+      // Get 2FA setup
+      const twoFactorAuth = await prisma.twoFactorAuth.findUnique({
+        where: { userId: req.user.userId },
+      });
+
+      if (!twoFactorAuth?.isEnabled) {
+        return res.status(400).json({
+          success: false,
+          error: '2FA is not enabled',
+        } as ApiResponse);
+      }
+
+      // Verify TOTP token with time window tolerance
+      const tempAuth = authenticator.clone();
+      tempAuth.options = { ...tempAuth.options, window: 2 };
+      const isValid = tempAuth.verify({ token, secret: twoFactorAuth.secret });
+
+      if (!isValid) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid verification code',
+        } as ApiResponse);
+      }
+
+      // Generate new backup codes
+      const newBackupCodes = Array.from({ length: 8 }, () =>
+        crypto.randomBytes(4).toString('hex').toUpperCase()
+      );
+
+      // Update backup codes
+      await prisma.$transaction([
+        prisma.twoFactorAuth.update({
+          where: { userId: req.user.userId },
+          data: {
+            backupCodes: JSON.stringify(newBackupCodes),
+            recoveryCodesUsed: '[]', // Reset used codes
+          },
+        }),
+        // Log backup codes regeneration
+        prisma.securityAuditLog.create({
+          data: {
+            userId: req.user.userId,
+            action: '2fa_backup_codes_regenerated',
+            resourceType: '2fa',
+            resourceId: req.user.userId,
+            ipAddress: req.ip,
+            userAgent: req.get('User-Agent') || 'Unknown',
+            status: 'success',
+            riskLevel: 'low',
+          },
+        }),
+      ]);
+
+      res.json({
+        success: true,
+        data: {
+          backupCodes: newBackupCodes,
+        },
+      } as ApiResponse);
+    } catch (error) {
+      console.error('Backup codes regeneration error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+      } as ApiResponse);
+    }
   }
-});
+);
 
 // Check backup codes status (without returning actual codes)
-router.get('/2fa/backup-codes/status', authenticateToken, async (req: AuthenticatedRequest, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'User not authenticated',
-      } as ApiResponse);
-    }
-
-    // Get 2FA setup
-    const twoFactorAuth = await prisma.twoFactorAuth.findUnique({
-      where: { userId: req.user.userId }
-    });
-
-    if (!twoFactorAuth?.isEnabled) {
-      return res.status(400).json({
-        success: false,
-        error: '2FA is not enabled',
-      } as ApiResponse);
-    }
-
-    // Parse backup codes to check if any exist
-    const backupCodes = JSON.parse(twoFactorAuth.backupCodes || '[]');
-    const hasBackupCodes = Array.isArray(backupCodes) && backupCodes.length > 0;
-
-    return res.json({
-      success: true,
-      data: {
-        hasBackupCodes,
-        codesCount: hasBackupCodes ? backupCodes.length : 0
+router.get(
+  '/2fa/backup-codes/status',
+  authenticateToken,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not authenticated',
+        } as ApiResponse);
       }
-    } as ApiResponse);
 
-  } catch (error) {
-    console.error('Backup codes status check error:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Internal server error',
-    } as ApiResponse);
+      // Get 2FA setup
+      const twoFactorAuth = await prisma.twoFactorAuth.findUnique({
+        where: { userId: req.user.userId },
+      });
+
+      if (!twoFactorAuth?.isEnabled) {
+        return res.status(400).json({
+          success: false,
+          error: '2FA is not enabled',
+        } as ApiResponse);
+      }
+
+      // Parse backup codes to check if any exist
+      const backupCodes = JSON.parse(twoFactorAuth.backupCodes || '[]');
+      const hasBackupCodes = Array.isArray(backupCodes) && backupCodes.length > 0;
+
+      return res.json({
+        success: true,
+        data: {
+          hasBackupCodes,
+          codesCount: hasBackupCodes ? backupCodes.length : 0,
+        },
+      } as ApiResponse);
+    } catch (error) {
+      console.error('Backup codes status check error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+      } as ApiResponse);
+    }
   }
-});
+);
 
 // =====================================
 // Passkey (WebAuthn) Routes
 // =====================================
 
 // Generate registration options for new passkey
-router.post('/passkeys/register/begin', authenticateToken, async (req: AuthenticatedRequestWithSession, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'User not authenticated',
-      } as ApiResponse);
-    }
-
-    // Get user info
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.userId },
-      include: {
-        passkeys: {
-          where: { isActive: true },
-          select: { credentialId: true }
-        }
+router.post(
+  '/passkeys/register/begin',
+  authenticateToken,
+  async (req: AuthenticatedRequestWithSession, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not authenticated',
+        } as ApiResponse);
       }
-    });
 
-    if (!user) {
-      return res.status(404).json({
+      // Get user info
+      const user = await prisma.user.findUnique({
+        where: { id: req.user.userId },
+        include: {
+          passkeys: {
+            where: { isActive: true },
+            select: { credentialId: true },
+          },
+        },
+      });
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found',
+        } as ApiResponse);
+      }
+
+      // Generate registration options
+      const options = await generateRegistrationOptions({
+        rpName,
+        rpID,
+        userID: new TextEncoder().encode(user.id),
+        userName: user.email,
+        userDisplayName: user.name || user.email,
+        attestationType: 'none',
+        excludeCredentials: user.passkeys.map(passkey => ({
+          id: passkey.credentialId,
+          transports: ['usb', 'ble', 'nfc', 'internal'] as const,
+        })),
+        authenticatorSelection: {
+          residentKey: 'preferred',
+          userVerification: 'preferred',
+        },
+      });
+
+      // Store challenge in temporary storage with TTL (5 minutes)
+      const challengeData: ChallengeData = {
+        challenge: options.challenge,
+        expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
+      };
+      challengeStore.set(req.user.userId, challengeData);
+
+      res.json({
+        success: true,
+        data: options,
+      } as ApiResponse);
+    } catch (error) {
+      console.error('Passkey registration begin error:', error);
+      res.status(500).json({
         success: false,
-        error: 'User not found',
+        error: 'Internal server error',
       } as ApiResponse);
     }
-
-    // Generate registration options
-    const options = await generateRegistrationOptions({
-      rpName,
-      rpID,
-      userID: new TextEncoder().encode(user.id),
-      userName: user.email,
-      userDisplayName: user.name || user.email,
-      attestationType: 'none',
-      excludeCredentials: user.passkeys.map(passkey => ({
-        id: passkey.credentialId,
-        transports: ['usb', 'ble', 'nfc', 'internal'] as const,
-      })),
-      authenticatorSelection: {
-        residentKey: 'preferred',
-        userVerification: 'preferred',
-      },
-    });
-
-    // Store challenge in temporary storage with TTL (5 minutes)
-    const challengeData: ChallengeData = {
-      challenge: options.challenge,
-      expiresAt: Date.now() + (5 * 60 * 1000) // 5 minutes
-    };
-    challengeStore.set(req.user.userId, challengeData);
-
-    res.json({
-      success: true,
-      data: options
-    } as ApiResponse);
-
-  } catch (error) {
-    console.error('Passkey registration begin error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error',
-    } as ApiResponse);
   }
-});
+);
 
 // Complete passkey registration
-router.post('/passkeys/register/complete', authenticateToken, async (req: AuthenticatedRequestWithSession, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'User not authenticated',
-      } as ApiResponse);
-    }
-
-    const { deviceName, attestationResponse } = req.body;
-
-    if (!deviceName || !attestationResponse) {
-      return res.status(400).json({
-        success: false,
-        error: 'Device name and attestation response are required',
-      } as ApiResponse);
-    }
-
-    // Get stored challenge from challengeStore
-    const challengeData = challengeStore.get(req.user.userId);
-    if (!challengeData) {
-      return res.status(400).json({
-        success: false,
-        error: 'No challenge found. Please restart registration.',
-      } as ApiResponse);
-    }
-
-    // Check if challenge has expired
-    if (challengeData.expiresAt < Date.now()) {
-      challengeStore.delete(req.user.userId);
-      return res.status(400).json({
-        success: false,
-        error: 'Challenge expired. Please restart registration.',
-      } as ApiResponse);
-    }
-
-    const expectedChallenge = challengeData.challenge;
-
-    // Verify registration response
-    const verification = await verifyRegistrationResponse({
-      response: attestationResponse,
-      expectedChallenge,
-      expectedOrigin: origin,
-      expectedRPID: rpID,
-    });
-
-    if (!verification.verified || !verification.registrationInfo) {
-      return res.status(400).json({
-        success: false,
-        error: 'Passkey registration verification failed',
-      } as ApiResponse);
-    }
-
-    const { credential } = verification.registrationInfo;
-
-    // Save passkey to database
-    await prisma.$transaction([
-      prisma.passkey.create({
-        data: {
-          userId: req.user.userId,
-          credentialId: credential.id,
-          publicKey: Buffer.from(credential.publicKey).toString('base64'),
-          deviceName,
-          counter: credential.counter,
-          deviceType: 'unknown', // Could be detected from user agent
-          transports: JSON.stringify(['usb', 'ble', 'nfc', 'internal']),
-        }
-      }),
-      // Update user security score
-      prisma.user.update({
-        where: { id: req.user.userId },
-        data: {
-          securityScore: { increment: 10 } // Boost for adding passkey
-        }
-      }),
-      // Log passkey addition
-      prisma.securityAuditLog.create({
-        data: {
-          userId: req.user.userId,
-          action: 'passkey_added',
-          resourceType: 'passkey',
-          resourceId: credential.id,
-          ipAddress: req.ip,
-          userAgent: req.get('User-Agent') || 'Unknown',
-          status: 'success',
-          riskLevel: 'low',
-          details: JSON.stringify({ deviceName })
-        }
-      })
-    ]);
-
-    // Clear challenge from storage
-    challengeStore.delete(req.user.userId);
-
-    res.json({
-      success: true,
-      data: {
-        message: 'Passkey registered successfully',
-        deviceName
+router.post(
+  '/passkeys/register/complete',
+  authenticateToken,
+  async (req: AuthenticatedRequestWithSession, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not authenticated',
+        } as ApiResponse);
       }
-    } as ApiResponse);
 
-  } catch (error) {
-    console.error('Passkey registration complete error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error',
-    } as ApiResponse);
+      const { deviceName, attestationResponse } = req.body;
+
+      if (!deviceName || !attestationResponse) {
+        return res.status(400).json({
+          success: false,
+          error: 'Device name and attestation response are required',
+        } as ApiResponse);
+      }
+
+      // Get stored challenge from challengeStore
+      const challengeData = challengeStore.get(req.user.userId);
+      if (!challengeData) {
+        return res.status(400).json({
+          success: false,
+          error: 'No challenge found. Please restart registration.',
+        } as ApiResponse);
+      }
+
+      // Check if challenge has expired
+      if (challengeData.expiresAt < Date.now()) {
+        challengeStore.delete(req.user.userId);
+        return res.status(400).json({
+          success: false,
+          error: 'Challenge expired. Please restart registration.',
+        } as ApiResponse);
+      }
+
+      const expectedChallenge = challengeData.challenge;
+
+      // Verify registration response
+      const verification = await verifyRegistrationResponse({
+        response: attestationResponse,
+        expectedChallenge,
+        expectedOrigin: origin,
+        expectedRPID: rpID,
+      });
+
+      if (!verification.verified || !verification.registrationInfo) {
+        return res.status(400).json({
+          success: false,
+          error: 'Passkey registration verification failed',
+        } as ApiResponse);
+      }
+
+      const { credential } = verification.registrationInfo;
+
+      // Save passkey to database
+      await prisma.$transaction([
+        prisma.passkey.create({
+          data: {
+            userId: req.user.userId,
+            credentialId: credential.id,
+            publicKey: Buffer.from(credential.publicKey).toString('base64'),
+            deviceName,
+            counter: credential.counter,
+            deviceType: 'unknown', // Could be detected from user agent
+            transports: JSON.stringify(['usb', 'ble', 'nfc', 'internal']),
+          },
+        }),
+        // Update user security score
+        prisma.user.update({
+          where: { id: req.user.userId },
+          data: {
+            securityScore: { increment: 10 }, // Boost for adding passkey
+          },
+        }),
+        // Log passkey addition
+        prisma.securityAuditLog.create({
+          data: {
+            userId: req.user.userId,
+            action: 'passkey_added',
+            resourceType: 'passkey',
+            resourceId: credential.id,
+            ipAddress: req.ip,
+            userAgent: req.get('User-Agent') || 'Unknown',
+            status: 'success',
+            riskLevel: 'low',
+            details: JSON.stringify({ deviceName }),
+          },
+        }),
+      ]);
+
+      // Clear challenge from storage
+      challengeStore.delete(req.user.userId);
+
+      res.json({
+        success: true,
+        data: {
+          message: 'Passkey registered successfully',
+          deviceName,
+        },
+      } as ApiResponse);
+    } catch (error) {
+      console.error('Passkey registration complete error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+      } as ApiResponse);
+    }
   }
-});
+);
 
 // Get user's passkeys
 router.get('/passkeys', authenticateToken, async (req: AuthenticatedRequest, res) => {
@@ -965,9 +968,9 @@ router.get('/passkeys', authenticateToken, async (req: AuthenticatedRequest, res
     }
 
     const passkeys = await prisma.passkey.findMany({
-      where: { 
+      where: {
         userId: req.user.userId,
-        isActive: true 
+        isActive: true,
       },
       select: {
         id: true,
@@ -978,16 +981,15 @@ router.get('/passkeys', authenticateToken, async (req: AuthenticatedRequest, res
         lastUsedAt: true,
         isBackupEligible: true,
         isBackupDevice: true,
-        isActive: true
+        isActive: true,
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
 
     res.json({
       success: true,
-      data: { passkeys }
+      data: { passkeys },
     } as ApiResponse);
-
   } catch (error) {
     console.error('Get passkeys error:', error);
     res.status(500).json({
@@ -1014,8 +1016,8 @@ router.delete('/passkeys/:passkeyId', authenticateToken, async (req: Authenticat
       where: {
         id: passkeyId,
         userId: req.user.userId,
-        isActive: true
-      }
+        isActive: true,
+      },
     });
 
     if (!passkey) {
@@ -1029,14 +1031,14 @@ router.delete('/passkeys/:passkeyId', authenticateToken, async (req: Authenticat
     await prisma.$transaction([
       prisma.passkey.update({
         where: { id: passkeyId },
-        data: { isActive: false }
+        data: { isActive: false },
       }),
       // Update user security score
       prisma.user.update({
         where: { id: req.user.userId },
         data: {
-          securityScore: { decrement: 5 } // Small penalty for removing passkey
-        }
+          securityScore: { decrement: 5 }, // Small penalty for removing passkey
+        },
       }),
       // Log passkey removal
       prisma.securityAuditLog.create({
@@ -1049,18 +1051,17 @@ router.delete('/passkeys/:passkeyId', authenticateToken, async (req: Authenticat
           userAgent: req.get('User-Agent') || 'Unknown',
           status: 'success',
           riskLevel: 'low',
-          details: JSON.stringify({ deviceName: passkey.deviceName })
-        }
-      })
+          details: JSON.stringify({ deviceName: passkey.deviceName }),
+        },
+      }),
     ]);
 
     res.json({
       success: true,
       data: {
-        message: 'Passkey removed successfully'
-      }
+        message: 'Passkey removed successfully',
+      },
     } as ApiResponse);
-
   } catch (error) {
     console.error('Delete passkey error:', error);
     res.status(500).json({
@@ -1093,19 +1094,19 @@ router.get('/status', authenticateToken, async (req: AuthenticatedRequest, res) 
           passwordChangedAt: true,
           passwordHistory: {
             orderBy: { createdAt: 'desc' },
-            take: 1
-          }
-        }
+            take: 1,
+          },
+        },
       }),
       prisma.twoFactorAuth.findUnique({
         where: { userId: req.user.userId },
-        select: { isEnabled: true }
+        select: { isEnabled: true },
       }),
       prisma.passkey.count({
-        where: { 
+        where: {
           userId: req.user.userId,
-          isActive: true 
-        }
+          isActive: true,
+        },
       }),
       prisma.securityAuditLog.count({
         where: {
@@ -1113,19 +1114,19 @@ router.get('/status', authenticateToken, async (req: AuthenticatedRequest, res) 
           action: 'login',
           status: 'success',
           timestamp: {
-            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
-          }
-        }
+            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+          },
+        },
       }),
       prisma.securityAuditLog.count({
         where: {
           userId: req.user.userId,
           action: 'failed_login',
           timestamp: {
-            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
-          }
-        }
-      })
+            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+          },
+        },
+      }),
     ]);
 
     // Calculate password strength (simplified)
@@ -1136,7 +1137,8 @@ router.get('/status', authenticateToken, async (req: AuthenticatedRequest, res) 
     }
 
     // Get last password change
-    const lastPasswordChange = user?.passwordChangedAt || user?.passwordHistory[0]?.createdAt || null;
+    const lastPasswordChange =
+      user?.passwordChangedAt || user?.passwordHistory[0]?.createdAt || null;
 
     res.json({
       success: true,
@@ -1147,10 +1149,9 @@ router.get('/status', authenticateToken, async (req: AuthenticatedRequest, res) 
         lastPasswordChange,
         recentLoginAttempts: failedAttempts,
         recentSuccessfulLogins: recentLogins,
-        securityScore: user?.securityScore || 65
-      }
+        securityScore: user?.securityScore || 65,
+      },
     } as ApiResponse);
-
   } catch (error) {
     console.error('Security status error:', error);
     res.status(500).json({
@@ -1174,15 +1175,7 @@ router.get('/audit-logs', authenticateToken, async (req: AuthenticatedRequest, r
       } as ApiResponse);
     }
 
-    const { 
-      page = 1, 
-      limit = 50, 
-      action,
-      riskLevel,
-      startDate,
-      endDate,
-      search 
-    } = req.query;
+    const { page = 1, limit = 50, action, riskLevel, startDate, endDate, search } = req.query;
 
     const pageNum = parseInt(page as string);
     const limitNum = parseInt(limit as string);
@@ -1190,7 +1183,7 @@ router.get('/audit-logs', authenticateToken, async (req: AuthenticatedRequest, r
 
     // Build filters
     const filters: any = {
-      userId: req.user.userId
+      userId: req.user.userId,
     };
 
     if (action) {
@@ -1216,7 +1209,7 @@ router.get('/audit-logs', authenticateToken, async (req: AuthenticatedRequest, r
         { ipAddress: { contains: search as string } },
         { userAgent: { contains: search as string } },
         { location: { contains: search as string } },
-        { details: { contains: search as string } }
+        { details: { contains: search as string } },
       ];
     }
 
@@ -1228,29 +1221,31 @@ router.get('/audit-logs', authenticateToken, async (req: AuthenticatedRequest, r
         skip: offset,
         take: limitNum,
       }),
-      prisma.securityAuditLog.count({ where: filters })
+      prisma.securityAuditLog.count({ where: filters }),
     ]);
 
-    // Debug logging
-    console.log(`[SecurityAuditAPI] User ${req.user.userId} requested audit logs:`);
-    console.log(`[SecurityAuditAPI] - Filters applied:`, JSON.stringify(filters, null, 2));
-    console.log(`[SecurityAuditAPI] - Found ${totalCount} total entries, returning ${rawLogs.length} entries`);
-    console.log(`[SecurityAuditAPI] - Page: ${pageNum}, Limit: ${limitNum}, Offset: ${offset}`);
-
     // Helper function to detect device type from user agent
-    const detectDeviceType = (userAgent: string | null): 'desktop' | 'mobile' | 'tablet' | 'unknown' => {
+    const detectDeviceType = (
+      userAgent: string | null
+    ): 'desktop' | 'mobile' | 'tablet' | 'unknown' => {
       if (!userAgent) return 'unknown';
       const ua = userAgent.toLowerCase();
       if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) return 'mobile';
       if (ua.includes('tablet') || ua.includes('ipad')) return 'tablet';
-      if (ua.includes('desktop') || ua.includes('windows') || ua.includes('mac') || ua.includes('linux')) return 'desktop';
+      if (
+        ua.includes('desktop') ||
+        ua.includes('windows') ||
+        ua.includes('mac') ||
+        ua.includes('linux')
+      )
+        return 'desktop';
       return 'unknown';
     };
 
     // Helper function to extract device name from user agent
     const extractDeviceName = (userAgent: string | null): string => {
       if (!userAgent) return 'Unknown Device';
-      
+
       // Simple device name extraction
       const ua = userAgent.toLowerCase();
       if (ua.includes('chrome')) return 'Chrome Browser';
@@ -1259,14 +1254,18 @@ router.get('/audit-logs', authenticateToken, async (req: AuthenticatedRequest, r
       if (ua.includes('edge')) return 'Edge Browser';
       if (ua.includes('mobile')) return 'Mobile Device';
       if (ua.includes('tablet')) return 'Tablet Device';
-      
+
       return 'Unknown Device';
     };
 
     // Helper function to get approximate location from IP (enhanced)
     const getLocationFromIP = (ipAddress: string | null): string => {
       if (!ipAddress) return 'Unknown Location';
-      if (ipAddress.includes('127.0.0.1') || ipAddress.includes('localhost') || ipAddress === '::1') {
+      if (
+        ipAddress.includes('127.0.0.1') ||
+        ipAddress.includes('localhost') ||
+        ipAddress === '::1'
+      ) {
         return 'Local Development';
       }
       // In production, you'd use a geolocation service here
@@ -1284,19 +1283,21 @@ router.get('/audit-logs', authenticateToken, async (req: AuthenticatedRequest, r
       location: log.location || getLocationFromIP(log.ipAddress),
       userAgent: log.userAgent || 'Unknown',
       success: log.status === 'success',
-      details: log.details && log.details !== '{}' ? 
-        (() => {
-          try {
-            const parsed = JSON.parse(log.details);
-            // Format details for better display
-            return Object.entries(parsed)
-              .filter(([key, value]) => value && key !== 'timestamp')
-              .map(([key, value]) => `${key}: ${value}`)
-              .join(', ');
-          } catch {
-            return log.details;
-          }
-        })() : undefined
+      details:
+        log.details && log.details !== '{}'
+          ? (() => {
+              try {
+                const parsed = JSON.parse(log.details);
+                // Format details for better display
+                return Object.entries(parsed)
+                  .filter(([key, value]) => value && key !== 'timestamp')
+                  .map(([key, value]) => `${key}: ${value}`)
+                  .join(', ');
+              } catch {
+                return log.details;
+              }
+            })()
+          : undefined,
     }));
 
     // Get summary statistics
@@ -1305,12 +1306,12 @@ router.get('/audit-logs', authenticateToken, async (req: AuthenticatedRequest, r
       where: {
         userId: req.user.userId,
         timestamp: {
-          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
-        }
+          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+        },
       },
       _count: {
-        action: true
-      }
+        action: true,
+      },
     });
 
     const uniqueDevices = await prisma.securityAuditLog.groupBy({
@@ -1319,19 +1320,19 @@ router.get('/audit-logs', authenticateToken, async (req: AuthenticatedRequest, r
         userId: req.user.userId,
         action: { in: ['login', 'password_change'] },
         timestamp: {
-          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-        }
+          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+        },
       },
       _count: {
-        userAgent: true
-      }
+        userAgent: true,
+      },
     });
 
     const summary = {
       totalEntries: totalCount,
       successfulLogins: stats.find(s => s.action === 'login')?._count.action || 0,
       failedAttempts: stats.find(s => s.action === 'failed_login')?._count.action || 0,
-      uniqueDevices: uniqueDevices.length
+      uniqueDevices: uniqueDevices.length,
     };
 
     res.json({
@@ -1341,10 +1342,9 @@ router.get('/audit-logs', authenticateToken, async (req: AuthenticatedRequest, r
         totalCount,
         currentPage: pageNum,
         totalPages: Math.ceil(totalCount / limitNum),
-        summary
-      }
+        summary,
+      },
     } as ApiResponse);
-
   } catch (error) {
     console.error('Get audit logs error:', error);
     res.status(500).json({
@@ -1368,7 +1368,7 @@ router.get('/audit-logs/export', authenticateToken, async (req: AuthenticatedReq
 
     // Build filters
     const filters: any = {
-      userId: req.user.userId
+      userId: req.user.userId,
     };
 
     if (startDate || endDate) {
@@ -1389,21 +1389,28 @@ router.get('/audit-logs/export', authenticateToken, async (req: AuthenticatedReq
 
     if (format === 'csv') {
       // Generate CSV
-      const csvHeader = 'Timestamp,Action,Resource Type,IP Address,User Agent,Status,Risk Level,Details\n';
-      const csvRows = logs.map(log => 
-        `"${log.timestamp.toISOString()}","${log.action}","${log.resourceType || ''}","${log.ipAddress || ''}","${log.userAgent || ''}","${log.status}","${log.riskLevel}","${log.details}"`
-      ).join('\n');
+      const csvHeader =
+        'Timestamp,Action,Resource Type,IP Address,User Agent,Status,Risk Level,Details\n';
+      const csvRows = logs
+        .map(
+          log =>
+            `"${log.timestamp.toISOString()}","${log.action}","${log.resourceType || ''}","${log.ipAddress || ''}","${log.userAgent || ''}","${log.status}","${log.riskLevel}","${log.details}"`
+        )
+        .join('\n');
 
       const csv = csvHeader + csvRows;
 
       res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename="security-audit-${new Date().toISOString().split('T')[0]}.csv"`);
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="security-audit-${new Date().toISOString().split('T')[0]}.csv"`
+      );
       res.send(csv);
     } else {
       // Return JSON
       res.json({
         success: true,
-        data: { logs }
+        data: { logs },
       } as ApiResponse);
     }
 
@@ -1417,10 +1424,9 @@ router.get('/audit-logs/export', authenticateToken, async (req: AuthenticatedReq
         userAgent: req.get('User-Agent') || 'Unknown',
         status: 'success',
         riskLevel: 'low',
-        details: JSON.stringify({ format, recordCount: logs.length })
-      }
+        details: JSON.stringify({ format, recordCount: logs.length }),
+      },
     });
-
   } catch (error) {
     console.error('Export audit logs error:', error);
     res.status(500).json({

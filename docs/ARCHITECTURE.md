@@ -2,7 +2,9 @@
 
 ## System Overview
 
-ParkML is a secure, HIPAA-compliant digital platform for Parkinson's disease symptom tracking, built as a TypeScript monorepo with React frontend and Express backend.
+ParkML is a secure, HIPAA-compliant digital platform for Parkinson's disease
+symptom tracking, built as a TypeScript monorepo with React frontend and Express
+backend.
 
 ## High-Level Architecture
 
@@ -17,6 +19,7 @@ ParkML is a secure, HIPAA-compliant digital platform for Parkinson's disease sym
 ## Technology Stack
 
 ### Frontend (React Application)
+
 - **Framework**: React 18.3.1 with TypeScript
 - **Build Tool**: Vite 6.3.5 for fast development and optimized builds
 - **Styling**: Tailwind CSS 3.4.17 for responsive design
@@ -26,6 +29,7 @@ ParkML is a secure, HIPAA-compliant digital platform for Parkinson's disease sym
 - **UI Components**: Lucide React icons, React Hot Toast notifications
 
 ### Backend (Express API)
+
 - **Runtime**: Node.js 24.4.0
 - **Framework**: Express 4.21.2 with TypeScript
 - **Authentication**: JWT tokens with bcrypt password hashing
@@ -34,6 +38,7 @@ ParkML is a secure, HIPAA-compliant digital platform for Parkinson's disease sym
 - **Development**: tsx watch mode for hot reloading
 
 ### Database Layer
+
 - **ORM**: Prisma ORM for type-safe database operations
 - **Development**: SQLite 3 with automatic schema initialization
 - **Production**: PostgreSQL 14+ with automated migrations
@@ -145,8 +150,8 @@ const user = await prisma.user.create({
   data: {
     email: 'user@example.com',
     name: 'John Doe',
-    role: 'patient'
-  }
+    role: 'patient',
+  },
 });
 
 // Automatic relationship handling
@@ -154,8 +159,8 @@ const patient = await prisma.patient.create({
   data: {
     user: { connect: { id: user.id } },
     name: 'John Doe',
-    dateOfBirth: new Date('1980-01-01')
-  }
+    dateOfBirth: new Date('1980-01-01'),
+  },
 });
 ```
 
@@ -196,12 +201,14 @@ Symptom Tracking:
 ## Security Architecture
 
 ### Authentication & Authorization
+
 - **JWT Tokens**: 24-hour expiration with secure secret
 - **Password Hashing**: bcrypt with 12 salt rounds
 - **Role-Based Access**: Patient, caregiver, healthcare provider roles
 - **Route Protection**: Middleware-based authentication & authorization
 
 ### Data Protection
+
 - **Database Encryption**: At-rest encryption for production
 - **Transport Security**: HTTPS in production
 - **Input Validation**: Sanitization and validation for all inputs
@@ -210,6 +217,7 @@ Symptom Tracking:
 ## Development Architecture
 
 ### Development Workflow
+
 ```
 1. Code Changes
    ├── TypeScript compilation
@@ -229,6 +237,7 @@ Symptom Tracking:
 ```
 
 ### Build & Deployment
+
 ```
 Development:
 ├── npm run dev              # Start both frontend & backend
@@ -245,17 +254,20 @@ Production:
 ## Performance Considerations
 
 ### Database Optimization
+
 - **Indexes**: Strategic indexing on frequently queried fields via Prisma schema
 - **Connection Pooling**: Prisma-managed connection pooling for production
 - **Query Optimization**: Prisma-optimized queries with type-safe operations
 - **Schema Evolution**: Automated migrations with rollback capabilities
 
 ### Frontend Optimization
+
 - **Code Splitting**: Vite-based code splitting for smaller bundles
 - **Lazy Loading**: Route-based lazy loading for better performance
 - **Caching**: Browser caching for static assets
 
 ### Backend Optimization
+
 - **Middleware Ordering**: Efficient middleware stack
 - **Error Handling**: Comprehensive error handling and logging
 - **Rate Limiting**: Protection against abuse and DoS attacks
@@ -263,6 +275,7 @@ Production:
 ## Deployment Architecture
 
 ### Development Environment
+
 - **Database**: SQLite file-based database with Prisma ORM
 - **Services**: Concurrent frontend (3000) and backend (5000)
 - **Hot Reload**: Automatic reloading for development efficiency
@@ -270,6 +283,7 @@ Production:
 - **Auto-seeding**: Pre-populated test accounts for immediate development
 
 ### Production Environment
+
 - **Database**: PostgreSQL with Prisma-managed migrations
 - **Services**: Reverse proxy with load balancing
 - **Security**: HTTPS, security headers, input validation
@@ -278,5 +292,5 @@ Production:
 
 ---
 
-*Last Updated: July 17, 2025*  
-*Architecture Version: 1.0*
+_Last Updated: July 17, 2025_  
+_Architecture Version: 1.0_

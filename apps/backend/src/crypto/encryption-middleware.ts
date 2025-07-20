@@ -5,11 +5,11 @@
 
 import { Prisma } from '@prisma/client';
 import { ABECrypto, UserSecretKey } from './abe-crypto';
-import { 
-  AccessLevel, 
-  DataCategory, 
+import {
+  AccessLevel,
+  DataCategory,
   EncryptionContext,
-  EncryptedDataContainer 
+  EncryptedDataContainer,
 } from '@parkml/shared';
 
 /**
@@ -33,33 +33,83 @@ const ENCRYPTION_CONFIG: EncryptionFieldConfig[] = [
   {
     model: 'SymptomEntry',
     fields: [
-      { fieldName: 'motorSymptoms', dataCategory: DataCategory.MOTOR_SYMPTOMS, accessLevel: AccessLevel.CAREGIVER_PROFESSIONAL, isJson: true },
-      { fieldName: 'nonMotorSymptoms', dataCategory: DataCategory.NON_MOTOR_SYMPTOMS, accessLevel: AccessLevel.CAREGIVER_PROFESSIONAL, isJson: true },
-      { fieldName: 'autonomicSymptoms', dataCategory: DataCategory.AUTONOMIC_SYMPTOMS, accessLevel: AccessLevel.CAREGIVER_PROFESSIONAL, isJson: true },
-      { fieldName: 'dailyActivities', dataCategory: DataCategory.DAILY_ACTIVITIES, accessLevel: AccessLevel.CAREGIVER_FAMILY, isJson: true },
-      { fieldName: 'environmentalFactors', dataCategory: DataCategory.ENVIRONMENTAL_FACTORS, accessLevel: AccessLevel.CAREGIVER_FAMILY, isJson: true },
-      { fieldName: 'safetyIncidents', dataCategory: DataCategory.SAFETY_INCIDENTS, accessLevel: AccessLevel.CAREGIVER_PROFESSIONAL, isJson: true }
-    ]
+      {
+        fieldName: 'motorSymptoms',
+        dataCategory: DataCategory.MOTOR_SYMPTOMS,
+        accessLevel: AccessLevel.CAREGIVER_PROFESSIONAL,
+        isJson: true,
+      },
+      {
+        fieldName: 'nonMotorSymptoms',
+        dataCategory: DataCategory.NON_MOTOR_SYMPTOMS,
+        accessLevel: AccessLevel.CAREGIVER_PROFESSIONAL,
+        isJson: true,
+      },
+      {
+        fieldName: 'autonomicSymptoms',
+        dataCategory: DataCategory.AUTONOMIC_SYMPTOMS,
+        accessLevel: AccessLevel.CAREGIVER_PROFESSIONAL,
+        isJson: true,
+      },
+      {
+        fieldName: 'dailyActivities',
+        dataCategory: DataCategory.DAILY_ACTIVITIES,
+        accessLevel: AccessLevel.CAREGIVER_FAMILY,
+        isJson: true,
+      },
+      {
+        fieldName: 'environmentalFactors',
+        dataCategory: DataCategory.ENVIRONMENTAL_FACTORS,
+        accessLevel: AccessLevel.CAREGIVER_FAMILY,
+        isJson: true,
+      },
+      {
+        fieldName: 'safetyIncidents',
+        dataCategory: DataCategory.SAFETY_INCIDENTS,
+        accessLevel: AccessLevel.CAREGIVER_PROFESSIONAL,
+        isJson: true,
+      },
+    ],
   },
   {
     model: 'Patient',
     fields: [
-      { fieldName: 'emergencyContact', dataCategory: DataCategory.EMERGENCY_CONTACTS, accessLevel: AccessLevel.EMERGENCY_ACCESS, isJson: true },
-      { fieldName: 'privacySettings', dataCategory: DataCategory.DEMOGRAPHICS, accessLevel: AccessLevel.PATIENT_FULL, isJson: true }
-    ]
+      {
+        fieldName: 'emergencyContact',
+        dataCategory: DataCategory.EMERGENCY_CONTACTS,
+        accessLevel: AccessLevel.EMERGENCY_ACCESS,
+        isJson: true,
+      },
+      {
+        fieldName: 'privacySettings',
+        dataCategory: DataCategory.DEMOGRAPHICS,
+        accessLevel: AccessLevel.PATIENT_FULL,
+        isJson: true,
+      },
+    ],
   },
   {
     model: 'CaregiverAssignment',
     fields: [
-      { fieldName: 'permissions', dataCategory: DataCategory.DEMOGRAPHICS, accessLevel: AccessLevel.CAREGIVER_PROFESSIONAL, isJson: true }
-    ]
+      {
+        fieldName: 'permissions',
+        dataCategory: DataCategory.DEMOGRAPHICS,
+        accessLevel: AccessLevel.CAREGIVER_PROFESSIONAL,
+        isJson: true,
+      },
+    ],
   },
   {
     model: 'Organization',
     fields: [
-      { fieldName: 'settings', dataCategory: DataCategory.DEMOGRAPHICS, accessLevel: AccessLevel.CAREGIVER_PROFESSIONAL, isJson: true }
-    ]
-  }
+      {
+        fieldName: 'settings',
+        dataCategory: DataCategory.DEMOGRAPHICS,
+        accessLevel: AccessLevel.CAREGIVER_PROFESSIONAL,
+        isJson: true,
+      },
+    ],
+  },
 ];
 
 /**
@@ -132,13 +182,9 @@ export class PrismaEncryptionMiddleware {
       const fieldValue = params.args.data[fieldConfig.fieldName];
       if (fieldValue !== undefined && fieldValue !== null) {
         try {
-          const encryptedValue = await this.encryptField(
-            fieldValue,
-            fieldConfig,
-            context
-          );
+          const encryptedValue = await this.encryptField(fieldValue, fieldConfig, context);
           params.args.data[fieldConfig.fieldName] = encryptedValue;
-          
+
           // Mark the record as encrypted
           if ('isEncrypted' in params.args.data) {
             params.args.data.isEncrypted = true;
@@ -162,7 +208,7 @@ export class PrismaEncryptionMiddleware {
 
     const context = this.contextProvider.getContext();
     const userSecretKey = this.contextProvider.getUserSecretKey();
-    
+
     if (!context || !userSecretKey) {
       console.warn('No decryption context available for read operation');
       return result;
@@ -170,7 +216,9 @@ export class PrismaEncryptionMiddleware {
 
     // Handle arrays of results
     if (Array.isArray(result)) {
-      return Promise.all(result.map(item => this.decryptRecord(item, config, context, userSecretKey)));
+      return Promise.all(
+        result.map(item => this.decryptRecord(item, config, context, userSecretKey))
+      );
     }
 
     // Handle single result
@@ -219,7 +267,12 @@ export class PrismaEncryptionMiddleware {
    */
   private async encryptField(
     value: any,
-    fieldConfig: { fieldName: string; dataCategory: DataCategory; accessLevel: AccessLevel; isJson: boolean },
+    fieldConfig: {
+      fieldName: string;
+      dataCategory: DataCategory;
+      accessLevel: AccessLevel;
+      isJson: boolean;
+    },
     context: EncryptionContext
   ): Promise<string> {
     // Convert value to string for encryption
@@ -249,7 +302,12 @@ export class PrismaEncryptionMiddleware {
    */
   private async decryptField(
     encryptedValue: string,
-    fieldConfig: { fieldName: string; dataCategory: DataCategory; accessLevel: AccessLevel; isJson: boolean },
+    fieldConfig: {
+      fieldName: string;
+      dataCategory: DataCategory;
+      accessLevel: AccessLevel;
+      isJson: boolean;
+    },
     context: EncryptionContext,
     userSecretKey: UserSecretKey
   ): Promise<any> {
@@ -258,11 +316,7 @@ export class PrismaEncryptionMiddleware {
       const container: EncryptedDataContainer = JSON.parse(encryptedValue);
 
       // Decrypt the field value
-      const decryptedString = await this.abeCrypto.decrypt(
-        container,
-        userSecretKey,
-        context
-      );
+      const decryptedString = await this.abeCrypto.decrypt(container, userSecretKey, context);
 
       // Convert back to original type
       return fieldConfig.isJson ? JSON.parse(decryptedString) : decryptedString;
@@ -282,9 +336,13 @@ export class PrismaEncryptionMiddleware {
   private getRestrictedFieldValue(dataCategory: DataCategory, requesterRole: string): any {
     switch (dataCategory) {
       case DataCategory.EMERGENCY_CONTACTS:
-        return requesterRole === 'professional_caregiver' ? '[RESTRICTED - Emergency Only]' : '[RESTRICTED]';
+        return requesterRole === 'professional_caregiver'
+          ? '[RESTRICTED - Emergency Only]'
+          : '[RESTRICTED]';
       case DataCategory.MEDICATION_DATA:
-        return requesterRole === 'family_caregiver' ? '[RESTRICTED - Professional Only]' : '[RESTRICTED]';
+        return requesterRole === 'family_caregiver'
+          ? '[RESTRICTED - Professional Only]'
+          : '[RESTRICTED]';
       default:
         return '[RESTRICTED]';
     }
@@ -308,7 +366,13 @@ export class PrismaEncryptionMiddleware {
    * Check if operation is a read operation
    */
   private isReadOperation(action: string): boolean {
-    return ['findUnique', 'findFirst', 'findMany', 'findUniqueOrThrow', 'findFirstOrThrow'].includes(action);
+    return [
+      'findUnique',
+      'findFirst',
+      'findMany',
+      'findUniqueOrThrow',
+      'findFirstOrThrow',
+    ].includes(action);
   }
 }
 
@@ -344,7 +408,7 @@ export class RequestEncryptionContextProvider implements EncryptionContextProvid
       organizationId: this.req.user.organizationId || '',
       requesterRole: this.req.user.role,
       dataCategories,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     // Generate user secret key based on their attributes
@@ -379,9 +443,9 @@ export class RequestEncryptionContextProvider implements EncryptionContextProvid
         accessType,
         reason: 'Emergency access granted',
         durationHours: 24,
-        emergencyAccessId
+        emergencyAccessId,
       },
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     // Generate emergency user secret key with emergency attributes
@@ -390,10 +454,12 @@ export class RequestEncryptionContextProvider implements EncryptionContextProvid
       `org:${this.req.user.organizationId}`,
       `role:${this.req.user.role}`,
       `emergency:active`,
-      `patient:${patientId}`
+      `patient:${patientId}`,
     ];
 
-    const authority = this.abeCrypto.createOrganizationAuthority(this.req.user.organizationId || '');
+    const authority = this.abeCrypto.createOrganizationAuthority(
+      this.req.user.organizationId || ''
+    );
     this.userSecretKey = authority.generateUserSecretKey(this.req.user.userId, emergencyAttributes);
   }
 

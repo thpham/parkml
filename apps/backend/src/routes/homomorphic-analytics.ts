@@ -1,7 +1,7 @@
 /**
  * Homomorphic Analytics API Routes
  * Provides privacy-preserving computation capabilities for medical research
- * 
+ *
  * Endpoints:
  * - POST /compute - Submit homomorphic computation request
  * - GET /computations - List user's computations
@@ -16,11 +16,11 @@ import { Router, Response } from 'express';
 import { ApiResponse, DataCategory } from '@parkml/shared';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
 import { requireOrganizationAdmin } from '../crypto/access-control-middleware';
-import { 
+import {
   homomorphicAnalytics,
   HomomorphicComputationRequest,
   ComputationType,
-  PrivacyLevel
+  PrivacyLevel,
 } from '../crypto/homomorphic-analytics';
 import { prisma } from '../database/prisma-client';
 
@@ -30,7 +30,8 @@ const router = Router();
  * Submit a new homomorphic computation request
  * POST /api/homomorphic-analytics/compute
  */
-router.post('/compute',
+router.post(
+  '/compute',
   authenticateToken,
   requireOrganizationAdmin(),
   async (req: AuthenticatedRequest, res: Response) => {
@@ -40,14 +41,14 @@ router.post('/compute',
         dataCategories,
         cohortCriteria,
         purpose,
-        privacyLevel = PrivacyLevel.BASIC
+        privacyLevel = PrivacyLevel.BASIC,
       } = req.body;
 
       // Validate required fields
       if (!computationType || !dataCategories || !purpose) {
         return res.status(400).json({
           success: false,
-          error: 'Missing required fields: computationType, dataCategories, purpose'
+          error: 'Missing required fields: computationType, dataCategories, purpose',
         } as ApiResponse);
       }
 
@@ -55,17 +56,19 @@ router.post('/compute',
       if (!Object.values(ComputationType).includes(computationType)) {
         return res.status(400).json({
           success: false,
-          error: `Invalid computation type. Supported types: ${Object.values(ComputationType).join(', ')}`
+          error: `Invalid computation type. Supported types: ${Object.values(ComputationType).join(', ')}`,
         } as ApiResponse);
       }
 
       // Validate data categories
       const validCategories = Object.values(DataCategory);
-      const invalidCategories = dataCategories.filter((cat: string) => !validCategories.includes(cat as DataCategory));
+      const invalidCategories = dataCategories.filter(
+        (cat: string) => !validCategories.includes(cat as DataCategory)
+      );
       if (invalidCategories.length > 0) {
         return res.status(400).json({
           success: false,
-          error: `Invalid data categories: ${invalidCategories.join(', ')}`
+          error: `Invalid data categories: ${invalidCategories.join(', ')}`,
         } as ApiResponse);
       }
 
@@ -77,7 +80,7 @@ router.post('/compute',
         requesterId: req.user?.userId!,
         organizationId: req.user?.organizationId || '',
         purpose,
-        privacyLevel
+        privacyLevel,
       };
 
       // Submit computation
@@ -94,17 +97,16 @@ router.post('/compute',
           privacyLevel,
           message: 'Homomorphic computation submitted successfully',
           estimatedCompletionTime: '5-30 minutes',
-          privacyPreserving: true
-        }
+          privacyPreserving: true,
+        },
       };
 
       res.status(201).json(response);
-
     } catch (error) {
       console.error('Homomorphic computation submission error:', error);
       res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to submit computation'
+        error: error instanceof Error ? error.message : 'Failed to submit computation',
       } as ApiResponse);
     }
   }
@@ -114,43 +116,40 @@ router.post('/compute',
  * List user's homomorphic computations
  * GET /api/homomorphic-analytics/computations
  */
-router.get('/computations',
-  authenticateToken,
-  async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const organizationId = req.user?.role === 'super_admin' ? undefined : req.user?.organizationId;
-      
-      const computations = await homomorphicAnalytics.listComputations(
-        req.user?.userId!,
-        organizationId
-      );
+router.get('/computations', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const organizationId = req.user?.role === 'super_admin' ? undefined : req.user?.organizationId;
 
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          computations,
-          totalCount: computations.length,
-          privacyPreservingAnalytics: true
-        }
-      };
+    const computations = await homomorphicAnalytics.listComputations(
+      req.user?.userId!,
+      organizationId
+    );
 
-      res.json(response);
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        computations,
+        totalCount: computations.length,
+        privacyPreservingAnalytics: true,
+      },
+    };
 
-    } catch (error) {
-      console.error('List computations error:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to retrieve computations'
-      } as ApiResponse);
-    }
+    res.json(response);
+  } catch (error) {
+    console.error('List computations error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve computations',
+    } as ApiResponse);
   }
-);
+});
 
 /**
  * Get computation result
  * GET /api/homomorphic-analytics/:computationId
  */
-router.get('/:computationId',
+router.get(
+  '/:computationId',
   authenticateToken,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -166,17 +165,16 @@ router.get('/:computationId',
         data: {
           ...result,
           privacyPreserving: true,
-          homomorphicallyComputed: true
-        }
+          homomorphicallyComputed: true,
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('Get computation result error:', error);
       res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to retrieve computation result'
+        error: error instanceof Error ? error.message : 'Failed to retrieve computation result',
       } as ApiResponse);
     }
   }
@@ -186,7 +184,8 @@ router.get('/:computationId',
  * Get computation status
  * GET /api/homomorphic-analytics/:computationId/status
  */
-router.get('/:computationId/status',
+router.get(
+  '/:computationId/status',
   authenticateToken,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -201,14 +200,14 @@ router.get('/:computationId/status',
           createdAt: true,
           computedAt: true,
           errorMessage: true,
-          requesterId: true
-        }
+          requesterId: true,
+        },
       });
 
       if (!computation) {
         return res.status(404).json({
           success: false,
-          error: 'Computation not found'
+          error: 'Computation not found',
         } as ApiResponse);
       }
 
@@ -218,7 +217,7 @@ router.get('/:computationId/status',
         if (!user || !['super_admin', 'clinic_admin'].includes(user.role)) {
           return res.status(403).json({
             success: false,
-            error: 'Insufficient permissions to view computation status'
+            error: 'Insufficient permissions to view computation status',
           } as ApiResponse);
         }
       }
@@ -235,17 +234,16 @@ router.get('/:computationId/status',
           isComplete: computation.status === 'completed',
           isFailed: computation.status === 'failed',
           isRunning: computation.status === 'running',
-          privacyPreserving: true
-        }
+          privacyPreserving: true,
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('Get computation status error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to retrieve computation status'
+        error: 'Failed to retrieve computation status',
       } as ApiResponse);
     }
   }
@@ -255,7 +253,8 @@ router.get('/:computationId/status',
  * Cancel a running computation
  * POST /api/homomorphic-analytics/:computationId/cancel
  */
-router.post('/:computationId/cancel',
+router.post(
+  '/:computationId/cancel',
   authenticateToken,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -263,13 +262,13 @@ router.post('/:computationId/cancel',
       const { reason } = req.body;
 
       const computation = await prisma.homomorphicComputation.findUnique({
-        where: { id: computationId }
+        where: { id: computationId },
       });
 
       if (!computation) {
         return res.status(404).json({
           success: false,
-          error: 'Computation not found'
+          error: 'Computation not found',
         } as ApiResponse);
       }
 
@@ -279,7 +278,7 @@ router.post('/:computationId/cancel',
         if (!user || !['super_admin', 'clinic_admin'].includes(user.role)) {
           return res.status(403).json({
             success: false,
-            error: 'Insufficient permissions to cancel computation'
+            error: 'Insufficient permissions to cancel computation',
           } as ApiResponse);
         }
       }
@@ -288,7 +287,7 @@ router.post('/:computationId/cancel',
       if (!['pending', 'running'].includes(computation.status)) {
         return res.status(400).json({
           success: false,
-          error: `Cannot cancel computation with status: ${computation.status}`
+          error: `Cannot cancel computation with status: ${computation.status}`,
         } as ApiResponse);
       }
 
@@ -297,8 +296,8 @@ router.post('/:computationId/cancel',
         where: { id: computationId },
         data: {
           status: 'failed',
-          errorMessage: `Cancelled by user: ${reason || 'No reason provided'}`
-        }
+          errorMessage: `Cancelled by user: ${reason || 'No reason provided'}`,
+        },
       });
 
       const response: ApiResponse = {
@@ -308,17 +307,16 @@ router.post('/:computationId/cancel',
           status: 'cancelled',
           cancelledAt: new Date(),
           reason: reason || 'No reason provided',
-          message: 'Computation cancelled successfully'
-        }
+          message: 'Computation cancelled successfully',
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('Cancel computation error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to cancel computation'
+        error: 'Failed to cancel computation',
       } as ApiResponse);
     }
   }
@@ -328,7 +326,8 @@ router.post('/:computationId/cancel',
  * Get supported computation capabilities
  * GET /api/homomorphic-analytics/capabilities
  */
-router.get('/capabilities',
+router.get(
+  '/capabilities',
   authenticateToken,
   async (_req: AuthenticatedRequest, res: Response) => {
     try {
@@ -339,35 +338,34 @@ router.get('/capabilities',
             type,
             description: getComputationDescription(type),
             privacyPreserving: true,
-            estimatedTime: getEstimatedTime(type)
+            estimatedTime: getEstimatedTime(type),
           })),
           supportedDataCategories: Object.values(DataCategory),
           privacyLevels: Object.values(PrivacyLevel).map(level => ({
             level,
-            description: getPrivacyLevelDescription(level)
+            description: getPrivacyLevelDescription(level),
           })),
           features: {
             homomorphicEncryption: true,
             differentialPrivacy: true,
             kAnonymity: true,
             federatedLearning: true,
-            multiPartyComputation: true
+            multiPartyComputation: true,
           },
           limitations: {
             maxCohortSize: 10000,
             maxComputationTime: '30 minutes',
-            maxConcurrentComputations: 5
-          }
-        }
+            maxConcurrentComputations: 5,
+          },
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('Get capabilities error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to retrieve capabilities'
+        error: 'Failed to retrieve capabilities',
       } as ApiResponse);
     }
   }
@@ -377,7 +375,8 @@ router.get('/capabilities',
  * Get analytics audit trail
  * GET /api/homomorphic-analytics/audit
  */
-router.get('/audit',
+router.get(
+  '/audit',
   authenticateToken,
   requireOrganizationAdmin(),
   async (req: AuthenticatedRequest, res: Response) => {
@@ -386,8 +385,8 @@ router.get('/audit',
 
       const where: any = {
         operation: {
-          in: ['homomorphic_computation_requested', 'homomorphic_computation_completed']
-        }
+          in: ['homomorphic_computation_requested', 'homomorphic_computation_completed'],
+        },
       };
 
       if (req.user?.role !== 'super_admin') {
@@ -396,14 +395,14 @@ router.get('/audit',
 
       if (computationType) {
         where.encryptionContext = {
-          contains: computationType as string
+          contains: computationType as string,
         };
       }
 
       const auditEntries = await prisma.cryptoAuditEntry.findMany({
         where,
         orderBy: { timestamp: 'desc' },
-        take: parseInt(limit as string, 10)
+        take: parseInt(limit as string, 10),
       });
 
       const response: ApiResponse = {
@@ -415,21 +414,22 @@ router.get('/audit',
             userId: entry.userId,
             success: entry.success,
             timestamp: entry.timestamp,
-            computationDetails: entry.encryptionContext ? JSON.parse(entry.encryptionContext) : null,
-            cryptographicProof: entry.cryptographicProof.substring(0, 16) + '...'
+            computationDetails: entry.encryptionContext
+              ? JSON.parse(entry.encryptionContext)
+              : null,
+            cryptographicProof: entry.cryptographicProof.substring(0, 16) + '...',
           })),
           totalEntries: auditEntries.length,
-          privacyPreservingAnalytics: true
-        }
+          privacyPreservingAnalytics: true,
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('Analytics audit trail error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to retrieve analytics audit trail'
+        error: 'Failed to retrieve analytics audit trail',
       } as ApiResponse);
     }
   }
@@ -439,47 +439,45 @@ router.get('/audit',
  * Get system analytics statistics
  * GET /api/homomorphic-analytics/statistics
  */
-router.get('/statistics',
+router.get(
+  '/statistics',
   authenticateToken,
   requireOrganizationAdmin(),
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const organizationId = req.user?.role === 'super_admin' ? undefined : req.user?.organizationId;
+      const organizationId =
+        req.user?.role === 'super_admin' ? undefined : req.user?.organizationId;
 
-      const [
-        totalComputations,
-        completedComputations,
-        runningComputations,
-        failedComputations
-      ] = await Promise.all([
-        prisma.homomorphicComputation.count({
-          where: organizationId ? { organizationId } : {}
-        }),
-        prisma.homomorphicComputation.count({
-          where: {
-            ...(organizationId ? { organizationId } : {}),
-            status: 'completed'
-          }
-        }),
-        prisma.homomorphicComputation.count({
-          where: {
-            ...(organizationId ? { organizationId } : {}),
-            status: 'running'
-          }
-        }),
-        prisma.homomorphicComputation.count({
-          where: {
-            ...(organizationId ? { organizationId } : {}),
-            status: 'failed'
-          }
-        })
-      ]);
+      const [totalComputations, completedComputations, runningComputations, failedComputations] =
+        await Promise.all([
+          prisma.homomorphicComputation.count({
+            where: organizationId ? { organizationId } : {},
+          }),
+          prisma.homomorphicComputation.count({
+            where: {
+              ...(organizationId ? { organizationId } : {}),
+              status: 'completed',
+            },
+          }),
+          prisma.homomorphicComputation.count({
+            where: {
+              ...(organizationId ? { organizationId } : {}),
+              status: 'running',
+            },
+          }),
+          prisma.homomorphicComputation.count({
+            where: {
+              ...(organizationId ? { organizationId } : {}),
+              status: 'failed',
+            },
+          }),
+        ]);
 
       // Get computation type distribution
       const computationsByType = await prisma.homomorphicComputation.groupBy({
         by: ['computationType'],
         where: organizationId ? { organizationId } : {},
-        _count: { computationType: true }
+        _count: { computationType: true },
       });
 
       const response: ApiResponse = {
@@ -490,29 +488,31 @@ router.get('/statistics',
             completedComputations,
             runningComputations,
             failedComputations,
-            successRate: totalComputations > 0 ? (completedComputations / totalComputations * 100).toFixed(1) + '%' : '0%'
+            successRate:
+              totalComputations > 0
+                ? ((completedComputations / totalComputations) * 100).toFixed(1) + '%'
+                : '0%',
           },
           computationsByType: computationsByType.map(item => ({
             type: item.computationType,
-            count: item._count.computationType
+            count: item._count.computationType,
           })),
           healthCheck: {
             homomorphicEngineOnline: true,
             sealLibraryLoaded: true,
             privacyPreservingCapable: true,
-            encryptionEnabled: true
+            encryptionEnabled: true,
           },
-          lastUpdated: new Date()
-        }
+          lastUpdated: new Date(),
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('Analytics statistics error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to retrieve analytics statistics'
+        error: 'Failed to retrieve analytics statistics',
       } as ApiResponse);
     }
   }

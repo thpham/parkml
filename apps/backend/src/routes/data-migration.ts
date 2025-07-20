@@ -2,7 +2,7 @@
  * Data Migration API Routes
  * Provides secure migration tools for transitioning existing unencrypted data
  * to the new multi-party encryption system
- * 
+ *
  * Endpoints:
  * - POST /start - Start a new data migration
  * - GET /estimate - Estimate migration time and resources
@@ -26,7 +26,8 @@ const router = Router();
  * Start a new data migration
  * POST /api/data-migration/start
  */
-router.post('/start',
+router.post(
+  '/start',
   authenticateToken,
   requireSuperAdmin(),
   async (req: AuthenticatedRequest, res: Response) => {
@@ -38,21 +39,21 @@ router.post('/start',
         dataCategories = Object.values(DataCategory) as DataCategory[],
         organizationIds = [] as string[],
         skipIntegrityChecks = false,
-        createBackups = true
+        createBackups = true,
       } = req.body;
 
       // Validate configuration
       if (batchSize <= 0 || batchSize > 1000) {
         return res.status(400).json({
           success: false,
-          error: 'Batch size must be between 1 and 1000'
+          error: 'Batch size must be between 1 and 1000',
         } as ApiResponse);
       }
 
       if (maxConcurrency <= 0 || maxConcurrency > 10) {
         return res.status(400).json({
           success: false,
-          error: 'Max concurrency must be between 1 and 10'
+          error: 'Max concurrency must be between 1 and 10',
         } as ApiResponse);
       }
 
@@ -64,7 +65,7 @@ router.post('/start',
         dataCategories,
         organizationIds,
         skipIntegrityChecks,
-        createBackups
+        createBackups,
       };
 
       // Start migration
@@ -77,22 +78,21 @@ router.post('/start',
           status: 'started',
           dryRun,
           config,
-          message: dryRun ? 
-            'Dry-run migration started - no data will be modified' : 
-            'Data migration started successfully',
-          warning: dryRun ? 
-            'This is a dry-run. No actual data changes will be made.' : 
-            'Migration is running. Do not shut down the server until complete.'
-        }
+          message: dryRun
+            ? 'Dry-run migration started - no data will be modified'
+            : 'Data migration started successfully',
+          warning: dryRun
+            ? 'This is a dry-run. No actual data changes will be made.'
+            : 'Migration is running. Do not shut down the server until complete.',
+        },
       };
 
       res.status(201).json(response);
-
     } catch (error) {
       console.error('Start migration error:', error);
       res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to start migration'
+        error: error instanceof Error ? error.message : 'Failed to start migration',
       } as ApiResponse);
     }
   }
@@ -102,7 +102,8 @@ router.post('/start',
  * Estimate migration time and resources
  * GET /api/data-migration/estimate
  */
-router.get('/estimate',
+router.get(
+  '/estimate',
   authenticateToken,
   requireSuperAdmin(),
   async (req: AuthenticatedRequest, res: Response) => {
@@ -110,21 +111,25 @@ router.get('/estimate',
       const {
         batchSize = 100,
         organizationIds = [] as string[],
-        dataCategories = Object.values(DataCategory) as DataCategory[]
+        dataCategories = Object.values(DataCategory) as DataCategory[],
       } = req.query;
 
       const config: MigrationConfig = {
         batchSize: parseInt(batchSize as string, 10),
         maxConcurrency: 5,
         dryRun: true,
-        dataCategories: Array.isArray(dataCategories) ? 
-          dataCategories as DataCategory[] : 
-          dataCategories ? [dataCategories as DataCategory] : Object.values(DataCategory),
-        organizationIds: Array.isArray(organizationIds) ? 
-          organizationIds as string[] : 
-          organizationIds ? [organizationIds as string] : [],
+        dataCategories: Array.isArray(dataCategories)
+          ? (dataCategories as DataCategory[])
+          : dataCategories
+            ? [dataCategories as DataCategory]
+            : Object.values(DataCategory),
+        organizationIds: Array.isArray(organizationIds)
+          ? (organizationIds as string[])
+          : organizationIds
+            ? [organizationIds as string]
+            : [],
         skipIntegrityChecks: false,
-        createBackups: true
+        createBackups: true,
       };
 
       const estimate = await dataMigrationEngine.estimateMigration(config);
@@ -136,28 +141,32 @@ router.get('/estimate',
           recommendations: {
             optimalBatchSize: estimate.estimatedRecords > 10000 ? 500 : 100,
             recommendedConcurrency: estimate.estimatedRecords > 50000 ? 5 : 3,
-            suggestedMaintenanceWindow: estimate.estimatedTimeMinutes > 60 ? 
-              'Schedule during low-usage hours' : 
-              'Can be run during normal hours',
-            backupRecommendation: 'Always create backups for production migrations'
+            suggestedMaintenanceWindow:
+              estimate.estimatedTimeMinutes > 60
+                ? 'Schedule during low-usage hours'
+                : 'Can be run during normal hours',
+            backupRecommendation: 'Always create backups for production migrations',
           },
           riskAssessment: {
-            complexity: estimate.estimatedRecords > 100000 ? 'High' : 
-                        estimate.estimatedRecords > 10000 ? 'Medium' : 'Low',
+            complexity:
+              estimate.estimatedRecords > 100000
+                ? 'High'
+                : estimate.estimatedRecords > 10000
+                  ? 'Medium'
+                  : 'Low',
             downtime: 'Zero downtime - reads remain available during migration',
             rollbackTime: '< 5 minutes using backup restoration',
-            dataIntegrity: 'SHA-256 hash verification for all records'
-          }
-        }
+            dataIntegrity: 'SHA-256 hash verification for all records',
+          },
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('Migration estimate error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to estimate migration'
+        error: 'Failed to estimate migration',
       } as ApiResponse);
     }
   }
@@ -167,7 +176,8 @@ router.get('/estimate',
  * Get migration status and progress
  * GET /api/data-migration/:migrationId
  */
-router.get('/:migrationId',
+router.get(
+  '/:migrationId',
   authenticateToken,
   requireSuperAdmin(),
   async (req: AuthenticatedRequest, res: Response) => {
@@ -179,19 +189,24 @@ router.get('/:migrationId',
       if (!migration) {
         return res.status(404).json({
           success: false,
-          error: 'Migration not found'
+          error: 'Migration not found',
         } as ApiResponse);
       }
 
       // Calculate progress percentage
-      const progressPercentage = migration.totalRecords > 0 ? 
-        Math.round((migration.processedRecords / migration.totalRecords) * 100) : 0;
+      const progressPercentage =
+        migration.totalRecords > 0
+          ? Math.round((migration.processedRecords / migration.totalRecords) * 100)
+          : 0;
 
       // Estimate time remaining
-      const elapsedMinutes = migration.startedAt ? 
-        (Date.now() - new Date(migration.startedAt).getTime()) / 60000 : 0;
-      const estimatedTotalMinutes = migration.totalRecords > 0 && migration.processedRecords > 0 ? 
-        (elapsedMinutes / migration.processedRecords) * migration.totalRecords : 0;
+      const elapsedMinutes = migration.startedAt
+        ? (Date.now() - new Date(migration.startedAt).getTime()) / 60000
+        : 0;
+      const estimatedTotalMinutes =
+        migration.totalRecords > 0 && migration.processedRecords > 0
+          ? (elapsedMinutes / migration.processedRecords) * migration.totalRecords
+          : 0;
       const remainingMinutes = Math.max(0, estimatedTotalMinutes - elapsedMinutes);
 
       const response: ApiResponse = {
@@ -204,28 +219,27 @@ router.get('/:migrationId',
             processedRecords: migration.processedRecords,
             totalRecords: migration.totalRecords,
             encryptedRecords: migration.encryptedRecords,
-            failedRecords: migration.failedRecords
+            failedRecords: migration.failedRecords,
           },
           timing: {
             startedAt: migration.startedAt,
             completedAt: migration.completedAt,
             elapsedMinutes: Math.round(elapsedMinutes),
-            estimatedRemainingMinutes: Math.round(remainingMinutes)
+            estimatedRemainingMinutes: Math.round(remainingMinutes),
           },
           config: migration.config ? JSON.parse(migration.config) : null,
           errorMessage: migration.errorMessage,
           isComplete: ['completed', 'failed', 'cancelled'].includes(migration.status),
-          canRollback: migration.status === 'completed'
-        }
+          canRollback: migration.status === 'completed',
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('Get migration status error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to get migration status'
+        error: 'Failed to get migration status',
       } as ApiResponse);
     }
   }
@@ -235,7 +249,8 @@ router.get('/:migrationId',
  * Cancel running migration
  * POST /api/data-migration/:migrationId/cancel
  */
-router.post('/:migrationId/cancel',
+router.post(
+  '/:migrationId/cancel',
   authenticateToken,
   requireSuperAdmin(),
   async (req: AuthenticatedRequest, res: Response) => {
@@ -244,20 +259,20 @@ router.post('/:migrationId/cancel',
       const { reason } = req.body;
 
       const migration = await prisma.dataMigration.findUnique({
-        where: { id: migrationId }
+        where: { id: migrationId },
       });
 
       if (!migration) {
         return res.status(404).json({
           success: false,
-          error: 'Migration not found'
+          error: 'Migration not found',
         } as ApiResponse);
       }
 
       if (migration.status !== 'running') {
         return res.status(400).json({
           success: false,
-          error: `Cannot cancel migration with status: ${migration.status}`
+          error: `Cannot cancel migration with status: ${migration.status}`,
         } as ApiResponse);
       }
 
@@ -267,8 +282,8 @@ router.post('/:migrationId/cancel',
         data: {
           status: 'cancelled',
           errorMessage: `Cancelled by user: ${reason || 'No reason provided'}`,
-          completedAt: new Date()
-        }
+          completedAt: new Date(),
+        },
       });
 
       const response: ApiResponse = {
@@ -279,17 +294,16 @@ router.post('/:migrationId/cancel',
           cancelledAt: new Date(),
           reason: reason || 'No reason provided',
           message: 'Migration cancelled successfully',
-          note: 'Partially migrated data remains encrypted. Use rollback to restore if needed.'
-        }
+          note: 'Partially migrated data remains encrypted. Use rollback to restore if needed.',
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('Cancel migration error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to cancel migration'
+        error: 'Failed to cancel migration',
       } as ApiResponse);
     }
   }
@@ -299,7 +313,8 @@ router.post('/:migrationId/cancel',
  * Rollback completed migration
  * POST /api/data-migration/:migrationId/rollback
  */
-router.post('/:migrationId/rollback',
+router.post(
+  '/:migrationId/rollback',
   authenticateToken,
   requireSuperAdmin(),
   async (req: AuthenticatedRequest, res: Response) => {
@@ -310,25 +325,25 @@ router.post('/:migrationId/rollback',
       if (!confirmRollback) {
         return res.status(400).json({
           success: false,
-          error: 'Rollback confirmation required. Set confirmRollback: true'
+          error: 'Rollback confirmation required. Set confirmRollback: true',
         } as ApiResponse);
       }
 
       const migration = await prisma.dataMigration.findUnique({
-        where: { id: migrationId }
+        where: { id: migrationId },
       });
 
       if (!migration) {
         return res.status(404).json({
           success: false,
-          error: 'Migration not found'
+          error: 'Migration not found',
         } as ApiResponse);
       }
 
       if (migration.status !== 'completed') {
         return res.status(400).json({
           success: false,
-          error: 'Can only rollback completed migrations'
+          error: 'Can only rollback completed migrations',
         } as ApiResponse);
       }
 
@@ -343,18 +358,17 @@ router.post('/:migrationId/rollback',
           alternatives: [
             'Restore from database backups created before migration',
             'Use manual data restoration scripts',
-            'Contact system administrator for assistance'
-          ]
-        }
+            'Contact system administrator for assistance',
+          ],
+        },
       };
 
       res.status(501).json(response);
-
     } catch (error) {
       console.error('Rollback migration error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to rollback migration'
+        error: 'Failed to rollback migration',
       } as ApiResponse);
     }
   }
@@ -364,7 +378,8 @@ router.post('/:migrationId/rollback',
  * List all migrations
  * GET /api/data-migration/list
  */
-router.get('/list',
+router.get(
+  '/list',
   authenticateToken,
   requireSuperAdmin(),
   async (req: AuthenticatedRequest, res: Response) => {
@@ -379,7 +394,7 @@ router.get('/list',
       const migrations = await prisma.dataMigration.findMany({
         where,
         orderBy: { startedAt: 'desc' },
-        take: parseInt(limit as string, 10)
+        take: parseInt(limit as string, 10),
       });
 
       const response: ApiResponse = {
@@ -395,25 +410,24 @@ router.get('/list',
             encryptedRecords: migration.encryptedRecords,
             failedRecords: migration.failedRecords,
             errorMessage: migration.errorMessage,
-            config: migration.config ? JSON.parse(migration.config) : null
+            config: migration.config ? JSON.parse(migration.config) : null,
           })),
           summary: {
             total: migrations.length,
             byStatus: migrations.reduce((acc: any, m) => {
               acc[m.status] = (acc[m.status] || 0) + 1;
               return acc;
-            }, {})
-          }
-        }
+            }, {}),
+          },
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('List migrations error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to list migrations'
+        error: 'Failed to list migrations',
       } as ApiResponse);
     }
   }
@@ -423,7 +437,8 @@ router.get('/list',
  * Get migration audit trail
  * GET /api/data-migration/audit
  */
-router.get('/audit',
+router.get(
+  '/audit',
   authenticateToken,
   requireSuperAdmin(),
   async (req: AuthenticatedRequest, res: Response) => {
@@ -432,20 +447,20 @@ router.get('/audit',
 
       const where: any = {
         operation: {
-          in: ['data_migration_started', 'data_migration_completed', 'data_migration_failed']
-        }
+          in: ['data_migration_started', 'data_migration_completed', 'data_migration_failed'],
+        },
       };
 
       if (migrationId) {
         where.encryptionContext = {
-          contains: migrationId as string
+          contains: migrationId as string,
         };
       }
 
       const auditEntries = await prisma.cryptoAuditEntry.findMany({
         where,
         orderBy: { timestamp: 'desc' },
-        take: parseInt(limit as string, 10)
+        take: parseInt(limit as string, 10),
       });
 
       const response: ApiResponse = {
@@ -458,20 +473,19 @@ router.get('/audit',
             success: entry.success,
             timestamp: entry.timestamp,
             migrationDetails: entry.encryptionContext ? JSON.parse(entry.encryptionContext) : null,
-            cryptographicProof: entry.cryptographicProof.substring(0, 16) + '...'
+            cryptographicProof: entry.cryptographicProof.substring(0, 16) + '...',
           })),
           totalEntries: auditEntries.length,
-          secureAuditTrail: true
-        }
+          secureAuditTrail: true,
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('Migration audit trail error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to retrieve migration audit trail'
+        error: 'Failed to retrieve migration audit trail',
       } as ApiResponse);
     }
   }
@@ -481,28 +495,33 @@ router.get('/audit',
  * Get migration health and system status
  * GET /api/data-migration/health
  */
-router.get('/health',
+router.get(
+  '/health',
   authenticateToken,
   requireSuperAdmin(),
   async (_req: AuthenticatedRequest, res: Response) => {
     try {
       // Check if any migrations are currently running
       const runningMigrations = await prisma.dataMigration.count({
-        where: { status: 'running' }
+        where: { status: 'running' },
       });
 
       // Get recent migration statistics
       const recentMigrations = await prisma.dataMigration.findMany({
         where: {
           startedAt: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
-          }
+            gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
+          },
         },
-        orderBy: { startedAt: 'desc' }
+        orderBy: { startedAt: 'desc' },
       });
 
-      const successRate = recentMigrations.length > 0 ? 
-        (recentMigrations.filter(m => m.status === 'completed').length / recentMigrations.length * 100) : 100;
+      const successRate =
+        recentMigrations.length > 0
+          ? (recentMigrations.filter(m => m.status === 'completed').length /
+              recentMigrations.length) *
+            100
+          : 100;
 
       const response: ApiResponse = {
         success: true,
@@ -511,34 +530,41 @@ router.get('/health',
             migrationEngineOnline: true,
             runningMigrations,
             encryptionSystemReady: true,
-            backupSystemReady: true
+            backupSystemReady: true,
           },
           recentActivity: {
             last24Hours: recentMigrations.length,
             successRate: `${successRate.toFixed(1)}%`,
-            averageRecordsPerMigration: recentMigrations.length > 0 ? 
-              Math.round(recentMigrations.reduce((sum, m) => sum + m.totalRecords, 0) / recentMigrations.length) : 0
+            averageRecordsPerMigration:
+              recentMigrations.length > 0
+                ? Math.round(
+                    recentMigrations.reduce((sum, m) => sum + m.totalRecords, 0) /
+                      recentMigrations.length
+                  )
+                : 0,
           },
-          recommendations: runningMigrations > 0 ? [
-            'Migration in progress - avoid system maintenance',
-            'Monitor migration progress regularly',
-            'Ensure adequate disk space for backups'
-          ] : [
-            'System ready for new migrations',
-            'Consider running migrations during low-usage periods',
-            'Always test with dry-run first'
-          ],
-          lastUpdated: new Date()
-        }
+          recommendations:
+            runningMigrations > 0
+              ? [
+                  'Migration in progress - avoid system maintenance',
+                  'Monitor migration progress regularly',
+                  'Ensure adequate disk space for backups',
+                ]
+              : [
+                  'System ready for new migrations',
+                  'Consider running migrations during low-usage periods',
+                  'Always test with dry-run first',
+                ],
+          lastUpdated: new Date(),
+        },
       };
 
       res.json(response);
-
     } catch (error) {
       console.error('Migration health check error:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to check migration health'
+        error: 'Failed to check migration health',
       } as ApiResponse);
     }
   }

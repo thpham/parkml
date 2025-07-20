@@ -1,156 +1,153 @@
 import { Router } from 'express';
 import { prisma } from '../database/prisma-client';
 import { ApiResponse } from '@parkml/shared';
-import { 
-  authenticateToken, 
+import {
+  authenticateToken,
   requireClinicAdmin,
   requireSuperAdmin,
   logUserActivity,
-  AuthenticatedRequest 
+  AuthenticatedRequest,
 } from '../middleware/auth';
 
 const router = Router();
 
 // Get all users (filtered by organization for clinic admins)
-router.get('/', 
-  authenticateToken, 
-  requireClinicAdmin,
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      if (!req.user) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'User not authenticated',
-        };
-        return res.status(401).json(response);
-      }
-
-      const { page = 1, limit = 50, role, isActive, search } = req.query;
-
-      // Build where clause
-      const whereClause: any = {};
-
-      // Organization filtering
-      if (req.user.role === 'clinic_admin') {
-        whereClause.organizationId = req.user.organizationId;
-      } else if (req.user.role === 'super_admin') {
-        // Super admin can see all users
-        // Optional organization filter can be added here
-      }
-
-      // Role filtering
-      if (role) {
-        whereClause.role = Array.isArray(role) ? { in: role } : role;
-      }
-
-      // Active status filtering
-      if (isActive !== undefined) {
-        whereClause.isActive = isActive === 'true';
-      }
-
-      // Search filtering
-      if (search) {
-        whereClause.OR = [
-          { name: { contains: search as string } },
-          { email: { contains: search as string } }
-        ];
-      }
-
-      // Calculate pagination
-      const skip = (Number(page) - 1) * Number(limit);
-
-      const [users, totalCount] = await Promise.all([
-        prisma.user.findMany({
-          where: whereClause,
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            role: true,
-            organizationId: true,
-            isActive: true,
-            lastLoginAt: true,
-            createdAt: true,
-            updatedAt: true,
-            organization: {
-              select: {
-                id: true,
-                name: true,
-                isActive: true
-              }
-            },
-            patient: {
-              select: {
-                id: true,
-                name: true,
-                dateOfBirth: true,
-                diagnosisDate: true
-              }
-            },
-            _count: {
-              select: {
-                caregiverAssignments: true,
-                createdAssignments: true,
-                sentInvitations: true,
-                symptomEntries: true,
-                auditLogs: true
-              }
-            }
-          },
-          orderBy: { name: 'asc' },
-          skip,
-          take: Number(limit)
-        }),
-        prisma.user.count({ where: whereClause })
-      ]);
-
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          users: users.map((user: any) => ({
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
-            organizationId: user.organizationId,
-            organization: user.organization,
-            isActive: user.isActive,
-            lastLoginAt: user.lastLoginAt,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt,
-            patient: user.patient,
-            stats: {
-              caregiverAssignmentCount: user._count.caregiverAssignments,
-              createdAssignmentCount: user._count.createdAssignments,
-              sentInvitationCount: user._count.sentInvitations,
-              symptomEntryCount: user._count.symptomEntries,
-              auditLogCount: user._count.auditLogs
-            }
-          })),
-          pagination: {
-            page: Number(page),
-            limit: Number(limit),
-            total: totalCount,
-            totalPages: Math.ceil(totalCount / Number(limit))
-          }
-        }
-      };
-
-      res.json(response);
-    } catch (error) {
-      console.error('Get users error:', error);
+router.get('/', authenticateToken, requireClinicAdmin, async (req: AuthenticatedRequest, res) => {
+  try {
+    if (!req.user) {
       const response: ApiResponse = {
         success: false,
-        error: 'Internal server error',
+        error: 'User not authenticated',
       };
-      res.status(500).json(response);
+      return res.status(401).json(response);
     }
+
+    const { page = 1, limit = 50, role, isActive, search } = req.query;
+
+    // Build where clause
+    const whereClause: any = {};
+
+    // Organization filtering
+    if (req.user.role === 'clinic_admin') {
+      whereClause.organizationId = req.user.organizationId;
+    } else if (req.user.role === 'super_admin') {
+      // Super admin can see all users
+      // Optional organization filter can be added here
+    }
+
+    // Role filtering
+    if (role) {
+      whereClause.role = Array.isArray(role) ? { in: role } : role;
+    }
+
+    // Active status filtering
+    if (isActive !== undefined) {
+      whereClause.isActive = isActive === 'true';
+    }
+
+    // Search filtering
+    if (search) {
+      whereClause.OR = [
+        { name: { contains: search as string } },
+        { email: { contains: search as string } },
+      ];
+    }
+
+    // Calculate pagination
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [users, totalCount] = await Promise.all([
+      prisma.user.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          organizationId: true,
+          isActive: true,
+          lastLoginAt: true,
+          createdAt: true,
+          updatedAt: true,
+          organization: {
+            select: {
+              id: true,
+              name: true,
+              isActive: true,
+            },
+          },
+          patient: {
+            select: {
+              id: true,
+              name: true,
+              dateOfBirth: true,
+              diagnosisDate: true,
+            },
+          },
+          _count: {
+            select: {
+              caregiverAssignments: true,
+              createdAssignments: true,
+              sentInvitations: true,
+              symptomEntries: true,
+              auditLogs: true,
+            },
+          },
+        },
+        orderBy: { name: 'asc' },
+        skip,
+        take: Number(limit),
+      }),
+      prisma.user.count({ where: whereClause }),
+    ]);
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        users: users.map((user: any) => ({
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          organizationId: user.organizationId,
+          organization: user.organization,
+          isActive: user.isActive,
+          lastLoginAt: user.lastLoginAt,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          patient: user.patient,
+          stats: {
+            caregiverAssignmentCount: user._count.caregiverAssignments,
+            createdAssignmentCount: user._count.createdAssignments,
+            sentInvitationCount: user._count.sentInvitations,
+            symptomEntryCount: user._count.symptomEntries,
+            auditLogCount: user._count.auditLogs,
+          },
+        })),
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total: totalCount,
+          totalPages: Math.ceil(totalCount / Number(limit)),
+        },
+      },
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Get users error:', error);
+    const response: ApiResponse = {
+      success: false,
+      error: 'Internal server error',
+    };
+    res.status(500).json(response);
   }
-);
+});
 
 // Get user by ID
-router.get('/:id', 
-  authenticateToken, 
+router.get(
+  '/:id',
+  authenticateToken,
   requireClinicAdmin,
   async (req: AuthenticatedRequest, res) => {
     try {
@@ -171,8 +168,8 @@ router.get('/:id',
             select: {
               id: true,
               name: true,
-              isActive: true
-            }
+              isActive: true,
+            },
           },
           patient: {
             select: {
@@ -181,8 +178,8 @@ router.get('/:id',
               dateOfBirth: true,
               diagnosisDate: true,
               emergencyContact: true,
-              privacySettings: true
-            }
+              privacySettings: true,
+            },
           },
           caregiverAssignments: {
             select: {
@@ -195,10 +192,10 @@ router.get('/:id',
               patient: {
                 select: {
                   id: true,
-                  name: true
-                }
-              }
-            }
+                  name: true,
+                },
+              },
+            },
           },
           _count: {
             select: {
@@ -206,10 +203,10 @@ router.get('/:id',
               createdAssignments: true,
               sentInvitations: true,
               symptomEntries: true,
-              auditLogs: true
-            }
-          }
-        }
+              auditLogs: true,
+            },
+          },
+        },
       });
 
       if (!user) {
@@ -249,9 +246,9 @@ router.get('/:id',
             createdAssignmentCount: user._count.createdAssignments,
             sentInvitationCount: user._count.sentInvitations,
             symptomEntryCount: user._count.symptomEntries,
-            auditLogCount: user._count.auditLogs
-          }
-        }
+            auditLogCount: user._count.auditLogs,
+          },
+        },
       };
 
       res.json(response);
@@ -267,8 +264,9 @@ router.get('/:id',
 );
 
 // Update user (admin only)
-router.put('/:id', 
-  authenticateToken, 
+router.put(
+  '/:id',
+  authenticateToken,
   requireClinicAdmin,
   logUserActivity('UPDATE', 'user'),
   async (req: AuthenticatedRequest, res) => {
@@ -286,7 +284,7 @@ router.put('/:id',
 
       // Get current user
       const currentUser = await prisma.user.findUnique({
-        where: { id }
+        where: { id },
       });
 
       if (!currentUser) {
@@ -298,7 +296,10 @@ router.put('/:id',
       }
 
       // Check authorization
-      if (req.user.role === 'clinic_admin' && currentUser.organizationId !== req.user.organizationId) {
+      if (
+        req.user.role === 'clinic_admin' &&
+        currentUser.organizationId !== req.user.organizationId
+      ) {
         const response: ApiResponse = {
           success: false,
           error: 'Access denied to user in different organization',
@@ -328,7 +329,7 @@ router.put('/:id',
       // Check if new email conflicts with existing user
       if (email && email !== currentUser.email) {
         const existingUser = await prisma.user.findUnique({
-          where: { email }
+          where: { email },
         });
 
         if (existingUser) {
@@ -342,7 +343,13 @@ router.put('/:id',
 
       // Validate role if provided
       if (role !== undefined) {
-        const validRoles = ['super_admin', 'clinic_admin', 'professional_caregiver', 'family_caregiver', 'patient'];
+        const validRoles = [
+          'super_admin',
+          'clinic_admin',
+          'professional_caregiver',
+          'family_caregiver',
+          'patient',
+        ];
         if (!validRoles.includes(role)) {
           const response: ApiResponse = {
             success: false,
@@ -355,7 +362,7 @@ router.put('/:id',
       // Validate organization if provided
       if (organizationId !== undefined && organizationId !== currentUser.organizationId) {
         const organization = await prisma.organization.findUnique({
-          where: { id: organizationId }
+          where: { id: organizationId },
         });
 
         if (!organization) {
@@ -392,18 +399,18 @@ router.put('/:id',
             select: {
               id: true,
               name: true,
-              isActive: true
-            }
+              isActive: true,
+            },
           },
           patient: {
             select: {
               id: true,
               name: true,
               dateOfBirth: true,
-              diagnosisDate: true
-            }
-          }
-        }
+              diagnosisDate: true,
+            },
+          },
+        },
       });
 
       const response: ApiResponse = {
@@ -419,8 +426,8 @@ router.put('/:id',
           lastLoginAt: updatedUser.lastLoginAt,
           createdAt: updatedUser.createdAt,
           updatedAt: updatedUser.updatedAt,
-          patient: updatedUser.patient
-        }
+          patient: updatedUser.patient,
+        },
       };
 
       res.json(response);
@@ -436,8 +443,9 @@ router.put('/:id',
 );
 
 // Deactivate user (admin only)
-router.post('/:id/deactivate', 
-  authenticateToken, 
+router.post(
+  '/:id/deactivate',
+  authenticateToken,
   requireClinicAdmin,
   logUserActivity('DEACTIVATE', 'user'),
   async (req: AuthenticatedRequest, res) => {
@@ -454,7 +462,7 @@ router.post('/:id/deactivate',
 
       // Get current user
       const currentUser = await prisma.user.findUnique({
-        where: { id }
+        where: { id },
       });
 
       if (!currentUser) {
@@ -466,7 +474,10 @@ router.post('/:id/deactivate',
       }
 
       // Check authorization
-      if (req.user.role === 'clinic_admin' && currentUser.organizationId !== req.user.organizationId) {
+      if (
+        req.user.role === 'clinic_admin' &&
+        currentUser.organizationId !== req.user.organizationId
+      ) {
         const response: ApiResponse = {
           success: false,
           error: 'Access denied to user in different organization',
@@ -492,23 +503,23 @@ router.post('/:id/deactivate',
             select: {
               id: true,
               name: true,
-              isActive: true
-            }
-          }
-        }
+              isActive: true,
+            },
+          },
+        },
       });
 
       // Deactivate all active caregiver assignments for this user
       await prisma.caregiverAssignment.updateMany({
         where: {
           caregiverId: id,
-          status: 'active'
+          status: 'active',
         },
         data: {
           status: 'inactive',
           endDate: new Date(),
-          notes: 'User deactivated'
-        }
+          notes: 'User deactivated',
+        },
       });
 
       const response: ApiResponse = {
@@ -523,8 +534,8 @@ router.post('/:id/deactivate',
           isActive: updatedUser.isActive,
           lastLoginAt: updatedUser.lastLoginAt,
           createdAt: updatedUser.createdAt,
-          updatedAt: updatedUser.updatedAt
-        }
+          updatedAt: updatedUser.updatedAt,
+        },
       };
 
       res.json(response);
@@ -540,8 +551,9 @@ router.post('/:id/deactivate',
 );
 
 // Reactivate user (admin only)
-router.post('/:id/reactivate', 
-  authenticateToken, 
+router.post(
+  '/:id/reactivate',
+  authenticateToken,
   requireClinicAdmin,
   logUserActivity('REACTIVATE', 'user'),
   async (req: AuthenticatedRequest, res) => {
@@ -558,7 +570,7 @@ router.post('/:id/reactivate',
 
       // Get current user
       const currentUser = await prisma.user.findUnique({
-        where: { id }
+        where: { id },
       });
 
       if (!currentUser) {
@@ -570,7 +582,10 @@ router.post('/:id/reactivate',
       }
 
       // Check authorization
-      if (req.user.role === 'clinic_admin' && currentUser.organizationId !== req.user.organizationId) {
+      if (
+        req.user.role === 'clinic_admin' &&
+        currentUser.organizationId !== req.user.organizationId
+      ) {
         const response: ApiResponse = {
           success: false,
           error: 'Access denied to user in different organization',
@@ -587,10 +602,10 @@ router.post('/:id/reactivate',
             select: {
               id: true,
               name: true,
-              isActive: true
-            }
-          }
-        }
+              isActive: true,
+            },
+          },
+        },
       });
 
       const response: ApiResponse = {
@@ -605,8 +620,8 @@ router.post('/:id/reactivate',
           isActive: updatedUser.isActive,
           lastLoginAt: updatedUser.lastLoginAt,
           createdAt: updatedUser.createdAt,
-          updatedAt: updatedUser.updatedAt
-        }
+          updatedAt: updatedUser.updatedAt,
+        },
       };
 
       res.json(response);
@@ -622,8 +637,9 @@ router.post('/:id/reactivate',
 );
 
 // Delete user (super admin only)
-router.delete('/:id', 
-  authenticateToken, 
+router.delete(
+  '/:id',
+  authenticateToken,
   requireSuperAdmin,
   logUserActivity('DELETE', 'user'),
   async (req: AuthenticatedRequest, res) => {
@@ -646,10 +662,10 @@ router.delete('/:id',
             select: {
               caregiverAssignments: true,
               createdAssignments: true,
-              symptomEntries: true
-            }
-          }
-        }
+              symptomEntries: true,
+            },
+          },
+        },
       });
 
       if (!currentUser) {
@@ -670,9 +686,11 @@ router.delete('/:id',
       }
 
       // Check if user has data that prevents deletion
-      if ((currentUser as any)._count.caregiverAssignments > 0 || 
-          (currentUser as any)._count.createdAssignments > 0 || 
-          (currentUser as any)._count.symptomEntries > 0) {
+      if (
+        (currentUser as any)._count.caregiverAssignments > 0 ||
+        (currentUser as any)._count.createdAssignments > 0 ||
+        (currentUser as any)._count.symptomEntries > 0
+      ) {
         const response: ApiResponse = {
           success: false,
           error: 'Cannot delete user with existing data. Deactivate instead.',
@@ -682,14 +700,14 @@ router.delete('/:id',
 
       // Delete user
       await prisma.user.delete({
-        where: { id }
+        where: { id },
       });
 
       const response: ApiResponse = {
         success: true,
         data: {
-          message: 'User deleted successfully'
-        }
+          message: 'User deleted successfully',
+        },
       };
 
       res.json(response);
