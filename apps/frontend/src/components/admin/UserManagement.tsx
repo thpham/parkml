@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { User, ApiResponse, UserStats } from '@parkml/shared';
 import { Avatar } from '../shared';
@@ -18,6 +18,13 @@ interface PaginatedUsers {
     total: number;
     totalPages: number;
   };
+}
+
+interface UserUpdateFormData {
+  name: string;
+  email: string;
+  role: string;
+  isActive: boolean;
 }
 
 const UserManagement: React.FC = () => {
@@ -40,13 +47,7 @@ const UserManagement: React.FC = () => {
     isActive: '',
   });
 
-  useEffect(() => {
-    if (user && token && isAdmin) {
-      fetchUsers();
-    }
-  }, [user, token, isAdmin, pagination.page, pagination.limit, filters]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -64,8 +65,14 @@ const UserManagement: React.FC = () => {
       const data: ApiResponse<PaginatedUsers> = await response.json();
 
       if (data.success && data.data) {
-        setUsers(data.data.users);
-        setPagination(data.data.pagination);
+        const responseData = data.data;
+        setUsers(responseData.users);
+        // Only update total and totalPages from server, keep client-controlled page and limit
+        setPagination(prev => ({
+          ...prev,
+          total: responseData.pagination.total,
+          totalPages: responseData.pagination.totalPages,
+        }));
       } else {
         toast.error(data.error || t('users.errors.fetchUsers'));
       }
@@ -75,9 +82,16 @@ const UserManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, filters, token, t]);
 
-  const handleUpdateUser = async (id: string, formData: any) => {
+  useEffect(() => {
+    if (user && token && isAdmin) {
+      fetchUsers();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchUsers excluded to prevent infinite loop
+  }, [user, token, isAdmin, pagination.page, pagination.limit, filters]);
+
+  const handleUpdateUser = async (id: string, formData: UserUpdateFormData) => {
     try {
       const response = await fetch(`/api/users/${id}`, {
         method: 'PUT',
@@ -440,7 +454,7 @@ const UserManagement: React.FC = () => {
 // User Edit Form Component
 interface UserEditFormProps {
   user: UserWithStats;
-  onSubmit: (formData: any) => void;
+  onSubmit: (formData: UserUpdateFormData) => void;
   onCancel: () => void;
 }
 

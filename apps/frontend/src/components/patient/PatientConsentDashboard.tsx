@@ -110,7 +110,8 @@ const PatientConsentDashboard: React.FC = () => {
       fetchAssignments();
       fetchPendingConsent();
     }
-  }, [user, token, fetchAssignments, fetchPendingConsent]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchAssignments and fetchPendingConsent excluded to prevent infinite loop
+  }, [user, token]);
 
   const handleConsentResponse = async (
     assignmentId: string,

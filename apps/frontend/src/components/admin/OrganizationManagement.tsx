@@ -1,10 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import { Organization, ApiResponse } from '@parkml/shared';
 import { Avatar } from '../shared';
 import { Building, Plus, Edit } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+interface OrganizationFormData {
+  name: string;
+  description: string;
+  address: string;
+  phone: string;
+  email: string;
+}
 
 const OrganizationManagement: React.FC = () => {
   const { user, token, isSuperAdmin } = useAuth();
@@ -14,13 +22,7 @@ const OrganizationManagement: React.FC = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
 
-  useEffect(() => {
-    if (user && token && isSuperAdmin) {
-      fetchOrganizations();
-    }
-  }, [user, token, isSuperAdmin]);
-
-  const fetchOrganizations = async () => {
+  const fetchOrganizations = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('/api/organizations', {
@@ -42,9 +44,16 @@ const OrganizationManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, t]);
 
-  const handleCreateOrganization = async (formData: any) => {
+  useEffect(() => {
+    if (user && token && isSuperAdmin) {
+      fetchOrganizations();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchOrganizations excluded to prevent infinite loop
+  }, [user, token, isSuperAdmin]);
+
+  const handleCreateOrganization = async (formData: OrganizationFormData) => {
     try {
       const response = await fetch('/api/organizations', {
         method: 'POST',
@@ -70,7 +79,7 @@ const OrganizationManagement: React.FC = () => {
     }
   };
 
-  const handleUpdateOrganization = async (id: string, formData: any) => {
+  const handleUpdateOrganization = async (id: string, formData: OrganizationFormData) => {
     try {
       const response = await fetch(`/api/organizations/${id}`, {
         method: 'PUT',
@@ -255,7 +264,7 @@ const OrganizationManagement: React.FC = () => {
 // Organization Form Component
 interface OrganizationFormProps {
   organization?: Organization;
-  onSubmit: (formData: any) => void;
+  onSubmit: (formData: OrganizationFormData) => void;
   onCancel: () => void;
 }
 

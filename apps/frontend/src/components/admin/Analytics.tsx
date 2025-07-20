@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import { ApiResponse } from '@parkml/shared';
@@ -56,14 +56,7 @@ const Analytics: React.FC = () => {
   const [selectedOrganization, setSelectedOrganization] = useState<string>('');
   const [timeRange, setTimeRange] = useState<string>('7'); // days
 
-  useEffect(() => {
-    if (user && token && isAdmin) {
-      fetchSystemStats();
-      fetchEmergencyStats();
-    }
-  }, [user, token, isAdmin, selectedOrganization, timeRange]);
-
-  const fetchSystemStats = async () => {
+  const fetchSystemStats = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (selectedOrganization) {
@@ -88,9 +81,9 @@ const Analytics: React.FC = () => {
       console.error('Error fetching system stats:', error);
       toast.error(t('analytics.errors.systemStatsError'));
     }
-  };
+  }, [selectedOrganization, timeRange, token, t]);
 
-  const fetchEmergencyStats = async () => {
+  const fetchEmergencyStats = useCallback(async () => {
     try {
       const response = await fetch('/api/analytics/emergency-access', {
         headers: {
@@ -111,7 +104,15 @@ const Analytics: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, t]);
+
+  useEffect(() => {
+    if (user && token && isAdmin) {
+      fetchSystemStats();
+      fetchEmergencyStats();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchSystemStats and fetchEmergencyStats excluded to prevent infinite loop
+  }, [user, token, isAdmin, selectedOrganization, timeRange]);
 
   const getAccessTypeBadgeColor = (type: string) => {
     switch (type) {

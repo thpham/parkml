@@ -65,6 +65,7 @@ const Dashboard: React.FC = () => {
     if (user && token && !isAdmin) {
       fetchDashboardData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchDashboardData excluded to prevent infinite loop
   }, [user, token, isAdmin]);
 
   // Redirect admin users to admin dashboard

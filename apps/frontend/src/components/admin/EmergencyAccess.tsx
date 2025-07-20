@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useAuth } from '../../contexts/AuthContext';
 import { EmergencyAccess as EmergencyAccessType, ApiResponse, Patient } from '@parkml/shared';
@@ -20,6 +20,20 @@ interface EmergencyAccessWithDetails extends EmergencyAccessType {
   patient?: Patient;
 }
 
+interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+interface EmergencyAccessFormData {
+  patientId: string;
+  reason: string;
+  accessType: string;
+  durationHours: number;
+}
+
 const EmergencyAccess: React.FC = () => {
   const { t } = useTranslation('admin');
   const { user, token, isAdmin } = useAuth();
@@ -32,13 +46,7 @@ const EmergencyAccess: React.FC = () => {
     isActive: '',
   });
 
-  useEffect(() => {
-    if (user && token) {
-      fetchEmergencyAccess();
-    }
-  }, [user, token, filters]);
-
-  const fetchEmergencyAccess = async () => {
+  const fetchEmergencyAccess = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams(
@@ -53,7 +61,7 @@ const EmergencyAccess: React.FC = () => {
 
       const data: ApiResponse<{
         emergencyAccesses: EmergencyAccessWithDetails[];
-        pagination: any;
+        pagination: PaginationInfo;
       }> = await response.json();
 
       if (data.success) {
@@ -67,9 +75,16 @@ const EmergencyAccess: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, token, t]);
 
-  const handleRequestAccess = async (formData: any) => {
+  useEffect(() => {
+    if (user && token) {
+      fetchEmergencyAccess();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchEmergencyAccess excluded to prevent infinite loop
+  }, [user, token, filters]);
+
+  const handleRequestAccess = async (formData: EmergencyAccessFormData) => {
     try {
       const response = await fetch('/api/emergency-access/request', {
         method: 'POST',
@@ -379,7 +394,7 @@ const EmergencyAccess: React.FC = () => {
 
 // Emergency Access Request Form Component
 interface EmergencyAccessFormProps {
-  onSubmit: (formData: any) => void;
+  onSubmit: (formData: EmergencyAccessFormData) => void;
   onCancel: () => void;
 }
 
@@ -395,11 +410,7 @@ const EmergencyAccessForm: React.FC<EmergencyAccessFormProps> = ({ onSubmit, onC
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchPatients();
-  }, []);
-
-  const fetchPatients = async () => {
+  const fetchPatients = useCallback(async () => {
     try {
       const response = await fetch('/api/patients', {
         headers: {
@@ -415,7 +426,11 @@ const EmergencyAccessForm: React.FC<EmergencyAccessFormProps> = ({ onSubmit, onC
     } catch (error) {
       console.error('Error fetching patients:', error);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchPatients();
+  }, [fetchPatients]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
