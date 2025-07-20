@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -7,16 +7,28 @@ import './i18n'; // Initialize i18next
 import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
 import Dashboard from './components/dashboard/Dashboard';
-import SymptomForm from './components/symptoms/SymptomForm';
-import OrganizationManagement from './components/admin/OrganizationManagement';
-import UserManagement from './components/admin/UserManagement';
-import CaregiverAssignments from './components/admin/CaregiverAssignments';
-import EmergencyAccess from './components/admin/EmergencyAccess';
-import Analytics from './components/admin/Analytics';
-import CaregiverDashboard from './components/caregiver/CaregiverDashboard';
-import PatientConsentDashboard from './components/patient/PatientConsentDashboard';
-import ProfilePage from './pages/ProfilePage';
 import './App.css';
+
+// Lazy load components that are not immediately needed
+const SymptomForm = React.lazy(() => import('./components/symptoms/SymptomForm'));
+const OrganizationManagement = React.lazy(() => import('./components/admin/OrganizationManagement'));
+const UserManagement = React.lazy(() => import('./components/admin/UserManagement'));
+const CaregiverAssignments = React.lazy(() => import('./components/admin/CaregiverAssignments'));
+const EmergencyAccess = React.lazy(() => import('./components/admin/EmergencyAccess'));
+const Analytics = React.lazy(() => import('./components/admin/Analytics'));
+const CaregiverDashboard = React.lazy(() => import('./components/caregiver/CaregiverDashboard'));
+const PatientConsentDashboard = React.lazy(() => import('./components/patient/PatientConsentDashboard'));
+const ProfilePage = React.lazy(() => import('./pages/ProfilePage'));
+
+// Loading component for lazy-loaded routes
+const PageLoading: React.FC = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="text-center">
+      <span className="loading loading-spinner loading-lg"></span>
+      <p className="mt-4 text-base-content/60">Loading...</p>
+    </div>
+  </div>
+);
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -109,7 +121,9 @@ const AppContent: React.FC = () => {
           <Route path="/symptoms/:patientId" element={
             <ProtectedRoute>
               <Layout>
-                <SymptomForm patientId={""} />
+                <Suspense fallback={<PageLoading />}>
+                  <SymptomForm patientId={""} />
+                </Suspense>
               </Layout>
             </ProtectedRoute>
           } />
@@ -118,7 +132,9 @@ const AppContent: React.FC = () => {
           <Route path="/caregiver/assignments" element={
             <ProtectedRoute>
               <Layout>
-                <CaregiverDashboard />
+                <Suspense fallback={<PageLoading />}>
+                  <CaregiverDashboard />
+                </Suspense>
               </Layout>
             </ProtectedRoute>
           } />
@@ -127,7 +143,9 @@ const AppContent: React.FC = () => {
           <Route path="/patient/consent" element={
             <ProtectedRoute>
               <Layout>
-                <PatientConsentDashboard />
+                <Suspense fallback={<PageLoading />}>
+                  <PatientConsentDashboard />
+                </Suspense>
               </Layout>
             </ProtectedRoute>
           } />
@@ -136,7 +154,9 @@ const AppContent: React.FC = () => {
           <Route path="/admin/organizations" element={
             <ProtectedRoute>
               <Layout>
-                <OrganizationManagement />
+                <Suspense fallback={<PageLoading />}>
+                  <OrganizationManagement />
+                </Suspense>
               </Layout>
             </ProtectedRoute>
           } />
@@ -144,7 +164,9 @@ const AppContent: React.FC = () => {
           <Route path="/admin/users" element={
             <ProtectedRoute>
               <Layout>
-                <UserManagement />
+                <Suspense fallback={<PageLoading />}>
+                  <UserManagement />
+                </Suspense>
               </Layout>
             </ProtectedRoute>
           } />
@@ -152,7 +174,9 @@ const AppContent: React.FC = () => {
           <Route path="/admin/assignments" element={
             <ProtectedRoute>
               <Layout>
-                <CaregiverAssignments />
+                <Suspense fallback={<PageLoading />}>
+                  <CaregiverAssignments />
+                </Suspense>
               </Layout>
             </ProtectedRoute>
           } />
@@ -160,7 +184,9 @@ const AppContent: React.FC = () => {
           <Route path="/admin/emergency-access" element={
             <ProtectedRoute>
               <Layout>
-                <EmergencyAccess />
+                <Suspense fallback={<PageLoading />}>
+                  <EmergencyAccess />
+                </Suspense>
               </Layout>
             </ProtectedRoute>
           } />
@@ -168,7 +194,9 @@ const AppContent: React.FC = () => {
           <Route path="/admin/analytics" element={
             <ProtectedRoute>
               <Layout>
-                <Analytics />
+                <Suspense fallback={<PageLoading />}>
+                  <Analytics />
+                </Suspense>
               </Layout>
             </ProtectedRoute>
           } />
@@ -177,7 +205,9 @@ const AppContent: React.FC = () => {
           <Route path="/profile" element={
             <ProtectedRoute>
               <Layout>
-                <ProfilePage />
+                <Suspense fallback={<PageLoading />}>
+                  <ProfilePage />
+                </Suspense>
               </Layout>
             </ProtectedRoute>
           } />
