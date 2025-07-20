@@ -128,7 +128,14 @@
       "expiresInWarning": "⚠️ La configuration expire dans {{seconds}} secondes ! Dépêchez-vous !",
       "expired": "Configuration expirée. Génération d'un nouveau code QR...",
       "newCodeGenerated": "Nouveau code QR généré. Veuillez scanner le code mis à jour."
-    }
+    },
+    "verify": "Vérifier l'authentification",
+    "authenticatorApp": "Application d'authentification",
+    "backupCode": "Code de sauvegarde",
+    "enterCode": "Saisir le code",
+    "enterBackupCode": "Saisir le code de sauvegarde",
+    "codeHelp": "Saisissez le code à 6 chiffres de votre application d'authentification",
+    "backupCodeHelp": "Saisissez l'un de vos codes de sauvegarde à 8 caractères"
   },
   "passkeys": {
     "title": "Clés d'accès",
@@ -206,5 +213,11 @@
     "enable2fa": "Activez l'authentification à deux facteurs pour une meilleure sécurité",
     "addPasskey": "Ajoutez une clé d'accès pour l'authentification sans mot de passe",
     "strongPassword": "Utilisez un mot de passe plus fort avec des caractères mixtes"
+  },
+  "validation": {
+    "codeRequired": "Le code d'authentification est requis",
+    "codeInvalid": "Veuillez saisir un code à 6 chiffres valide",
+    "backupCodeRequired": "Le code de sauvegarde est requis",
+    "backupCodeInvalid": "Veuillez saisir un code de sauvegarde à 8 caractères valide"
   }
 }

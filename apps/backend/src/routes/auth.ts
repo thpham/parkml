@@ -1,10 +1,30 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { authenticator } from '@otplib/preset-default';
+// WebAuthn imports for passkey login
+import { 
+  generateAuthenticationOptions,
+  verifyAuthenticationResponse,
+  type AuthenticatorTransportFuture
+} from '@simplewebauthn/server';
 import { prisma } from '../database/prisma-client';
 import { ApiResponse } from '@parkml/shared';
 import { authenticateToken, logUserActivity } from '../middleware/auth';
 import type { AuthenticatedRequest } from '../middleware/auth';
+
+// Temporary in-memory challenge storage for passkey authentication
+const challengeStore = new Map<string, { challenge: string; userId: string; expiresAt: number }>();
+
+// Clean up expired challenges every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of challengeStore.entries()) {
+    if (value.expiresAt < now) {
+      challengeStore.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
 
 // Password strength validation function
 const validatePasswordStrength = (password: string): { isValid: boolean; strength: string; errors: string[] } => {
@@ -259,10 +279,10 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Login user
+// Enhanced login user with 2FA support
 router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, twoFactorCode, backupCode } = req.body;
 
     // Validate input
     if (!email || !password) {
@@ -273,7 +293,18 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
       return res.status(400).json(response);
     }
 
-    // Find user
+    // Log login attempt
+    await prisma.loginAttempt.create({
+      data: {
+        email,
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.get('User-Agent') || null,
+        success: false, // Will update if successful
+        failureReason: null
+      }
+    });
+
+    // Find user with 2FA information
     const user = await prisma.user.findUnique({
       where: { email },
       include: {
@@ -283,11 +314,23 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
             name: true,
             isActive: true
           }
-        }
+        },
+        twoFactorAuth: true
       }
     });
 
     if (!user) {
+      // Update login attempt with failure reason
+      await prisma.loginAttempt.updateMany({
+        where: { 
+          email,
+          ipAddress: req.ip || 'unknown',
+          success: false,
+          failureReason: null
+        },
+        data: { failureReason: 'invalid_email' }
+      });
+
       const response: ApiResponse = {
         success: false,
         error: 'Invalid credentials',
@@ -297,6 +340,16 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
 
     // Check if user is active
     if (!user.isActive) {
+      await prisma.loginAttempt.updateMany({
+        where: { 
+          email,
+          ipAddress: req.ip || 'unknown',
+          success: false,
+          failureReason: null
+        },
+        data: { failureReason: 'account_locked' }
+      });
+
       const response: ApiResponse = {
         success: false,
         error: 'Account is deactivated',
@@ -317,12 +370,131 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
     const isValidPassword = await bcrypt.compare(password, user.passwordHash);
 
     if (!isValidPassword) {
+      await prisma.loginAttempt.updateMany({
+        where: { 
+          email,
+          ipAddress: req.ip || 'unknown',
+          success: false,
+          failureReason: null
+        },
+        data: { failureReason: 'invalid_password' }
+      });
+
       const response: ApiResponse = {
         success: false,
         error: 'Invalid credentials',
       };
       return res.status(401).json(response);
     }
+
+    // Check if 2FA is enabled and handle 2FA verification
+    if (user.twoFactorAuth?.isEnabled) {
+      // If no 2FA code provided, request it
+      if (!twoFactorCode && !backupCode) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Two-factor authentication required',
+          data: {
+            requiresTwoFactor: true,
+            userId: user.id // Temporary identifier for 2FA step
+          }
+        };
+        return res.status(200).json(response); // 200 because it's expected flow
+      }
+
+      // Verify 2FA code or backup code
+      let isValid2FA = false;
+
+      if (twoFactorCode) {
+        // Verify TOTP token with time window tolerance
+        const tempAuth = authenticator.clone();
+        tempAuth.options = { ...tempAuth.options, window: 2 };
+        isValid2FA = tempAuth.verify({ 
+          token: twoFactorCode, 
+          secret: user.twoFactorAuth.secret 
+        });
+      } else if (backupCode) {
+        // Verify backup code
+        const backupCodes = JSON.parse(user.twoFactorAuth.backupCodes || '[]');
+        const usedCodes = JSON.parse(user.twoFactorAuth.recoveryCodesUsed || '[]');
+        
+        isValid2FA = backupCodes.includes(backupCode.toUpperCase()) && 
+                     !usedCodes.includes(backupCode.toUpperCase());
+        
+        if (isValid2FA) {
+          // Mark backup code as used
+          usedCodes.push(backupCode.toUpperCase());
+          await prisma.twoFactorAuth.update({
+            where: { userId: user.id },
+            data: { 
+              recoveryCodesUsed: JSON.stringify(usedCodes),
+              lastUsedAt: new Date()
+            }
+          });
+        }
+      }
+
+      if (!isValid2FA) {
+        // Increment failed attempts
+        await prisma.twoFactorAuth.update({
+          where: { userId: user.id },
+          data: { failedAttempts: { increment: 1 } }
+        });
+
+        await prisma.loginAttempt.updateMany({
+          where: { 
+            email,
+            ipAddress: req.ip || 'unknown',
+            success: false,
+            failureReason: null
+          },
+          data: { failureReason: 'invalid_2fa' }
+        });
+
+        const response: ApiResponse = {
+          success: false,
+          error: 'Invalid two-factor authentication code',
+        };
+        return res.status(401).json(response);
+      }
+
+      // Update 2FA last used time for TOTP
+      if (twoFactorCode) {
+        await prisma.twoFactorAuth.update({
+          where: { userId: user.id },
+          data: { lastUsedAt: new Date() }
+        });
+      }
+    }
+
+    // Create security audit log entry for successful login
+    await prisma.securityAuditLog.create({
+      data: {
+        userId: user.id,
+        action: 'login',
+        resourceType: 'session',
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.get('User-Agent') || null,
+        status: 'success',
+        riskLevel: 'low',
+        details: JSON.stringify({
+          loginMethod: user.twoFactorAuth?.isEnabled ? 
+            (twoFactorCode ? '2fa_totp' : 'backup_code') : 'password',
+          timestamp: new Date().toISOString()
+        })
+      }
+    });
+
+    // Update successful login attempt
+    await prisma.loginAttempt.updateMany({
+      where: { 
+        email,
+        ipAddress: req.ip || 'unknown',
+        success: false,
+        failureReason: null
+      },
+      data: { success: true }
+    });
 
     // Update last login time
     await prisma.user.update({
@@ -357,14 +529,350 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
           lastLoginAt: user.lastLoginAt,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
+          twoFactorEnabled: user.twoFactorAuth?.isEnabled || false
         },
         token,
+        loginMethod: user.twoFactorAuth?.isEnabled ? 
+          (twoFactorCode ? '2fa_totp' : 'backup_code') : 'password'
       },
     };
 
     res.json(response);
   } catch (error) {
     console.error('Login error:', error);
+    
+    // Log failed login attempt due to server error
+    if (req.body.email) {
+      await prisma.loginAttempt.updateMany({
+        where: { 
+          email: req.body.email,
+          ipAddress: req.ip || 'unknown',
+          success: false,
+          failureReason: null
+        },
+        data: { failureReason: 'server_error' }
+      });
+    }
+
+    const response: ApiResponse = {
+      success: false,
+      error: 'Internal server error',
+    };
+    res.status(500).json(response);
+  }
+});
+
+// Generate authentication options for passkey login
+router.post('/login/passkey/begin', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Email is required for passkey authentication',
+      };
+      return res.status(400).json(response);
+    }
+
+    // Find user and their passkeys
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        passkeys: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            credentialId: true,
+            publicKey: true,
+            counter: true,
+            transports: true
+          }
+        }
+      }
+    });
+
+    if (!user) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'No account found with this email',
+      };
+      return res.status(404).json(response);
+    }
+
+    if (!user.isActive) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Account is deactivated',
+      };
+      return res.status(403).json(response);
+    }
+
+    if (user.passkeys.length === 0) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'No passkeys registered for this account',
+      };
+      return res.status(400).json(response);
+    }
+
+    // Generate authentication options
+    const allowCredentials = user.passkeys.map(passkey => ({
+      id: passkey.credentialId,
+      transports: (JSON.parse(passkey.transports || '[]') as AuthenticatorTransportFuture[])
+    }));
+
+    const options = await generateAuthenticationOptions({
+      rpID: process.env.RP_ID || 'localhost',
+      allowCredentials,
+      userVerification: 'preferred',
+    });
+
+    // Store challenge in temporary storage
+    const challengeKey = `challenge_${user.id}_${Date.now()}`;
+    challengeStore.set(challengeKey, {
+      challenge: options.challenge,
+      userId: user.id,
+      expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes
+    });
+
+    const response: ApiResponse = {
+      success: true,
+      data: { 
+        options,
+        challengeKey,
+        userId: user.id // Temporary identifier for verification step
+      }
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Passkey login begin error:', error);
+    const response: ApiResponse = {
+      success: false,
+      error: 'Failed to generate authentication options',
+    };
+    res.status(500).json(response);
+  }
+});
+
+// Verify passkey authentication and complete login
+router.post('/login/passkey/complete', logUserActivity('LOGIN', 'user'), async (req, res) => {
+  try {
+    const { userId, challengeKey, authenticationResponse } = req.body;
+
+    if (!userId || !challengeKey || !authenticationResponse) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'User ID, challenge key, and authentication response are required',
+      };
+      return res.status(400).json(response);
+    }
+
+    // Get stored challenge
+    const storedChallenge = challengeStore.get(challengeKey);
+    
+    if (!storedChallenge || storedChallenge.expiresAt < Date.now() || storedChallenge.userId !== userId) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Authentication challenge not found or expired',
+      };
+      return res.status(400).json(response);
+    }
+
+    // Find user with passkeys
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            isActive: true
+          }
+        },
+        passkeys: {
+          where: { 
+            credentialId: authenticationResponse.id,
+            isActive: true 
+          }
+        },
+        twoFactorAuth: true
+      }
+    });
+
+    if (!user) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'User not found',
+      };
+      return res.status(404).json(response);
+    }
+
+    if (!user.isActive) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Account is deactivated',
+      };
+      return res.status(403).json(response);
+    }
+
+    if (user.organization && !user.organization.isActive) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Organization is deactivated',
+      };
+      return res.status(403).json(response);
+    }
+
+
+    const passkey = user.passkeys[0];
+    if (!passkey) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Passkey not found or inactive',
+      };
+      return res.status(400).json(response);
+    }
+
+    // Verify the authentication response
+    const verification = await verifyAuthenticationResponse({
+      response: authenticationResponse,
+      expectedChallenge: storedChallenge.challenge,
+      expectedOrigin: process.env.EXPECTED_ORIGIN || 'http://localhost:3000',
+      expectedRPID: process.env.RP_ID || 'localhost',
+      credential: {
+        id: passkey.credentialId,
+        publicKey: Buffer.from(passkey.publicKey, 'base64'),
+        counter: passkey.counter
+      },
+      requireUserVerification: false
+    });
+
+    if (!verification.verified) {
+      // Log failed login attempt
+      await prisma.loginAttempt.create({
+        data: {
+          email: user.email,
+          ipAddress: req.ip || 'unknown',
+          userAgent: req.get('User-Agent') || null,
+          success: false,
+          failureReason: 'invalid_passkey'
+        }
+      });
+
+      const response: ApiResponse = {
+        success: false,
+        error: 'Passkey verification failed',
+      };
+      return res.status(401).json(response);
+    }
+
+    // Update passkey counter and last used
+    await prisma.passkey.update({
+      where: { id: passkey.id },
+      data: {
+        counter: verification.authenticationInfo.newCounter,
+        lastUsedAt: new Date()
+      }
+    });
+
+    // Clean up used challenge
+    challengeStore.delete(challengeKey);
+
+    // Create security audit log entry
+    await prisma.securityAuditLog.create({
+      data: {
+        userId: user.id,
+        action: 'login',
+        resourceType: 'session',
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.get('User-Agent') || null,
+        status: 'success',
+        riskLevel: 'low',
+        details: JSON.stringify({
+          loginMethod: 'passkey',
+          passkeyId: passkey.id,
+          deviceName: passkey.deviceName,
+          timestamp: new Date().toISOString()
+        })
+      }
+    });
+
+    // Log successful login attempt
+    await prisma.loginAttempt.create({
+      data: {
+        email: user.email,
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.get('User-Agent') || null,
+        success: true
+      }
+    });
+
+    // Update last login time
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email, 
+        role: user.role,
+        organizationId: user.organizationId,
+        isActive: user.isActive
+      },
+      process.env.JWT_SECRET || 'default_secret',
+      { expiresIn: '24h' }
+    );
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          organizationId: user.organizationId,
+          organization: user.organization,
+          isActive: user.isActive,
+          lastLoginAt: user.lastLoginAt,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          twoFactorEnabled: user.twoFactorAuth?.isEnabled || false
+        },
+        token,
+        loginMethod: 'passkey'
+      },
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Passkey login complete error:', error);
+
+    // Log failed login attempt due to server error
+    if (req.body.userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: req.body.userId },
+        select: { email: true }
+      });
+      
+      if (user) {
+        await prisma.loginAttempt.create({
+          data: {
+            email: user.email,
+            ipAddress: req.ip || 'unknown',
+            userAgent: req.get('User-Agent') || null,
+            success: false,
+            failureReason: 'server_error'
+          }
+        });
+      }
+    }
+
     const response: ApiResponse = {
       success: false,
       error: 'Internal server error',

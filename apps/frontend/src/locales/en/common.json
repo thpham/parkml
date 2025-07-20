@@ -9,7 +9,6 @@
     "yes": "Yes",
     "no": "No",
     "close": "Close",
-    "back": "Back",
     "next": "Next",
     "refresh": "Refresh",
     "export": "Export",
@@ -100,5 +99,8 @@
   "copy": "Copy",
   "download": "Download",
   "copied": "Copied to clipboard",
-  "generate": "Generate"
+  "generate": "Generate",
+  "or": "or",
+  "comingSoon": "Coming Soon",
+  "back": "Back"
 }

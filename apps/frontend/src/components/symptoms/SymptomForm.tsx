@@ -39,12 +39,12 @@ const SymptomForm: React.FC<SymptomFormProps> = ({ patientId, onSubmit }) => {
   });
 
   const sections = [
-    { id: 'motor', title: t('categories.motorSymptoms'), shortTitle: t('categories.motorSymptomsShort', t('categories.motorSymptoms')), icon: '🏃' },
-    { id: 'non-motor', title: t('categories.nonMotorSymptoms'), shortTitle: t('categories.nonMotorSymptomsShort', t('categories.nonMotorSymptoms')), icon: '🧠' },
-    { id: 'autonomic', title: t('categories.autonomicSymptoms'), shortTitle: t('categories.autonomicSymptomsShort', t('categories.autonomicSymptoms')), icon: '❤️' },
-    { id: 'daily', title: t('categories.dailyActivities'), shortTitle: t('categories.dailyActivitiesShort', t('categories.dailyActivities')), icon: '🏠' },
-    { id: 'environmental', title: t('categories.environmentalFactors'), shortTitle: t('categories.environmentalFactorsShort', t('categories.environmentalFactors')), icon: '🌤️' },
-    { id: 'safety', title: t('categories.safetyIncidents'), shortTitle: t('categories.safetyIncidentsShort', t('categories.safetyIncidents')), icon: '⚠️' },
+    { id: 'motor', title: t('categories.motorSymptoms'), shortTitle: t('categories.motorSymptomsShort') || t('categories.motorSymptoms'), icon: '🏃' },
+    { id: 'non-motor', title: t('categories.nonMotorSymptoms'), shortTitle: t('categories.nonMotorSymptomsShort') || t('categories.nonMotorSymptoms'), icon: '🧠' },
+    { id: 'autonomic', title: t('categories.autonomicSymptoms'), shortTitle: t('categories.autonomicSymptomsShort') || t('categories.autonomicSymptoms'), icon: '❤️' },
+    { id: 'daily', title: t('categories.dailyActivities'), shortTitle: t('categories.dailyActivitiesShort') || t('categories.dailyActivities'), icon: '🏠' },
+    { id: 'environmental', title: t('categories.environmentalFactors'), shortTitle: t('categories.environmentalFactorsShort') || t('categories.environmentalFactors'), icon: '🌤️' },
+    { id: 'safety', title: t('categories.safetyIncidents'), shortTitle: t('categories.safetyIncidentsShort') || t('categories.safetyIncidents'), icon: '⚠️' },
   ];
 
   const submitForm = async (data: Partial<SymptomEntry>) => {

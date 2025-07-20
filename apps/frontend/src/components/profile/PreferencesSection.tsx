@@ -44,7 +44,7 @@ interface UserPreferences {
 }
 
 const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
-  const { t, changeLanguage } = useTranslation(['profile', 'common']);
+  const { t, setLanguage } = useTranslation(['profile', 'common']);
   const [preferences, setPreferences] = useState<UserPreferences>({
     theme: 'system',
     language: 'en',
@@ -126,7 +126,7 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = () => {
         
         // Apply language change immediately
         if (preferences.language) {
-          changeLanguage(preferences.language);
+          await setLanguage(preferences.language as 'en' | 'fr');
         }
         
         // Apply theme change

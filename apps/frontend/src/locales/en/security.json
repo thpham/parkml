@@ -128,7 +128,14 @@
       "expiresInWarning": "⚠️ Setup expires in {{seconds}} seconds! Hurry!",
       "expired": "Setup expired. Generating new QR code...",
       "newCodeGenerated": "New QR code generated. Please scan the updated code."
-    }
+    },
+    "verify": "Verify Authentication",
+    "authenticatorApp": "Authenticator App",
+    "backupCode": "Backup Code",
+    "enterCode": "Enter Code",
+    "enterBackupCode": "Enter Backup Code",
+    "codeHelp": "Enter the 6-digit code from your authenticator app",
+    "backupCodeHelp": "Enter one of your 8-character backup codes"
   },
   "passkeys": {
     "title": "Passkeys",
@@ -206,5 +213,11 @@
     "enable2fa": "Enable two-factor authentication for better security",
     "addPasskey": "Add a passkey for passwordless authentication",
     "strongPassword": "Use a stronger password with mixed characters"
+  },
+  "validation": {
+    "codeRequired": "Authentication code is required",
+    "codeInvalid": "Please enter a valid 6-digit code",
+    "backupCodeRequired": "Backup code is required",
+    "backupCodeInvalid": "Please enter a valid 8-character backup code"
   }
 }

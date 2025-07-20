@@ -104,5 +104,8 @@
   "filter": "Filtrer",
   "refresh": "Actualiser",
   "export": "Exporter",
-  "details": "Détails"
+  "details": "Détails",
+  "or": "ou",
+  "comingSoon": "Bientôt disponible",
+  "back": "Retour"
 }
