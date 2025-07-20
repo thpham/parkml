@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { SessionManagerService } from '../services/SessionManagerService';
 import { SecurityAuditService } from '../services/SecurityAuditService';
+import { JwtPayload } from '@parkml/shared';
 import { ApiResponse } from '@parkml/shared';
 
 export interface SessionAuthenticatedRequest extends Request {
@@ -45,9 +46,9 @@ export const authenticateSession = async (
     const token = authHeader.substring(7);
 
     // Verify JWT token
-    let decoded: any;
+    let decoded: JwtPayload;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret');
+      decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret') as JwtPayload;
     } catch (error) {
       // Skip security audit logging for invalid tokens since we don't have a valid userId
       console.log('Invalid token access attempt:', {

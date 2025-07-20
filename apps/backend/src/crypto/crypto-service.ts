@@ -3,6 +3,12 @@
  * Main service orchestrating all cryptographic operations for the ParkML platform
  */
 
+import { Request, Response, NextFunction } from 'express';
+
+// Extend Request interface to include encryption context
+interface CryptoRequest extends Request {
+  encryptionContext?: any; // Will be properly typed when crypto context is implemented
+}
 import { prisma } from '../database/prisma-client';
 import { ABECrypto } from './abe-crypto';
 import { WASMCryptoLoader, HomomorphicEncryption } from './wasm-loader';
@@ -416,7 +422,7 @@ export async function initializeCrypto(): Promise<void> {
  * Express middleware factory for encryption context
  */
 export function createCryptoMiddleware() {
-  return (req: any, res: any, next: any) => {
+  return (req: CryptoRequest, res: Response, next: NextFunction) => {
     if (!cryptoService.isReady()) {
       return res.status(503).json({
         success: false,

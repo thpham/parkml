@@ -296,7 +296,7 @@ export class EmergencyAccessCrypto {
         accessLevel: AccessLevel.EMERGENCY_ACCESS,
         dataCategories: Object.values(DataCategory),
         emergencyContext: {
-          accessType: emergencyAccess.accessType as any,
+          accessType: emergencyAccess.accessType,
           reason: emergencyAccess.reason,
           durationHours: 24,
           emergencyAccessId: requestId,
