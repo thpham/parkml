@@ -128,7 +128,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      // Call backend logout endpoint to log security event
+      const currentToken = localStorage.getItem('parkml_token');
+      if (currentToken) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${currentToken}`,
+            'Content-Type': 'application/json',
+          },
+        }).catch(error => {
+          // Don't throw on logout API failure - still clear local state
+          console.warn('Logout API call failed:', error);
+        });
+      }
+    } catch (error) {
+      console.warn('Error during logout API call:', error);
+    }
+    
+    // Always clear local state regardless of API call success
     setUser(null);
     setToken(null);
     setOrganization(null);

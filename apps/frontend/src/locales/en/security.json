@@ -195,7 +195,18 @@
       "passkey_added": "Passkey Added",
       "passkey_removed": "Passkey Removed",
       "failed_login": "Failed Login",
-      "session_expired": "Session Expired"
+      "session_expired": "Session Expired",
+      "session_created": "Session Created",
+      "2fa_backup_codes_regenerated": "2FA Backup Codes Regenerated",
+      "2fa_setup_initiated": "2FA Setup Initiated",
+      "2fa_setup_expired": "2FA Setup Expired",
+      "2fa_verification_expired": "2FA Verification Expired",
+      "2fa_verification_failed": "2FA Verification Failed",
+      "session_terminated": "Session Terminated",
+      "session_access": "Session Access",
+      "audit_log_exported": "Audit Log Exported",
+      "logout_all_sessions": "Logout All Sessions",
+      "all_sessions_terminated": "All Sessions Terminated"
     },
     "stats": {
       "totalEntries": "Total Entries",
@@ -219,5 +230,31 @@
     "codeInvalid": "Please enter a valid 6-digit code",
     "backupCodeRequired": "Backup code is required",
     "backupCodeInvalid": "Please enter a valid 8-character backup code"
+  },
+  "sessionManagement": {
+    "title": "Active Sessions",
+    "description": "Manage your active login sessions across devices",
+    "currentSession": "Current Session",
+    "terminateSession": "Terminate Session",
+    "logoutOtherSessions": "Logout Other Sessions",
+    "logoutAllSessions": "Logout All Sessions",
+    "confirmTerminate": "Confirm Session Termination",
+    "confirmLogoutOthers": "Logout Other Sessions",
+    "confirmLogoutAll": "Logout All Sessions",
+    "terminateWarning": "Are you sure you want to terminate this session? This will log out the device immediately.",
+    "logoutOthersWarning": "This will log you out of all other devices but keep you logged in on this device.",
+    "logoutAllWarning": "⚠️ DANGER: This will log you out of ALL devices, including this one! You will be redirected to the login page.",
+    "filterBySessions": "Filter by Session",
+    "deviceInfo": "Device: {{device}}",
+    "lastAccessed": "Last accessed: {{time}}",
+    "location": "Location: {{location}}",
+    "noActiveSessions": "No other active sessions",
+    "globalActions": "Global Session Actions",
+    "sessionTerminated": "Session terminated successfully",
+    "otherSessionsLoggedOut": "Logged out of {{count}} other sessions",
+    "allSessionsLoggedOut": "Logged out of all sessions",
+    "othersSessionsCount": "This will terminate {{count}} other active sessions.",
+    "allSessionsCount": "This will terminate all {{count}} active sessions.",
+    "autoLogoutNotice": "You will be automatically logged out in 1.5 seconds."
   }
 }

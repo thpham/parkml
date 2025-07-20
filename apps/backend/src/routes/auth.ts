@@ -12,6 +12,8 @@ import { prisma } from '../database/prisma-client';
 import { ApiResponse } from '@parkml/shared';
 import { authenticateToken, logUserActivity } from '../middleware/auth';
 import type { AuthenticatedRequest } from '../middleware/auth';
+import { SecurityAuditService } from '../services/SecurityAuditService';
+import { SessionManagerService } from '../services/SessionManagerService';
 
 // Temporary in-memory challenge storage for passkey authentication
 const challengeStore = new Map<string, { challenge: string; userId: string; expiresAt: number }>();
@@ -293,7 +295,7 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
       return res.status(400).json(response);
     }
 
-    // Log login attempt
+    // Log login attempt (security event will be logged after we identify the user)
     await prisma.loginAttempt.create({
       data: {
         email,
@@ -320,7 +322,7 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
     });
 
     if (!user) {
-      // Update login attempt with failure reason
+      // Update login attempt with failure reason (no security audit for unknown users)
       await prisma.loginAttempt.updateMany({
         where: { 
           email,
@@ -340,15 +342,27 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
 
     // Check if user is active
     if (!user.isActive) {
-      await prisma.loginAttempt.updateMany({
-        where: { 
-          email,
-          ipAddress: req.ip || 'unknown',
-          success: false,
-          failureReason: null
-        },
-        data: { failureReason: 'account_locked' }
-      });
+      await Promise.all([
+        prisma.loginAttempt.updateMany({
+          where: { 
+            email,
+            ipAddress: req.ip || 'unknown',
+            success: false,
+            failureReason: null
+          },
+          data: { failureReason: 'account_locked' }
+        }),
+        SecurityAuditService.logSecurityEvent({
+          userId: user.id,
+          action: 'failed_login',
+          status: 'failed',
+          riskLevel: 'high',
+          details: {
+            email,
+            failureReason: 'account_locked'
+          }
+        }, req)
+      ]);
 
       const response: ApiResponse = {
         success: false,
@@ -370,15 +384,28 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
     const isValidPassword = await bcrypt.compare(password, user.passwordHash);
 
     if (!isValidPassword) {
-      await prisma.loginAttempt.updateMany({
-        where: { 
-          email,
-          ipAddress: req.ip || 'unknown',
-          success: false,
-          failureReason: null
-        },
-        data: { failureReason: 'invalid_password' }
-      });
+      await Promise.all([
+        prisma.loginAttempt.updateMany({
+          where: { 
+            email,
+            ipAddress: req.ip || 'unknown',
+            success: false,
+            failureReason: null
+          },
+          data: { failureReason: 'invalid_password' }
+        }),
+        SecurityAuditService.logSecurityEvent({
+          userId: user.id,
+          action: 'failed_login',
+          status: 'failed',
+          riskLevel: 'medium',
+          details: {
+            email,
+            failureReason: 'invalid_password',
+            loginMethod: 'password'
+          }
+        }, req)
+      ]);
 
       const response: ApiResponse = {
         success: false,
@@ -436,20 +463,33 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
 
       if (!isValid2FA) {
         // Increment failed attempts
-        await prisma.twoFactorAuth.update({
-          where: { userId: user.id },
-          data: { failedAttempts: { increment: 1 } }
-        });
-
-        await prisma.loginAttempt.updateMany({
-          where: { 
-            email,
-            ipAddress: req.ip || 'unknown',
-            success: false,
-            failureReason: null
-          },
-          data: { failureReason: 'invalid_2fa' }
-        });
+        await Promise.all([
+          prisma.twoFactorAuth.update({
+            where: { userId: user.id },
+            data: { failedAttempts: { increment: 1 } }
+          }),
+          prisma.loginAttempt.updateMany({
+            where: { 
+              email,
+              ipAddress: req.ip || 'unknown',
+              success: false,
+              failureReason: null
+            },
+            data: { failureReason: 'invalid_2fa' }
+          }),
+          SecurityAuditService.logSecurityEvent({
+            userId: user.id,
+            action: 'failed_login',
+            status: 'failed',
+            riskLevel: 'high',
+            details: {
+              email,
+              failureReason: 'invalid_2fa',
+              loginMethod: twoFactorCode ? '2fa_totp' : 'backup_code',
+              twoFactorUsed: true
+            }
+          }, req)
+        ]);
 
         const response: ApiResponse = {
           success: false,
@@ -467,23 +507,39 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
       }
     }
 
-    // Create security audit log entry for successful login
-    await prisma.securityAuditLog.create({
-      data: {
-        userId: user.id,
-        action: 'login',
-        resourceType: 'session',
-        ipAddress: req.ip || 'unknown',
-        userAgent: req.get('User-Agent') || null,
-        status: 'success',
-        riskLevel: 'low',
-        details: JSON.stringify({
-          loginMethod: user.twoFactorAuth?.isEnabled ? 
-            (twoFactorCode ? '2fa_totp' : 'backup_code') : 'password',
-          timestamp: new Date().toISOString()
-        })
-      }
-    });
+    // Create session and log security events
+    const sessionData = {
+      userId: user.id,
+      organizationId: user.organizationId || undefined,
+      loginMethod: (user.twoFactorAuth?.isEnabled ? 
+        (twoFactorCode ? '2fa_totp' : 'backup_code') : 'password') as 'password' | '2fa_totp' | 'backup_code',
+      twoFactorVerified: !!user.twoFactorAuth?.isEnabled
+    };
+
+    const { sessionToken, sessionId } = await SessionManagerService.createSession(
+      sessionData,
+      req,
+      false // rememberMe - could be extended to support this
+    );
+
+    // Log comprehensive security event
+    await SecurityAuditService.logSecurityEvent({
+      userId: user.id,
+      organizationId: user.organizationId || undefined,
+      action: 'login',
+      resourceType: 'session',
+      resourceId: sessionId,
+      status: 'success',
+      riskLevel: 'low',
+      details: {
+        loginMethod: sessionData.loginMethod,
+        twoFactorUsed: !!user.twoFactorAuth?.isEnabled,
+        sessionId,
+        userAgent: req.get('User-Agent'),
+        timestamp: new Date().toISOString()
+      },
+      sessionId
+    }, req);
 
     // Update successful login attempt
     await prisma.loginAttempt.updateMany({
@@ -502,14 +558,16 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
       data: { lastLoginAt: new Date() },
     });
 
-    // Generate JWT token
+    // Generate JWT token with session information
     const token = jwt.sign(
       { 
         userId: user.id, 
         email: user.email, 
         role: user.role,
         organizationId: user.organizationId,
-        isActive: user.isActive
+        isActive: user.isActive,
+        sessionId,
+        sessionToken
       },
       process.env.JWT_SECRET || 'default_secret',
       { expiresIn: '24h' }
@@ -532,6 +590,7 @@ router.post('/login', logUserActivity('LOGIN', 'user'), async (req, res) => {
           twoFactorEnabled: user.twoFactorAuth?.isEnabled || false
         },
         token,
+        sessionId,
         loginMethod: user.twoFactorAuth?.isEnabled ? 
           (twoFactorCode ? '2fa_totp' : 'backup_code') : 'password'
       },
@@ -780,24 +839,39 @@ router.post('/login/passkey/complete', logUserActivity('LOGIN', 'user'), async (
     // Clean up used challenge
     challengeStore.delete(challengeKey);
 
-    // Create security audit log entry
-    await prisma.securityAuditLog.create({
-      data: {
-        userId: user.id,
-        action: 'login',
-        resourceType: 'session',
-        ipAddress: req.ip || 'unknown',
-        userAgent: req.get('User-Agent') || null,
-        status: 'success',
-        riskLevel: 'low',
-        details: JSON.stringify({
-          loginMethod: 'passkey',
-          passkeyId: passkey.id,
-          deviceName: passkey.deviceName,
-          timestamp: new Date().toISOString()
-        })
-      }
-    });
+    // Create session and log security events
+    const passkeySessionData = {
+      userId: user.id,
+      organizationId: user.organizationId || undefined,
+      loginMethod: 'passkey' as const,
+      twoFactorVerified: false // Passkey is considered strong authentication
+    };
+
+    const { sessionToken: passkeySessionToken, sessionId: passkeySessionId } = await SessionManagerService.createSession(
+      passkeySessionData,
+      req,
+      false
+    );
+
+    // Log comprehensive security event
+    await SecurityAuditService.logSecurityEvent({
+      userId: user.id,
+      organizationId: user.organizationId || undefined,
+      action: 'login',
+      resourceType: 'session',
+      resourceId: passkeySessionId,
+      status: 'success',
+      riskLevel: 'low',
+      details: {
+        loginMethod: 'passkey',
+        passkeyId: passkey.id,
+        deviceName: passkey.deviceName,
+        passkeyUsed: true,
+        sessionId: passkeySessionId,
+        timestamp: new Date().toISOString()
+      },
+      sessionId: passkeySessionId
+    }, req);
 
     // Log successful login attempt
     await prisma.loginAttempt.create({
@@ -815,14 +889,16 @@ router.post('/login/passkey/complete', logUserActivity('LOGIN', 'user'), async (
       data: { lastLoginAt: new Date() },
     });
 
-    // Generate JWT token
+    // Generate JWT token with session information
     const token = jwt.sign(
       { 
         userId: user.id, 
         email: user.email, 
         role: user.role,
         organizationId: user.organizationId,
-        isActive: user.isActive
+        isActive: user.isActive,
+        sessionId: passkeySessionId,
+        sessionToken: passkeySessionToken
       },
       process.env.JWT_SECRET || 'default_secret',
       { expiresIn: '24h' }
@@ -845,6 +921,7 @@ router.post('/login/passkey/complete', logUserActivity('LOGIN', 'user'), async (
           twoFactorEnabled: user.twoFactorAuth?.isEnabled || false
         },
         token,
+        sessionId: passkeySessionId,
         loginMethod: 'passkey'
       },
     };
@@ -1384,6 +1461,52 @@ router.post('/passkey/register/complete', (_req, res) => {
     error: 'This endpoint has moved. Please use /api/security/passkeys/register/complete',
     redirectTo: '/api/security/passkeys/register/complete'
   });
+});
+
+// Logout endpoint using same auth as other endpoints
+router.post('/logout', authenticateToken, logUserActivity('LOGOUT', 'user'), async (req: AuthenticatedRequest, res) => {
+  try {
+    if (!req.user) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'User not authenticated',
+      };
+      return res.status(401).json(response);
+    }
+
+    // Log security audit event
+    await prisma.securityAuditLog.create({
+      data: {
+        userId: req.user.userId,
+        action: 'logout',
+        resourceType: 'session',
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent') || 'Unknown',
+        status: 'success',
+        riskLevel: 'low',
+        details: JSON.stringify({
+          logoutMethod: 'user_initiated',
+          timestamp: new Date().toISOString()
+        })
+      }
+    });
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        message: 'Logged out successfully'
+      },
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Logout error:', error);
+    const response: ApiResponse = {
+      success: false,
+      error: 'Internal server error',
+    };
+    res.status(500).json(response);
+  }
 });
 
 // Audit Logs

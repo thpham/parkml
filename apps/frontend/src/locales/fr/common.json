@@ -105,6 +105,18 @@
   "refresh": "Actualiser",
   "export": "Exporter",
   "details": "Détails",
+  "pagination": {
+    "page": "Page",
+    "of": "de",
+    "entries": "entrées",
+    "entriesPerPage": "Entrées par page",
+    "showingEntries": "Affichage de {{start}} à {{end}} sur {{total}} entrées",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "first": "Premier",
+    "last": "Dernier"
+  },
+  "all": "Tous",
   "or": "ou",
   "comingSoon": "Bientôt disponible",
   "back": "Retour"

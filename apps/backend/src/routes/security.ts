@@ -1071,6 +1071,96 @@ router.delete('/passkeys/:passkeyId', authenticateToken, async (req: Authenticat
 });
 
 // =====================================
+// Security Status and Statistics Routes
+// =====================================
+
+// Get comprehensive security status
+router.get('/status', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated',
+      } as ApiResponse);
+    }
+
+    // Get user's current security data
+    const [user, twoFactorAuth, passkeys, recentLogins, failedAttempts] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: req.user.userId },
+        select: {
+          securityScore: true,
+          passwordChangedAt: true,
+          passwordHistory: {
+            orderBy: { createdAt: 'desc' },
+            take: 1
+          }
+        }
+      }),
+      prisma.twoFactorAuth.findUnique({
+        where: { userId: req.user.userId },
+        select: { isEnabled: true }
+      }),
+      prisma.passkey.count({
+        where: { 
+          userId: req.user.userId,
+          isActive: true 
+        }
+      }),
+      prisma.securityAuditLog.count({
+        where: {
+          userId: req.user.userId,
+          action: 'login',
+          status: 'success',
+          timestamp: {
+            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
+          }
+        }
+      }),
+      prisma.securityAuditLog.count({
+        where: {
+          userId: req.user.userId,
+          action: 'failed_login',
+          timestamp: {
+            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
+          }
+        }
+      })
+    ]);
+
+    // Calculate password strength (simplified)
+    let passwordStrength: 'weak' | 'medium' | 'strong' = 'medium';
+    if (user?.securityScore) {
+      if (user.securityScore >= 85) passwordStrength = 'strong';
+      else if (user.securityScore < 60) passwordStrength = 'weak';
+    }
+
+    // Get last password change
+    const lastPasswordChange = user?.passwordChangedAt || user?.passwordHistory[0]?.createdAt || null;
+
+    res.json({
+      success: true,
+      data: {
+        passwordStrength,
+        twoFactorEnabled: twoFactorAuth?.isEnabled || false,
+        passkeyCount: passkeys,
+        lastPasswordChange,
+        recentLoginAttempts: failedAttempts,
+        recentSuccessfulLogins: recentLogins,
+        securityScore: user?.securityScore || 65
+      }
+    } as ApiResponse);
+
+  } catch (error) {
+    console.error('Security status error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+    } as ApiResponse);
+  }
+});
+
+// =====================================
 // Security Audit Routes
 // =====================================
 
@@ -1131,7 +1221,7 @@ router.get('/audit-logs', authenticateToken, async (req: AuthenticatedRequest, r
     }
 
     // Get logs and total count
-    const [logs, totalCount] = await Promise.all([
+    const [rawLogs, totalCount] = await Promise.all([
       prisma.securityAuditLog.findMany({
         where: filters,
         orderBy: { timestamp: 'desc' },
@@ -1140,6 +1230,74 @@ router.get('/audit-logs', authenticateToken, async (req: AuthenticatedRequest, r
       }),
       prisma.securityAuditLog.count({ where: filters })
     ]);
+
+    // Debug logging
+    console.log(`[SecurityAuditAPI] User ${req.user.userId} requested audit logs:`);
+    console.log(`[SecurityAuditAPI] - Filters applied:`, JSON.stringify(filters, null, 2));
+    console.log(`[SecurityAuditAPI] - Found ${totalCount} total entries, returning ${rawLogs.length} entries`);
+    console.log(`[SecurityAuditAPI] - Page: ${pageNum}, Limit: ${limitNum}, Offset: ${offset}`);
+
+    // Helper function to detect device type from user agent
+    const detectDeviceType = (userAgent: string | null): 'desktop' | 'mobile' | 'tablet' | 'unknown' => {
+      if (!userAgent) return 'unknown';
+      const ua = userAgent.toLowerCase();
+      if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) return 'mobile';
+      if (ua.includes('tablet') || ua.includes('ipad')) return 'tablet';
+      if (ua.includes('desktop') || ua.includes('windows') || ua.includes('mac') || ua.includes('linux')) return 'desktop';
+      return 'unknown';
+    };
+
+    // Helper function to extract device name from user agent
+    const extractDeviceName = (userAgent: string | null): string => {
+      if (!userAgent) return 'Unknown Device';
+      
+      // Simple device name extraction
+      const ua = userAgent.toLowerCase();
+      if (ua.includes('chrome')) return 'Chrome Browser';
+      if (ua.includes('firefox')) return 'Firefox Browser';
+      if (ua.includes('safari') && !ua.includes('chrome')) return 'Safari Browser';
+      if (ua.includes('edge')) return 'Edge Browser';
+      if (ua.includes('mobile')) return 'Mobile Device';
+      if (ua.includes('tablet')) return 'Tablet Device';
+      
+      return 'Unknown Device';
+    };
+
+    // Helper function to get approximate location from IP (enhanced)
+    const getLocationFromIP = (ipAddress: string | null): string => {
+      if (!ipAddress) return 'Unknown Location';
+      if (ipAddress.includes('127.0.0.1') || ipAddress.includes('localhost') || ipAddress === '::1') {
+        return 'Local Development';
+      }
+      // In production, you'd use a geolocation service here
+      return 'External Location';
+    };
+
+    // Transform logs to match frontend format
+    const logs = rawLogs.map(log => ({
+      id: log.id,
+      timestamp: log.timestamp.toISOString(),
+      action: log.action as any, // Cast to frontend action type
+      deviceType: detectDeviceType(log.userAgent),
+      deviceName: extractDeviceName(log.userAgent),
+      ipAddress: log.ipAddress || 'Unknown',
+      location: log.location || getLocationFromIP(log.ipAddress),
+      userAgent: log.userAgent || 'Unknown',
+      success: log.status === 'success',
+      details: log.details && log.details !== '{}' ? 
+        (() => {
+          try {
+            const parsed = JSON.parse(log.details);
+            // Format details for better display
+            return Object.entries(parsed)
+              .filter(([key, value]) => value && key !== 'timestamp')
+              .map(([key, value]) => `${key}: ${value}`)
+              .join(', ');
+          } catch {
+            return log.details;
+          }
+        })() : undefined
+    }));
 
     // Get summary statistics
     const stats = await prisma.securityAuditLog.groupBy({

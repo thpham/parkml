@@ -22,9 +22,11 @@ import dataMigrationRoutes from './routes/data-migration';
 import performanceAuditRoutes from './routes/performance-audit';
 import securityRoutes from './routes/security';
 import preferencesRoutes from './routes/preferences';
+import sessionRoutes from './routes/sessions';
 import { initializeEmergencyAccessCleanup } from './services/emergency-access-cleanup';
 import { cleanup2FASetups } from './routes/security';
 import { initializeCrypto, createCryptoMiddleware } from './crypto/crypto-service';
+import { SessionManagerService } from './services/SessionManagerService';
 
 // Load environment variables
 dotenv.config();
@@ -79,6 +81,7 @@ app.use('/api/data-migration', dataMigrationRoutes);
 app.use('/api/performance-audit', performanceAuditRoutes);
 app.use('/api/security', securityRoutes);
 app.use('/api/user', preferencesRoutes);
+app.use('/api/sessions', sessionRoutes);
 
 // Legacy users endpoint (for backward compatibility)
 app.get(API_ENDPOINTS.USERS, (_req, res) => {
@@ -128,6 +131,19 @@ app.listen(PORT, async () => {
       }
     }, 5 * 60 * 1000); // 5 minutes
     console.log('🔐 2FA cleanup service initialized (runs every 5 minutes)');
+    
+    // Initialize session cleanup service (every 30 minutes)
+    setInterval(async () => {
+      try {
+        const cleanedCount = await SessionManagerService.cleanupExpiredSessions();
+        if (cleanedCount > 0) {
+          console.log(`🧹 Session cleanup: removed ${cleanedCount} expired sessions`);
+        }
+      } catch (error) {
+        console.error('Session cleanup service error:', error);
+      }
+    }, 30 * 60 * 1000); // 30 minutes
+    console.log('🧹 Session cleanup service initialized (runs every 30 minutes)');
     
     console.log('🚀 ParkML server fully initialized');
   } catch (error) {

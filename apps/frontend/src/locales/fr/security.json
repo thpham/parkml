@@ -195,7 +195,18 @@
       "passkey_added": "Clé d'accès ajoutée",
       "passkey_removed": "Clé d'accès supprimée",
       "failed_login": "Connexion échouée",
-      "session_expired": "Session expirée"
+      "session_expired": "Session expirée",
+      "session_created": "Session créée",
+      "2fa_backup_codes_regenerated": "Codes de sauvegarde 2FA régénérés",
+      "2fa_setup_initiated": "Configuration 2FA initiée",
+      "2fa_setup_expired": "Configuration 2FA expirée",
+      "2fa_verification_expired": "Vérification 2FA expirée",
+      "2fa_verification_failed": "Vérification 2FA échouée",
+      "session_terminated": "Session terminée",
+      "session_access": "Accès à la session",
+      "audit_log_exported": "Journal d'audit exporté",
+      "logout_all_sessions": "Déconnexion de toutes les sessions",
+      "all_sessions_terminated": "Toutes les sessions terminées"
     },
     "stats": {
       "totalEntries": "Entrées totales",
@@ -219,5 +230,31 @@
     "codeInvalid": "Veuillez saisir un code à 6 chiffres valide",
     "backupCodeRequired": "Le code de sauvegarde est requis",
     "backupCodeInvalid": "Veuillez saisir un code de sauvegarde à 8 caractères valide"
+  },
+  "sessionManagement": {
+    "title": "Sessions actives",
+    "description": "Gérez vos sessions de connexion actives sur tous vos appareils",
+    "currentSession": "Session actuelle",
+    "terminateSession": "Terminer la session",
+    "logoutOtherSessions": "Déconnecter les autres sessions",
+    "logoutAllSessions": "Déconnecter toutes les sessions",
+    "confirmTerminate": "Confirmer la fermeture de session",
+    "confirmLogoutOthers": "Déconnecter les autres sessions",
+    "confirmLogoutAll": "Déconnecter toutes les sessions",
+    "terminateWarning": "Êtes-vous sûr de vouloir terminer cette session ? Cela déconnectera immédiatement l'appareil.",
+    "logoutOthersWarning": "Cela vous déconnectera de tous les autres appareils mais vous gardera connecté sur cet appareil.",
+    "logoutAllWarning": "⚠️ DANGER : Cela vous déconnectera de TOUS les appareils, y compris celui-ci ! Vous serez redirigé vers la page de connexion.",
+    "filterBySessions": "Filtrer par session",
+    "deviceInfo": "Appareil : {{device}}",
+    "lastAccessed": "Dernier accès : {{time}}",
+    "location": "Localisation : {{location}}",
+    "noActiveSessions": "Aucune autre session active",
+    "globalActions": "Actions globales des sessions",
+    "sessionTerminated": "Session terminée avec succès",
+    "otherSessionsLoggedOut": "Déconnecté de {{count}} autres sessions",
+    "allSessionsLoggedOut": "Déconnecté de toutes les sessions",
+    "othersSessionsCount": "Cela terminera {{count}} autres sessions actives.",
+    "allSessionsCount": "Cela terminera toutes les {{count}} sessions actives.",
+    "autoLogoutNotice": "Vous serez automatiquement déconnecté dans 1,5 seconde."
   }
 }

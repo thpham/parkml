@@ -47,49 +47,28 @@ const SecuritySection: React.FC<SecuritySectionProps> = () => {
     try {
       setIsLoading(true);
       
-      // Fetch actual security data from multiple endpoints
-      const [twoFactorResponse, passkeysResponse] = await Promise.all([
-        fetch('/api/security/2fa/status', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`
-          }
-        }),
-        fetch('/api/security/passkeys', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`
-          }
-        })
-      ]);
-      
-      let twoFactorEnabled = false;
-      let passkeyCount = 0;
-      
-      // Get 2FA status
-      if (twoFactorResponse.ok) {
-        const twoFactorData = await twoFactorResponse.json();
-        twoFactorEnabled = twoFactorData.data?.isEnabled || false;
-      }
-      
-      // Get passkey count
-      if (passkeysResponse.ok) {
-        const passkeysData = await passkeysResponse.json();
-        passkeyCount = passkeysData.data?.passkeys?.length || 0;
-      }
-      
-      // Calculate security score based on actual status
-      let securityScore = 40; // Base score
-      if (twoFactorEnabled) securityScore += 25;
-      if (passkeyCount > 0) securityScore += 20;
-      securityScore += 15; // For having a password
-      
-      setSecurityStatus({
-        passwordStrength: 'medium', // TODO: Get from user profile
-        twoFactorEnabled,
-        passkeyCount,
-        lastPasswordChange: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // TODO: Get from profile
-        recentLoginAttempts: 0, // TODO: Get from audit logs
-        securityScore: Math.min(securityScore, 100)
+      // Fetch comprehensive security status from single endpoint
+      const response = await fetch('/api/security/status', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('parkml_token')}`
+        }
       });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const statusData = data.data;
+        
+        setSecurityStatus({
+          passwordStrength: statusData.passwordStrength || 'medium',
+          twoFactorEnabled: statusData.twoFactorEnabled || false,
+          passkeyCount: statusData.passkeyCount || 0,
+          lastPasswordChange: statusData.lastPasswordChange ? new Date(statusData.lastPasswordChange) : null,
+          recentLoginAttempts: statusData.recentLoginAttempts || 0,
+          securityScore: statusData.securityScore || 65
+        });
+      } else {
+        throw new Error('Failed to load security status');
+      }
       
     } catch (error) {
       console.error('Failed to load security status:', error);
@@ -146,7 +125,7 @@ const SecuritySection: React.FC<SecuritySectionProps> = () => {
           </div>
           <div className="text-right">
             <div className={`text-2xl font-bold ${getSecurityScoreColor(securityStatus.securityScore)}`}>
-              {securityStatus.securityScore}%
+              {Math.min(securityStatus.securityScore, 100)}%
             </div>
             <div className="text-sm text-base-content/60">
               {getSecurityScoreLabel(securityStatus.securityScore)}
@@ -161,7 +140,7 @@ const SecuritySection: React.FC<SecuritySectionProps> = () => {
               securityStatus.securityScore >= 90 ? 'bg-success' :
               securityStatus.securityScore >= 70 ? 'bg-warning' : 'bg-error'
             }`}
-            style={{ width: `${securityStatus.securityScore}%` }}
+            style={{ width: `${Math.min(securityStatus.securityScore, 100)}%` }}
           ></div>
         </div>
       </div>

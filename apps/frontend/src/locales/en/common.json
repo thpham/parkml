@@ -100,6 +100,19 @@
   "download": "Download",
   "copied": "Copied to clipboard",
   "generate": "Generate",
+  "details": "Details",
+  "pagination": {
+    "page": "Page",
+    "of": "of",
+    "entries": "entries",
+    "entriesPerPage": "Entries per page",
+    "showingEntries": "Showing {{start}} to {{end}} of {{total}} entries",
+    "previous": "Previous",
+    "next": "Next",
+    "first": "First",
+    "last": "Last"
+  },
+  "all": "All",
   "or": "or",
   "comingSoon": "Coming Soon",
   "back": "Back"
