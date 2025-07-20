@@ -9,6 +9,65 @@ import {
 } from '../middleware/auth';
 import { EmergencyAccessCleanupService } from '../services/emergency-access-cleanup';
 
+// TypeScript interfaces for emergency access data structures
+interface EmergencyAccessQueryFilter {
+  patient?: {
+    organizationId?: string;
+  };
+  patientId?: string;
+  userId?: string;
+  isActive?: boolean;
+  createdAt?: {
+    gte?: Date;
+    lte?: Date;
+  };
+  endTime?: {
+    gt?: Date;
+  };
+}
+
+interface PatientInfo {
+  id: string;
+  name: string;
+  dateOfBirth: Date;
+  diagnosisDate: Date;
+  organizationId: string;
+  organization: {
+    id: string;
+    name: string;
+  };
+}
+
+interface UserInfo {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  organizationId: string;
+  organization: {
+    id: string;
+    name: string;
+  };
+}
+
+interface EmergencyAccessWithPatient {
+  id: string;
+  patientId: string;
+  reason: string;
+  accessType: string;
+  startTime: Date;
+  endTime: Date;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  user: UserInfo;
+  patient: PatientInfo;
+}
+
+interface AccessTypeCount {
+  [accessType: string]: number;
+}
+
 const router = Router();
 
 // Request emergency access to patient data
@@ -186,7 +245,7 @@ router.get('/', authenticateToken, requireClinicAdmin, async (req: Authenticated
     const { page = 1, limit = 50, patientId, userId, isActive, startDate, endDate } = req.query;
 
     // Build where clause
-    const whereClause: any = {};
+    const whereClause: EmergencyAccessQueryFilter = {};
 
     // Organization filtering for clinic admins
     if (req.user.role === 'clinic_admin') {
@@ -198,12 +257,12 @@ router.get('/', authenticateToken, requireClinicAdmin, async (req: Authenticated
 
     // Patient filtering
     if (patientId) {
-      whereClause.patientId = patientId;
+      whereClause.patientId = patientId as string;
     }
 
     // User filtering
     if (userId) {
-      whereClause.userId = userId;
+      whereClause.userId = userId as string;
     }
 
     // Active status filtering
@@ -279,7 +338,7 @@ router.get('/', authenticateToken, requireClinicAdmin, async (req: Authenticated
           endTime: access.endTime,
           isActive: access.isActive,
           user: access.user,
-          patient: (access as any).patient,
+          patient: (access as EmergencyAccessWithPatient).patient,
           createdAt: access.createdAt,
           updatedAt: access.updatedAt,
         })),
@@ -591,7 +650,7 @@ router.get(
       const { startDate, endDate } = req.query;
 
       // Build where clause
-      const whereClause: any = {};
+      const whereClause: EmergencyAccessQueryFilter = {};
 
       // Organization filtering for clinic admins
       if (req.user.role === 'clinic_admin') {
@@ -649,7 +708,7 @@ router.get(
       ]);
 
       // Format statistics
-      const accessByTypeFormatted = accessByType.reduce((acc: any, stat) => {
+      const accessByTypeFormatted = accessByType.reduce((acc: AccessTypeCount, stat) => {
         acc[stat.accessType] = stat._count.id;
         return acc;
       }, {});
