@@ -103,7 +103,7 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
         });
         break;
 
-      case 'patient':
+      case 'patient': {
         // Patients can only see their own record
         patients = await prisma.patient.findMany({
           where: {
@@ -129,13 +129,15 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
           orderBy: { name: 'asc' },
         });
         break;
+      }
 
-      default:
+      default: {
         const response: ApiResponse = {
           success: false,
           error: 'Unauthorized role',
         };
         return res.status(403).json(response);
+      }
     }
 
     const response: ApiResponse = {
@@ -380,7 +382,7 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
         });
         break;
 
-      case 'patient':
+      case 'patient': {
         // Patients can only access their own record
         patient = await prisma.patient.findFirst({
           where: {
@@ -419,13 +421,15 @@ router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => 
           }
         });
         break;
+      }
 
-      default:
+      default: {
         const response: ApiResponse = {
           success: false,
           error: 'Unauthorized role',
         };
         return res.status(403).json(response);
+      }
     }
 
     if (!patient) {

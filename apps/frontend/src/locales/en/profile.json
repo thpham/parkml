@@ -1,0 +1,203 @@
+{
+  "pageTitle": "User Profile",
+  "pageDescription": "Manage your account settings and preferences",
+  "status": {
+    "active": "Active"
+  },
+  "tabs": {
+    "personalInfo": "Personal Info",
+    "personalInfoDesc": "Basic information and contact details",
+    "security": "Security",
+    "securityDesc": "Password, 2FA, and security settings",
+    "preferences": "Preferences", 
+    "preferencesDesc": "Language, theme, and app preferences",
+    "notifications": "Notifications",
+    "notificationsDesc": "Email, push, and notification settings"
+  },
+  "personalInfo": {
+    "title": "Personal Information",
+    "description": "Update your personal details and contact information",
+    "saveSuccess": "Profile updated successfully",
+    "saveError": "Failed to update profile",
+    "basicInfo": "Basic Information",
+    "name": "Full Name",
+    "namePlaceholder": "Enter your full name",
+    "email": "Email Address",
+    "emailNote": "Contact support to change your email address",
+    "verified": "Verified",
+    "phone": "Phone Number",
+    "phonePlaceholder": "+1 (555) 123-4567",
+    "dateOfBirth": "Date of Birth",
+    "notProvided": "Not provided",
+    "address": "Address",
+    "street": "Street Address",
+    "streetPlaceholder": "123 Main Street",
+    "city": "City",
+    "cityPlaceholder": "New York",
+    "postalCode": "Postal Code",
+    "postalCodePlaceholder": "10001",
+    "country": "Country",
+    "selectCountry": "Select a country",
+    "emergencyContact": "Emergency Contact",
+    "contactName": "Contact Name",
+    "contactNamePlaceholder": "John Doe",
+    "contactPhone": "Contact Phone",
+    "contactPhonePlaceholder": "+1 (555) 987-6543",
+    "relationship": "Relationship",
+    "selectRelationship": "Select relationship",
+    "relationships": {
+      "spouse": "Spouse",
+      "parent": "Parent",
+      "child": "Child",
+      "sibling": "Sibling",
+      "friend": "Friend",
+      "other": "Other"
+    },
+    "medicalInfo": "Medical Information",
+    "allergies": "Allergies",
+    "allergiesPlaceholder": "List any known allergies...",
+    "medications": "Current Medications",
+    "medicationsPlaceholder": "List current medications and dosages...",
+    "emergencyNotes": "Emergency Medical Notes",
+    "emergencyNotesPlaceholder": "Important medical information for emergencies...",
+    "privacy": {
+      "title": "Privacy Notice",
+      "description": "Your personal information is encrypted and stored securely. Medical information is only shared with authorized healthcare providers."
+    }
+  },
+  "security": {
+    "title": "Security Settings",
+    "description": "Manage your account security and authentication methods"
+  },
+  "preferences": {
+    "title": "Preferences",
+    "description": "Customize your app experience and settings",
+    "saveSuccess": "Preferences saved successfully",
+    "saveError": "Failed to save preferences",
+    "resetSuccess": "Preferences reset successfully",
+    "unsavedChanges": "You have unsaved changes",
+    "unsavedChangesDesc": "Save your changes before leaving this page",
+    "appearance": {
+      "title": "Appearance",
+      "theme": "Theme",
+      "themes": {
+        "light": "Light",
+        "dark": "Dark", 
+        "system": "System"
+      },
+      "language": "Language"
+    },
+    "regional": {
+      "title": "Regional Settings",
+      "timezone": "Timezone",
+      "dateFormat": "Date Format",
+      "timeFormat": "Time Format"
+    },
+    "notifications": {
+      "title": "Notification Preferences",
+      "email": "Email Notifications",
+      "push": "Push Notifications",
+      "sms": "SMS Notifications",
+      "reminderTime": "Reminder Time",
+      "frequency": "Frequency",
+      "frequencies": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly"
+      }
+    },
+    "accessibility": {
+      "title": "Accessibility",
+      "reduceMotion": "Reduce Motion",
+      "reduceMotionDesc": "Minimize animations and transitions",
+      "highContrast": "High Contrast",
+      "largeText": "Large Text",
+      "screenReader": "Screen Reader Support"
+    },
+    "privacy": {
+      "title": "Privacy Settings",
+      "dataSharing": "Data Sharing",
+      "dataSharingDesc": "Share anonymized data for research",
+      "analytics": "Analytics",
+      "analyticsDesc": "Help improve the app with usage analytics",
+      "marketing": "Marketing Communications",
+      "marketingDesc": "Receive updates about new features",
+      "profileVisibility": "Profile Visibility",
+      "visibility": {
+        "public": "Public",
+        "contacts": "Contacts Only",
+        "private": "Private"
+      }
+    }
+  },
+  "notifications": {
+    "title": "Notification Settings",
+    "description": "Configure how and when you receive notifications",
+    "saveSuccess": "Notification settings saved successfully",
+    "saveError": "Failed to save notification settings",
+    "unsavedChanges": "You have unsaved notification changes",
+    "unsavedChangesDesc": "Don't forget to save your notification preferences",
+    "test": "Test",
+    "testSent": {
+      "email": "Test email sent successfully",
+      "push": "Test push notification sent",
+      "sms": "Test SMS sent successfully"
+    },
+    "testError": "Failed to send test notification",
+    "clearHistory": "Clear History",
+    "clearHistoryConfirm": "Are you sure you want to clear all notification history?",
+    "historyCleared": "Notification history cleared",
+    "clearError": "Failed to clear notification history",
+    "markRead": "Mark as Read",
+    "tabs": {
+      "settings": "Settings",
+      "history": "History"
+    },
+    "email": {
+      "title": "Email Notifications",
+      "symptomReminders": "Symptom Tracking Reminders",
+      "appointmentReminders": "Appointment Reminders",
+      "medicationReminders": "Medication Reminders",
+      "weeklyReports": "Weekly Health Reports",
+      "frequency": "Email Frequency"
+    },
+    "push": {
+      "title": "Push Notifications",
+      "symptomReminders": "Symptom Reminders",
+      "emergencyAlerts": "Emergency Alerts",
+      "quietHours": "Quiet Hours",
+      "enableQuietHours": "Enable Quiet Hours",
+      "quietStart": "Start",
+      "quietEnd": "End"
+    },
+    "sms": {
+      "title": "SMS Notifications",
+      "phoneNumber": "Phone Number",
+      "emergencyOnly": "Emergency Only",
+      "appointmentReminders": "Appointment Reminders"
+    },
+    "inApp": {
+      "title": "In-App Notifications",
+      "sound": "Sound",
+      "vibration": "Vibration",
+      "badges": "Badge Count",
+      "popups": "Popup Notifications"
+    },
+    "frequencies": {
+      "immediate": "Immediate",
+      "daily": "Daily Digest",
+      "weekly": "Weekly Summary"
+    },
+    "categories": {
+      "reminder": "Reminder",
+      "alert": "Alert",
+      "update": "Update",
+      "report": "Report"
+    },
+    "history": {
+      "title": "Notification History",
+      "empty": "No Notifications",
+      "emptyDesc": "Your notification history will appear here"
+    }
+  }
+}

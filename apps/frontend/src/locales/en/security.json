@@ -1,0 +1,210 @@
+{
+  "score": {
+    "excellent": "Excellent",
+    "good": "Good", 
+    "fair": "Fair",
+    "poor": "Poor"
+  },
+  "status": {
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "active": "Active",
+    "inactive": "Inactive",
+    "success": "Success",
+    "failed": "Failed"
+  },
+  "password": {
+    "title": "Password",
+    "current": "Current Password",
+    "new": "New Password",
+    "confirm": "Confirm Password",
+    "change": "Change Password",
+    "currentPlaceholder": "Enter your current password",
+    "newPlaceholder": "Enter a new password",
+    "confirmPlaceholder": "Confirm your new password",
+    "strengthLabel": "Password Strength",
+    "lastChanged": "Last changed: {{date}}",
+    "neverChanged": "Never changed",
+    "strength": {
+      "undefined": "Not calculated",
+      "veryWeak": "Very Weak",
+      "weak": "Weak",
+      "fair": "Fair",
+      "medium": "Medium",
+      "good": "Good",
+      "strong": "Strong"
+    },
+    "requirements": {
+      "minLength": "At least 8 characters",
+      "uppercase": "Uppercase letter",
+      "lowercase": "Lowercase letter", 
+      "numbers": "Number",
+      "specialChars": "Special character"
+    },
+    "errors": {
+      "passwordMismatch": "Passwords do not match",
+      "weakPassword": "Password is too weak",
+      "changeFailed": "Failed to change password"
+    },
+    "success": {
+      "changed": "Password changed successfully"
+    },
+    "tips": {
+      "title": "Password Security Tips",
+      "tip1": "Use a unique password you don't use elsewhere",
+      "tip2": "Include a mix of letters, numbers, and symbols",
+      "tip3": "Avoid personal information like names or birthdays"
+    }
+  },
+  "twoFactor": {
+    "title": "Two-Factor Authentication",
+    "description": "Add an extra layer of security to your account",
+    "setupButton": "Enable 2FA",
+    "manage": "Manage 2FA",
+    "setup": {
+      "title": "Set Up Two-Factor Authentication",
+      "description": "Secure your account with an additional authentication step",
+      "step1": {
+        "title": "Install Authenticator App",
+        "description": "Download and install an authenticator app on your mobile device"
+      },
+      "step2": {
+        "title": "Scan QR Code",
+        "description": "Use your authenticator app to scan this QR code",
+        "qrInstructions": "Scan this QR code with your authenticator app",
+        "manualEntry": "Or enter this code manually:"
+      },
+      "step3": {
+        "title": "Verify Setup",
+        "description": "Enter the 6-digit code from your authenticator app",
+        "codeLabel": "Verification Code",
+        "verify": "Verify & Enable"
+      }
+    },
+    "manageSection": {
+      "title": "Two-Factor Authentication",
+      "description": "Your account is protected with 2FA",
+      "backupCodes": "Backup Codes",
+      "regenerate": "Regenerate",
+      "noBackupCodes": "No backup codes have been generated yet. Click below to generate new backup codes.",
+      "generateBackupCodes": "Generate Backup Codes",
+      "verifyToGenerate": "Enter your 2FA code to generate backup codes",
+      "enterCodeFromApp": "Enter the 6-digit code from your authenticator app",
+      "regenerateWarning": "⚠️ Regenerating will invalidate all current backup codes. Make sure to save the new ones.",
+      "generateInfo": "These backup codes can be used to access your account if you lose your authenticator device.",
+      "codesAccessedMessage": "Your backup codes have been securely saved and are no longer visible for security reasons.",
+      "generateNewCodes": "Generate New Codes",
+      "codesExistSecurely": "You have backup codes securely stored (not shown for security)",
+      "regenerateToView": "Regenerate backup codes to view and download new ones.",
+      "backupCodesImportant": "⚠️ IMPORTANT: Save these backup codes immediately! They will be hidden after confirmation for security.",
+      "confirmSaved": "I have saved my backup codes securely (downloaded or written down)",
+      "confirmAndContinue": "Confirm & Continue",
+      "mustSaveFirst": "Please download or copy your backup codes before confirming.",
+      "disable": {
+        "title": "Disable Two-Factor Authentication",
+        "warning": "This will remove 2FA protection from your account",
+        "codePlaceholder": "Enter verification code",
+        "confirm": "Disable 2FA"
+      }
+    },
+    "errors": {
+      "setupFailed": "Failed to set up 2FA",
+      "codeRequired": "Verification code is required",
+      "invalidCode": "Invalid verification code",
+      "verificationFailed": "Verification failed",
+      "disableFailed": "Failed to disable 2FA",
+      "backupCodesFailed": "Failed to regenerate backup codes"
+    },
+    "success": {
+      "enabled": "Two-factor authentication enabled successfully",
+      "disabled": "Two-factor authentication disabled",
+      "backupCodesRegenerated": "Backup codes regenerated successfully",
+      "backupCodesDownloaded": "Backup codes downloaded",
+      "backupCodesCleared": "Backup codes cleared from browser memory for security",
+      "backupCodesSecured": "Backup codes have been securely saved and removed from browser"
+    },
+    "countdown": {
+      "expiresIn": "Setup expires in {{seconds}} seconds. Complete verification promptly.",
+      "expiresInWarning": "⚠️ Setup expires in {{seconds}} seconds! Hurry!",
+      "expired": "Setup expired. Generating new QR code...",
+      "newCodeGenerated": "New QR code generated. Please scan the updated code."
+    }
+  },
+  "passkeys": {
+    "title": "Passkeys",
+    "description": "Sign in securely with biometrics or device authentication",
+    "add": "Add Passkey",
+    "manage": "Manage Passkeys", 
+    "register": "Register Passkey",
+    "deviceName": "Device Name",
+    "deviceNamePlaceholder": "e.g., iPhone 15 Pro",
+    "deviceNameHint": "Give this device a recognizable name",
+    "created": "Created",
+    "lastUsed": "Last used",
+    "neverUsed": "Never used",
+    "registered": "registered",
+    "noPasskeys": "No Passkeys Registered",
+    "noPasskeysDescription": "Add a passkey to sign in securely with biometrics",
+    "confirmDelete": "Are you sure you want to remove the passkey for {{deviceName}}?",
+    "unsupported": {
+      "title": "Passkeys Not Supported",
+      "description": "Your browser doesn't support passkeys. Please use a modern browser."
+    },
+    "errors": {
+      "deviceNameRequired": "Device name is required",
+      "userCancelled": "Passkey registration was cancelled",
+      "notSupported": "Passkeys are not supported on this device",
+      "registrationFailed": "Failed to register passkey",
+      "deleteFailed": "Failed to delete passkey"
+    },
+    "success": {
+      "registered": "Passkey registered successfully",
+      "deleted": "Passkey deleted successfully"
+    },
+    "info": {
+      "title": "About Passkeys",
+      "point1": "Passkeys are more secure than passwords",
+      "point2": "Use biometrics or device PIN to sign in",
+      "point3": "Works across all your devices",
+      "point4": "Cannot be phished or stolen"
+    }
+  },
+  "auditLog": {
+    "title": "Security Audit Log",
+    "description": "View your account's security activity and login history",
+    "exported": "Audit log exported successfully",
+    "searchPlaceholder": "Search by device, location, or action...",
+    "filterByAction": "Filter by Action",
+    "noEntries": "No Audit Entries",
+    "noEntriesDescription": "Your security activity will appear here",
+    "noMatchingEntries": "No entries match your search criteria",
+    "suspiciousActivity": "Suspicious activity detected",
+    "actions": {
+      "login": "Login",
+      "logout": "Logout", 
+      "password_change": "Password Changed",
+      "2fa_enabled": "2FA Enabled",
+      "2fa_disabled": "2FA Disabled",
+      "passkey_added": "Passkey Added",
+      "passkey_removed": "Passkey Removed",
+      "failed_login": "Failed Login",
+      "session_expired": "Session Expired"
+    },
+    "stats": {
+      "totalEntries": "Total Entries",
+      "successfulLogins": "Successful Logins",
+      "failedAttempts": "Failed Attempts",
+      "uniqueDevices": "Unique Devices"
+    }
+  },
+  "activity": {
+    "title": "Recent Activity",
+    "recentAttempts": "recent login attempts"
+  },
+  "recommendations": {
+    "title": "Security Recommendations", 
+    "enable2fa": "Enable two-factor authentication for better security",
+    "addPasskey": "Add a passkey for passwordless authentication",
+    "strongPassword": "Use a stronger password with mixed characters"
+  }
+}

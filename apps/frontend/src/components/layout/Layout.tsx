@@ -262,19 +262,38 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {/* Language Selector */}
                 <LanguageSelector compact className="hidden sm:flex" />
                 
-                <div className="hidden sm:flex items-center text-sm">
-                  <User className="h-4 w-4 mr-1" />
-                  <span className="font-medium">{user?.name}</span>
-                  <span className="ml-2 opacity-60 capitalize hidden md:inline">({user?.role})</span>
+                {/* User Profile Dropdown */}
+                <div className="dropdown dropdown-end">
+                  <div tabIndex={0} role="button" className="btn btn-ghost btn-sm">
+                    <User className="h-4 w-4" />
+                    <span className="hidden sm:inline font-medium">{user?.name}</span>
+                    <span className="ml-2 opacity-60 capitalize hidden md:inline">({user?.role})</span>
+                    <ChevronDown className="h-3 w-3" />
+                  </div>
+                  <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                    <li>
+                      <button
+                        onClick={() => handleNavigation('/profile')}
+                        className="flex items-center"
+                      >
+                        <User className="h-4 w-4" />
+                        {t('menu.profile')}
+                      </button>
+                    </li>
+                    <li>
+                      <hr className="my-1" />
+                    </li>
+                    <li>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center text-error"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        {t('menu.logout')}
+                      </button>
+                    </li>
+                  </ul>
                 </div>
-                
-                <button
-                  onClick={handleLogout}
-                  className="btn btn-ghost btn-sm text-error"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span className="hidden sm:inline">{t('menu.logout')}</span>
-                </button>
               </div>
             </div>
           </div>
@@ -430,6 +449,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   </li>
                 </>
               )}
+
+              {/* Profile */}
+              <li className="mt-4">
+                <button
+                  onClick={() => handleNavigation('/profile')}
+                  className="flex items-center p-3 hover:bg-base-100 rounded-lg w-full"
+                >
+                  <User className="h-5 w-5 mr-3" />
+                  {t('menu.profile')}
+                </button>
+              </li>
 
               {/* Language Selector for Mobile */}
               <li className="mt-4">

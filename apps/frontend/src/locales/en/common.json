@@ -86,5 +86,19 @@
   "language": {
     "selectLanguage": "Select Language",
     "currentLanguage": "Current Language"
-  }
+  },
+  "loading": "Loading...",
+  "save": "Save",
+  "cancel": "Cancel",
+  "edit": "Edit",
+  "delete": "Delete",
+  "change": "Change",
+  "manage": "Manage",
+  "view": "View",
+  "hide": "Hide",
+  "show": "Show",
+  "copy": "Copy",
+  "download": "Download",
+  "copied": "Copied to clipboard",
+  "generate": "Generate"
 }

@@ -20,7 +20,10 @@ import homomorphicAnalyticsRoutes from './routes/homomorphic-analytics';
 import accessControlDemoRoutes from './routes/access-control-demo';
 import dataMigrationRoutes from './routes/data-migration';
 import performanceAuditRoutes from './routes/performance-audit';
+import securityRoutes from './routes/security';
+import preferencesRoutes from './routes/preferences';
 import { initializeEmergencyAccessCleanup } from './services/emergency-access-cleanup';
+import { cleanup2FASetups } from './routes/security';
 import { initializeCrypto, createCryptoMiddleware } from './crypto/crypto-service';
 
 // Load environment variables
@@ -74,6 +77,8 @@ app.use('/api/homomorphic-analytics', homomorphicAnalyticsRoutes);
 app.use('/api/access-control-demo', accessControlDemoRoutes);
 app.use('/api/data-migration', dataMigrationRoutes);
 app.use('/api/performance-audit', performanceAuditRoutes);
+app.use('/api/security', securityRoutes);
+app.use('/api/user', preferencesRoutes);
 
 // Legacy users endpoint (for backward compatibility)
 app.get(API_ENDPOINTS.USERS, (_req, res) => {
@@ -113,6 +118,16 @@ app.listen(PORT, async () => {
     
     // Initialize emergency access cleanup service
     initializeEmergencyAccessCleanup();
+    
+    // Initialize 2FA setup cleanup service (every 5 minutes)
+    setInterval(async () => {
+      try {
+        await cleanup2FASetups();
+      } catch (error) {
+        console.error('2FA cleanup service error:', error);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+    console.log('🔐 2FA cleanup service initialized (runs every 5 minutes)');
     
     console.log('🚀 ParkML server fully initialized');
   } catch (error) {

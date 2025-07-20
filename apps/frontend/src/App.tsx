@@ -15,6 +15,7 @@ import EmergencyAccess from './components/admin/EmergencyAccess';
 import Analytics from './components/admin/Analytics';
 import CaregiverDashboard from './components/caregiver/CaregiverDashboard';
 import PatientConsentDashboard from './components/patient/PatientConsentDashboard';
+import ProfilePage from './pages/ProfilePage';
 import './App.css';
 
 // Protected Route Component
@@ -168,6 +169,15 @@ const AppContent: React.FC = () => {
             <ProtectedRoute>
               <Layout>
                 <Analytics />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          {/* Profile Route */}
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Layout>
+                <ProfilePage />
               </Layout>
             </ProtectedRoute>
           } />

@@ -46,6 +46,30 @@ model User {
   isActive           Boolean      @default(true) @map("is_active")
   lastLoginAt        DateTime?    @map("last_login_at")
   encryptionMetadata String?      @map("encryption_metadata") // JSON - Encryption metadata for migration tracking
+  
+  // Enhanced Profile Fields
+  phone                      String?    @map("phone")
+  dateOfBirth                DateTime?  @map("date_of_birth")
+  addressStreet              String?    @map("address_street")
+  addressCity                String?    @map("address_city")
+  addressPostalCode          String?    @map("address_postal_code")
+  addressCountry             String?    @map("address_country")
+  emergencyContactName       String?    @map("emergency_contact_name")
+  emergencyContactPhone      String?    @map("emergency_contact_phone")
+  emergencyContactRelationship String? @map("emergency_contact_relationship")
+  medicalAllergies           String?    @map("medical_allergies")
+  medicalMedications         String?    @map("medical_medications")
+  medicalEmergencyNotes      String?    @map("medical_emergency_notes")
+  preferences                String     @default("{}") @map("preferences") // JSON stored as string
+  notificationSettings       String     @default("{}") @map("notification_settings") // JSON stored as string
+  
+  // Security Fields
+  twoFactorSecret            String?    @map("two_factor_secret")
+  twoFactorEnabled           Boolean    @default(false) @map("two_factor_enabled")
+  twoFactorBackupCodes       String?    @map("two_factor_backup_codes") // JSON array of backup codes
+  passwordChangedAt          DateTime?  @map("password_changed_at")
+  securityScore              Int        @default(65) @map("security_score")
+  
   createdAt          DateTime     @default(now()) @map("created_at")
   updatedAt          DateTime     @updatedAt @map("updated_at")
 
@@ -63,6 +87,15 @@ model User {
   receivedInvitations         Invitation[]                 @relation("InvitationReceiver")
   symptomEntries              SymptomEntry[]
   auditLogs                   AuditLog[]
+
+  // New Security Relationships
+  twoFactorAuth               TwoFactorAuth?
+  passkeys                    Passkey[]
+  securityAuditLogs           SecurityAuditLog[]
+  userSessions                UserSession[]
+  passwordHistory             PasswordHistory[]
+  userPreferences             UserPreferences?
+  userNotificationSettings    NotificationSettings?
 
   // Legacy relationships - will be deprecated after migration
   caregiverPatients           PatientCaregiver[]
@@ -488,4 +521,175 @@ model PerformanceAudit {
   createdAt        DateTime @default(now()) @map("created_at")
 
   @@map("performance_audits")
+}
+
+// Enhanced User Profile and Security Models
+
+// Two-Factor Authentication
+model TwoFactorAuth {
+  id                  String    @id @default(cuid())
+  userId              String    @unique @map("user_id")
+  secret              String    // TOTP secret
+  isEnabled           Boolean   @default(false) @map("is_enabled")
+  backupCodes         String?   @map("backup_codes") // JSON array of backup codes
+  recoveryCodesUsed   String    @default("[]") @map("recovery_codes_used") // JSON array of used recovery codes
+  qrCodeUrl           String?   @map("qr_code_url")
+  setupCompletedAt    DateTime? @map("setup_completed_at")
+  lastUsedAt          DateTime? @map("last_used_at")
+  failedAttempts      Int       @default(0) @map("failed_attempts")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("two_factor_auth")
+}
+
+// WebAuthn Passkeys
+model Passkey {
+  id                String    @id @default(cuid())
+  userId            String    @map("user_id")
+  credentialId      String    @unique @map("credential_id")
+  publicKey         String    @map("public_key")
+  deviceName        String    @map("device_name")
+  deviceType        String?   @map("device_type") // 'mobile', 'desktop', 'hardware'
+  counter           Int       @default(0) @map("counter")
+  isBackupEligible  Boolean   @default(false) @map("is_backup_eligible")
+  isBackupDevice    Boolean   @default(false) @map("is_backup_device")
+  transports        String?   @map("transports") // JSON array of transport methods
+  createdAt         DateTime  @default(now()) @map("created_at")
+  lastUsedAt        DateTime? @map("last_used_at")
+  isActive          Boolean   @default(true) @map("is_active")
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("passkeys")
+}
+
+// Security Audit Logs
+model SecurityAuditLog {
+  id                String   @id @default(cuid())
+  userId            String   @map("user_id")
+  organizationId    String?  @map("organization_id")
+  action            String   // 'login', 'logout', 'password_change', '2fa_enabled', '2fa_disabled', 'passkey_added', 'passkey_removed', 'failed_login', 'session_expired'
+  resourceType      String?  @map("resource_type") // 'user', 'password', '2fa', 'passkey', 'session'
+  resourceId        String?  @map("resource_id")
+  ipAddress         String?  @map("ip_address")
+  userAgent         String?  @map("user_agent")
+  deviceFingerprint String?  @map("device_fingerprint")
+  location          String?  @map("location") // Approximate location based on IP
+  status            String   // 'success', 'failed', 'suspicious'
+  riskLevel         String   @default("low") @map("risk_level") // 'low', 'medium', 'high', 'critical'
+  details           String   @default("{}") @map("details") // JSON stored as string with additional details
+  sessionId         String?  @map("session_id")
+  timestamp         DateTime @default(now()) @map("timestamp")
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("security_audit_logs")
+}
+
+// User Sessions
+model UserSession {
+  id                String   @id @default(cuid())
+  userId            String   @map("user_id")
+  sessionToken      String   @unique @map("session_token")
+  deviceFingerprint String?  @map("device_fingerprint")
+  ipAddress         String?  @map("ip_address")
+  userAgent         String?  @map("user_agent")
+  location          String?  @map("location")
+  isActive          Boolean  @default(true) @map("is_active")
+  expiresAt         DateTime @map("expires_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  lastAccessedAt    DateTime @default(now()) @map("last_accessed_at")
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+// Password History
+model PasswordHistory {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_history")
+}
+
+// Login Attempts
+model LoginAttempt {
+  id            String   @id @default(cuid())
+  email         String   @map("email")
+  ipAddress     String   @map("ip_address")
+  userAgent     String?  @map("user_agent")
+  success       Boolean  @map("success")
+  failureReason String?  @map("failure_reason") // 'invalid_password', 'invalid_2fa', 'account_locked', 'invalid_email'
+  attemptedAt   DateTime @default(now()) @map("attempted_at")
+
+  @@map("login_attempts")
+}
+
+// User Preferences
+model UserPreferences {
+  id                         String   @id @default(cuid())
+  userId                     String   @unique @map("user_id")
+  theme                      String   @default("system") @map("theme") // 'light', 'dark', 'system'
+  language                   String   @default("en") @map("language") // 'en', 'fr', etc.
+  timezone                   String   @default("UTC") @map("timezone")
+  dateFormat                 String   @default("MM/DD/YYYY") @map("date_format")
+  timeFormat                 String   @default("12h") @map("time_format") // '12h', '24h'
+  accessibilityHighContrast  Boolean  @default(false) @map("accessibility_high_contrast")
+  accessibilityLargeText     Boolean  @default(false) @map("accessibility_large_text")
+  accessibilityScreenReader  Boolean  @default(false) @map("accessibility_screen_reader")
+  accessibilityKeyboardNav   Boolean  @default(false) @map("accessibility_keyboard_navigation")
+  privacyAnalytics           Boolean  @default(true) @map("privacy_analytics")
+  privacyMarketing           Boolean  @default(false) @map("privacy_marketing")
+  privacyDataSharing         Boolean  @default(false) @map("privacy_data_sharing")
+  createdAt                  DateTime @default(now()) @map("created_at")
+  updatedAt                  DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+// Notification Settings
+model NotificationSettings {
+  id                       String   @id @default(cuid())
+  userId                   String   @unique @map("user_id")
+  emailSecurityAlerts      Boolean  @default(true) @map("email_security_alerts")
+  emailLoginNotifications  Boolean  @default(true) @map("email_login_notifications")
+  emailPasswordChanges     Boolean  @default(true) @map("email_password_changes")
+  emailAccountChanges      Boolean  @default(true) @map("email_account_changes")
+  emailWeeklySummary       Boolean  @default(true) @map("email_weekly_summary")
+  emailSystemUpdates       Boolean  @default(false) @map("email_system_updates")
+  smsSecurityAlerts        Boolean  @default(false) @map("sms_security_alerts")
+  smsLoginNotifications    Boolean  @default(false) @map("sms_login_notifications")
+  smsEmergencyAlerts       Boolean  @default(false) @map("sms_emergency_alerts")
+  pushSecurityAlerts       Boolean  @default(true) @map("push_security_alerts")
+  pushLoginNotifications   Boolean  @default(false) @map("push_login_notifications")
+  pushSymptomReminders     Boolean  @default(true) @map("push_symptom_reminders")
+  pushMedicationReminders  Boolean  @default(true) @map("push_medication_reminders")
+  inAppSecurityAlerts      Boolean  @default(true) @map("in_app_security_alerts")
+  inAppSystemNotifications Boolean  @default(true) @map("in_app_system_notifications")
+  frequencyDailyDigest     Boolean  @default(false) @map("frequency_daily_digest")
+  frequencyWeeklySummary   Boolean  @default(true) @map("frequency_weekly_summary")
+  frequencyMonthlyReport   Boolean  @default(false) @map("frequency_monthly_report")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_settings")
 }

@@ -292,7 +292,7 @@ export class PerformanceAuditEngine {
         tracker.recordEnd(true);
         latencies.push(performance.now() - tracker.startTime);
         memoryUsages.push(process.memoryUsage().heapUsed / 1024 / 1024);
-      } catch (error) {
+      } catch {
         errors++;
       }
     }
@@ -470,7 +470,7 @@ export class PerformanceAuditEngine {
           discoveredAt: new Date()
         });
       }
-    } catch (error) {
+    } catch {
       findings.push({
         id: 'KEY_002',
         severity: 'medium',
@@ -536,7 +536,7 @@ export class PerformanceAuditEngine {
           discoveredAt: new Date()
         });
       }
-    } catch (error) {
+    } catch {
       findings.push({
         id: 'AC_003',
         severity: 'low',
@@ -596,7 +596,7 @@ export class PerformanceAuditEngine {
           discoveredAt: new Date()
         });
       }
-    } catch (error) {
+    } catch {
       findings.push({
         id: 'DE_003',
         severity: 'medium',
@@ -654,7 +654,7 @@ export class PerformanceAuditEngine {
           discoveredAt: new Date()
         });
       }
-    } catch (error) {
+    } catch {
       findings.push({
         id: 'AT_003',
         severity: 'medium',

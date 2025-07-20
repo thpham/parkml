@@ -144,7 +144,7 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
         });
         break;
 
-      case 'patient':
+      case 'patient': {
         // Get patient ID from patient record
         const patientRecord = await prisma.patient.findUnique({
           where: { userId: req.user.userId },
@@ -197,13 +197,15 @@ router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
           orderBy: { createdAt: 'desc' }
         });
         break;
+      }
 
-      default:
+      default: {
         const response: ApiResponse = {
           success: false,
           error: 'Unauthorized role',
         };
         return res.status(403).json(response);
+      }
     }
 
     const response: ApiResponse = {

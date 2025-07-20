@@ -264,10 +264,11 @@ export class HomomorphicAnalytics {
         results.push(await this.computeHomomorphicSum(encryptedData));
         break;
 
-      case ComputationType.MEAN:
+      case ComputationType.MEAN: {
         const sum = await this.computeHomomorphicSum(encryptedData);
         results.push(sum / encryptedData.length);
         break;
+      }
 
       case ComputationType.COUNT:
         results.push(encryptedData.length);

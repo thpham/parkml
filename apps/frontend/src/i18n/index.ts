@@ -69,7 +69,7 @@ i18n
     supportedLngs: supportedLanguages.map(lang => lang.code),
     
     // Namespace settings
-    ns: ['common', 'navigation', 'auth', 'dashboard', 'admin', 'patient', 'caregiver', 'symptoms'],
+    ns: ['common', 'navigation', 'auth', 'dashboard', 'admin', 'patient', 'caregiver', 'symptoms', 'security', 'profile'],
     defaultNS: 'common',
     
     // Debug mode (disable in production)

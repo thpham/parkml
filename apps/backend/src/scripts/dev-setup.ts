@@ -51,7 +51,7 @@ async function setupDatabase() {
     try {
       execSync('npx prisma migrate status', { stdio: 'pipe' });
       console.log('✅ Database is up to date with migrations\n');
-    } catch (error) {
+    } catch {
       console.log('🔄 Database schema drift detected, resetting...');
       runCommand('npx prisma migrate reset --force', 'Resetting database to sync with migrations');
     }
@@ -69,7 +69,7 @@ async function setupDatabase() {
       }
       
       await prisma.$disconnect();
-    } catch (error) {
+    } catch {
       console.log('🌱 Seeding database to ensure data is present...');
       runCommand('npm run db:seed', 'Seeding database with initial data');
     }

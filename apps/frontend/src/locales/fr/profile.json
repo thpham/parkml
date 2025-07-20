@@ -1,0 +1,203 @@
+{
+  "pageTitle": "Profil utilisateur",
+  "pageDescription": "Gérez vos paramètres de compte et préférences",
+  "status": {
+    "active": "Actif"
+  },
+  "tabs": {
+    "personalInfo": "Informations personnelles",
+    "personalInfoDesc": "Informations de base et coordonnées",
+    "security": "Sécurité",
+    "securityDesc": "Mot de passe, 2FA et paramètres de sécurité",
+    "preferences": "Préférences", 
+    "preferencesDesc": "Langue, thème et préférences de l'application",
+    "notifications": "Notifications",
+    "notificationsDesc": "Paramètres email, push et notifications"
+  },
+  "personalInfo": {
+    "title": "Informations personnelles",
+    "description": "Mettez à jour vos informations personnelles et coordonnées",
+    "saveSuccess": "Profil mis à jour avec succès",
+    "saveError": "Échec de la mise à jour du profil",
+    "basicInfo": "Informations de base",
+    "name": "Nom complet",
+    "namePlaceholder": "Entrez votre nom complet",
+    "email": "Adresse email",
+    "emailNote": "Contactez le support pour changer votre adresse email",
+    "verified": "Vérifié",
+    "phone": "Numéro de téléphone",
+    "phonePlaceholder": "+41 XX XXX XX XX",
+    "dateOfBirth": "Date de naissance",
+    "notProvided": "Non fourni",
+    "address": "Adresse",
+    "street": "Adresse de rue",
+    "streetPlaceholder": "123 Rue principale",
+    "city": "Ville",
+    "cityPlaceholder": "Zurich",
+    "postalCode": "Code postal",
+    "postalCodePlaceholder": "8001",
+    "country": "Pays",
+    "selectCountry": "Sélectionnez un pays",
+    "emergencyContact": "Contact d'urgence",
+    "contactName": "Nom du contact",
+    "contactNamePlaceholder": "Jean Dupont",
+    "contactPhone": "Téléphone du contact",
+    "contactPhonePlaceholder": "+41 XX XXX XX XX",
+    "relationship": "Relation",
+    "selectRelationship": "Sélectionnez la relation",
+    "relationships": {
+      "spouse": "Conjoint(e)",
+      "parent": "Parent",
+      "child": "Enfant",
+      "sibling": "Frère/Sœur",
+      "friend": "Ami(e)",
+      "other": "Autre"
+    },
+    "medicalInfo": "Informations médicales",
+    "allergies": "Allergies",
+    "allergiesPlaceholder": "Listez les allergies connues...",
+    "medications": "Médicaments actuels",
+    "medicationsPlaceholder": "Listez les médicaments actuels et dosages...",
+    "emergencyNotes": "Notes médicales d'urgence",
+    "emergencyNotesPlaceholder": "Informations médicales importantes pour les urgences...",
+    "privacy": {
+      "title": "Avis de confidentialité",
+      "description": "Vos informations personnelles sont chiffrées et stockées en sécurité. Les informations médicales ne sont partagées qu'avec les professionnels de santé autorisés."
+    }
+  },
+  "security": {
+    "title": "Paramètres de sécurité",
+    "description": "Gérez la sécurité de votre compte et les méthodes d'authentification"
+  },
+  "preferences": {
+    "title": "Préférences",
+    "description": "Personnalisez votre expérience et paramètres de l'application",
+    "saveSuccess": "Préférences sauvegardées avec succès",
+    "saveError": "Échec de la sauvegarde des préférences",
+    "resetSuccess": "Préférences réinitialisées avec succès",
+    "unsavedChanges": "Vous avez des modifications non sauvegardées",
+    "unsavedChangesDesc": "Sauvegardez vos modifications avant de quitter cette page",
+    "appearance": {
+      "title": "Apparence",
+      "theme": "Thème",
+      "themes": {
+        "light": "Clair",
+        "dark": "Sombre", 
+        "system": "Système"
+      },
+      "language": "Langue"
+    },
+    "regional": {
+      "title": "Paramètres régionaux",
+      "timezone": "Fuseau horaire",
+      "dateFormat": "Format de date",
+      "timeFormat": "Format d'heure"
+    },
+    "notifications": {
+      "title": "Préférences de notification",
+      "email": "Notifications email",
+      "push": "Notifications push",
+      "sms": "Notifications SMS",
+      "reminderTime": "Heure de rappel",
+      "frequency": "Fréquence",
+      "frequencies": {
+        "daily": "Quotidienne",
+        "weekly": "Hebdomadaire",
+        "monthly": "Mensuelle"
+      }
+    },
+    "accessibility": {
+      "title": "Accessibilité",
+      "reduceMotion": "Réduire les mouvements",
+      "reduceMotionDesc": "Minimiser les animations et transitions",
+      "highContrast": "Contraste élevé",
+      "largeText": "Texte large",
+      "screenReader": "Support lecteur d'écran"
+    },
+    "privacy": {
+      "title": "Paramètres de confidentialité",
+      "dataSharing": "Partage de données",
+      "dataSharingDesc": "Partager des données anonymisées pour la recherche",
+      "analytics": "Analyses",
+      "analyticsDesc": "Aidez à améliorer l'application avec les analyses d'utilisation",
+      "marketing": "Communications marketing",
+      "marketingDesc": "Recevoir des mises à jour sur les nouvelles fonctionnalités",
+      "profileVisibility": "Visibilité du profil",
+      "visibility": {
+        "public": "Public",
+        "contacts": "Contacts uniquement",
+        "private": "Privé"
+      }
+    }
+  },
+  "notifications": {
+    "title": "Paramètres de notification",
+    "description": "Configurez comment et quand vous recevez les notifications",
+    "saveSuccess": "Paramètres de notification sauvegardés avec succès",
+    "saveError": "Échec de la sauvegarde des paramètres de notification",
+    "unsavedChanges": "Vous avez des modifications de notification non sauvegardées",
+    "unsavedChangesDesc": "N'oubliez pas de sauvegarder vos préférences de notification",
+    "test": "Tester",
+    "testSent": {
+      "email": "Email de test envoyé avec succès",
+      "push": "Notification push de test envoyée",
+      "sms": "SMS de test envoyé avec succès"
+    },
+    "testError": "Échec de l'envoi de la notification de test",
+    "clearHistory": "Effacer l'historique",
+    "clearHistoryConfirm": "Êtes-vous sûr de vouloir effacer tout l'historique des notifications ?",
+    "historyCleared": "Historique des notifications effacé",
+    "clearError": "Échec de l'effacement de l'historique des notifications",
+    "markRead": "Marquer comme lu",
+    "tabs": {
+      "settings": "Paramètres",
+      "history": "Historique"
+    },
+    "email": {
+      "title": "Notifications email",
+      "symptomReminders": "Rappels de suivi des symptômes",
+      "appointmentReminders": "Rappels de rendez-vous",
+      "medicationReminders": "Rappels de médicaments",
+      "weeklyReports": "Rapports de santé hebdomadaires",
+      "frequency": "Fréquence des emails"
+    },
+    "push": {
+      "title": "Notifications push",
+      "symptomReminders": "Rappels de symptômes",
+      "emergencyAlerts": "Alertes d'urgence",
+      "quietHours": "Heures silencieuses",
+      "enableQuietHours": "Activer les heures silencieuses",
+      "quietStart": "Début",
+      "quietEnd": "Fin"
+    },
+    "sms": {
+      "title": "Notifications SMS",
+      "phoneNumber": "Numéro de téléphone",
+      "emergencyOnly": "Urgences uniquement",
+      "appointmentReminders": "Rappels de rendez-vous"
+    },
+    "inApp": {
+      "title": "Notifications dans l'application",
+      "sound": "Son",
+      "vibration": "Vibration",
+      "badges": "Compteur de badges",
+      "popups": "Notifications popup"
+    },
+    "frequencies": {
+      "immediate": "Immédiat",
+      "daily": "Résumé quotidien",
+      "weekly": "Résumé hebdomadaire"
+    },
+    "categories": {
+      "reminder": "Rappel",
+      "alert": "Alerte",
+      "update": "Mise à jour",
+      "report": "Rapport"
+    },
+    "history": {
+      "title": "Historique des notifications",
+      "empty": "Aucune notification",
+      "emptyDesc": "Votre historique de notifications apparaîtra ici"
+    }
+  }
+}

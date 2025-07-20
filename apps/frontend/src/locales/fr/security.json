@@ -1,0 +1,210 @@
+{
+  "score": {
+    "excellent": "Excellent",
+    "good": "Bon", 
+    "fair": "Correct",
+    "poor": "Faible"
+  },
+  "status": {
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "success": "Succès",
+    "failed": "Échec"
+  },
+  "password": {
+    "title": "Mot de passe",
+    "current": "Mot de passe actuel",
+    "new": "Nouveau mot de passe",
+    "confirm": "Confirmer le mot de passe",
+    "change": "Changer le mot de passe",
+    "currentPlaceholder": "Entrez votre mot de passe actuel",
+    "newPlaceholder": "Entrez un nouveau mot de passe",
+    "confirmPlaceholder": "Confirmez votre nouveau mot de passe",
+    "strengthLabel": "Force du mot de passe",
+    "lastChanged": "Dernière modification : {{date}}",
+    "neverChanged": "Jamais modifié",
+    "strength": {
+      "undefined": "Non calculé",
+      "veryWeak": "Très faible",
+      "weak": "Faible",
+      "fair": "Correct",
+      "medium": "Moyen",
+      "good": "Bon",
+      "strong": "Fort"
+    },
+    "requirements": {
+      "minLength": "Au moins 8 caractères",
+      "uppercase": "Lettre majuscule",
+      "lowercase": "Lettre minuscule", 
+      "numbers": "Chiffre",
+      "specialChars": "Caractère spécial"
+    },
+    "errors": {
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "weakPassword": "Le mot de passe est trop faible",
+      "changeFailed": "Échec du changement de mot de passe"
+    },
+    "success": {
+      "changed": "Mot de passe modifié avec succès"
+    },
+    "tips": {
+      "title": "Conseils de sécurité",
+      "tip1": "Utilisez un mot de passe unique que vous n'utilisez nulle part ailleurs",
+      "tip2": "Incluez un mélange de lettres, chiffres et symboles",
+      "tip3": "Évitez les informations personnelles comme les noms ou dates de naissance"
+    }
+  },
+  "twoFactor": {
+    "title": "Authentification à deux facteurs",
+    "description": "Ajoutez une couche de sécurité supplémentaire à votre compte",
+    "setupButton": "Activer 2FA",
+    "manage": "Gérer 2FA",
+    "setup": {
+      "title": "Configuration de l'authentification à deux facteurs",
+      "description": "Sécurisez votre compte avec une étape d'authentification supplémentaire",
+      "step1": {
+        "title": "Installer l'application d'authentification",
+        "description": "Téléchargez et installez une application d'authentification sur votre appareil mobile"
+      },
+      "step2": {
+        "title": "Scanner le code QR",
+        "description": "Utilisez votre application d'authentification pour scanner ce code QR",
+        "qrInstructions": "Scannez ce code QR avec votre application d'authentification",
+        "manualEntry": "Ou entrez ce code manuellement :"
+      },
+      "step3": {
+        "title": "Vérifier la configuration",
+        "description": "Entrez le code à 6 chiffres de votre application d'authentification",
+        "codeLabel": "Code de vérification",
+        "verify": "Vérifier et activer"
+      }
+    },
+    "manageSection": {
+      "title": "Authentification à deux facteurs",
+      "description": "Votre compte est protégé par 2FA",
+      "backupCodes": "Codes de sauvegarde",
+      "regenerate": "Régénérer",
+      "noBackupCodes": "Aucun code de sauvegarde n'a encore été généré. Cliquez ci-dessous pour générer de nouveaux codes de sauvegarde.",
+      "generateBackupCodes": "Générer des codes de sauvegarde",
+      "verifyToGenerate": "Entrez votre code 2FA pour générer des codes de sauvegarde",
+      "enterCodeFromApp": "Entrez le code à 6 chiffres de votre application d'authentification",
+      "regenerateWarning": "⚠️ La régénération invalidera tous les codes de sauvegarde actuels. Assurez-vous de sauvegarder les nouveaux.",
+      "generateInfo": "Ces codes de sauvegarde peuvent être utilisés pour accéder à votre compte si vous perdez votre appareil d'authentification.",
+      "codesAccessedMessage": "Vos codes de sauvegarde ont été sécurisés et ne sont plus visibles pour des raisons de sécurité.",
+      "generateNewCodes": "Générer de nouveaux codes",
+      "codesExistSecurely": "Vous avez des codes de sauvegarde stockés en sécurité (non affichés pour la sécurité)",
+      "regenerateToView": "Régénérez les codes de sauvegarde pour voir et télécharger de nouveaux codes.",
+      "backupCodesImportant": "⚠️ IMPORTANT : Sauvegardez ces codes immédiatement ! Ils seront masqués après confirmation pour la sécurité.",
+      "confirmSaved": "J'ai sauvegardé mes codes de sauvegarde en sécurité (téléchargés ou notés)",
+      "confirmAndContinue": "Confirmer et continuer",
+      "mustSaveFirst": "Veuillez télécharger ou copier vos codes de sauvegarde avant de confirmer.",
+      "disable": {
+        "title": "Désactiver l'authentification à deux facteurs",
+        "warning": "Cela supprimera la protection 2FA de votre compte",
+        "codePlaceholder": "Entrez le code de vérification",
+        "confirm": "Désactiver 2FA"
+      }
+    },
+    "errors": {
+      "setupFailed": "Échec de la configuration 2FA",
+      "codeRequired": "Le code de vérification est requis",
+      "invalidCode": "Code de vérification invalide",
+      "verificationFailed": "Échec de la vérification",
+      "disableFailed": "Échec de la désactivation 2FA",
+      "backupCodesFailed": "Échec de la régénération des codes de sauvegarde"
+    },
+    "success": {
+      "enabled": "Authentification à deux facteurs activée avec succès",
+      "disabled": "Authentification à deux facteurs désactivée",
+      "backupCodesRegenerated": "Codes de sauvegarde régénérés avec succès",
+      "backupCodesDownloaded": "Codes de sauvegarde téléchargés",
+      "backupCodesCleared": "Codes de sauvegarde effacés de la mémoire du navigateur pour la sécurité",
+      "backupCodesSecured": "Les codes de sauvegarde ont été sécurisés et supprimés du navigateur"
+    },
+    "countdown": {
+      "expiresIn": "La configuration expire dans {{seconds}} secondes. Effectuez la vérification rapidement.",
+      "expiresInWarning": "⚠️ La configuration expire dans {{seconds}} secondes ! Dépêchez-vous !",
+      "expired": "Configuration expirée. Génération d'un nouveau code QR...",
+      "newCodeGenerated": "Nouveau code QR généré. Veuillez scanner le code mis à jour."
+    }
+  },
+  "passkeys": {
+    "title": "Clés d'accès",
+    "description": "Connectez-vous en toute sécurité avec la biométrie ou l'authentification de l'appareil",
+    "add": "Ajouter une clé d'accès",
+    "manage": "Gérer les clés d'accès", 
+    "register": "Enregistrer une clé d'accès",
+    "deviceName": "Nom de l'appareil",
+    "deviceNamePlaceholder": "ex: iPhone 15 Pro",
+    "deviceNameHint": "Donnez un nom reconnaissable à cet appareil",
+    "created": "Créé",
+    "lastUsed": "Dernière utilisation",
+    "neverUsed": "Jamais utilisé",
+    "registered": "enregistrées",
+    "noPasskeys": "Aucune clé d'accès enregistrée",
+    "noPasskeysDescription": "Ajoutez une clé d'accès pour vous connecter en toute sécurité avec la biométrie",
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer la clé d'accès pour {{deviceName}} ?",
+    "unsupported": {
+      "title": "Clés d'accès non supportées",
+      "description": "Votre navigateur ne supporte pas les clés d'accès. Veuillez utiliser un navigateur moderne."
+    },
+    "errors": {
+      "deviceNameRequired": "Le nom de l'appareil est requis",
+      "userCancelled": "L'enregistrement de la clé d'accès a été annulé",
+      "notSupported": "Les clés d'accès ne sont pas supportées sur cet appareil",
+      "registrationFailed": "Échec de l'enregistrement de la clé d'accès",
+      "deleteFailed": "Échec de la suppression de la clé d'accès"
+    },
+    "success": {
+      "registered": "Clé d'accès enregistrée avec succès",
+      "deleted": "Clé d'accès supprimée avec succès"
+    },
+    "info": {
+      "title": "À propos des clés d'accès",
+      "point1": "Les clés d'accès sont plus sécurisées que les mots de passe",
+      "point2": "Utilisez la biométrie ou le code PIN de l'appareil pour vous connecter",
+      "point3": "Fonctionne sur tous vos appareils",
+      "point4": "Ne peut pas être hameçonné ou volé"
+    }
+  },
+  "auditLog": {
+    "title": "Journal d'audit de sécurité",
+    "description": "Consultez l'activité de sécurité de votre compte et l'historique des connexions",
+    "exported": "Journal d'audit exporté avec succès",
+    "searchPlaceholder": "Rechercher par appareil, localisation ou action...",
+    "filterByAction": "Filtrer par action",
+    "noEntries": "Aucune entrée d'audit",
+    "noEntriesDescription": "Votre activité de sécurité apparaîtra ici",
+    "noMatchingEntries": "Aucune entrée ne correspond à vos critères de recherche",
+    "suspiciousActivity": "Activité suspecte détectée",
+    "actions": {
+      "login": "Connexion",
+      "logout": "Déconnexion", 
+      "password_change": "Mot de passe modifié",
+      "2fa_enabled": "2FA activé",
+      "2fa_disabled": "2FA désactivé",
+      "passkey_added": "Clé d'accès ajoutée",
+      "passkey_removed": "Clé d'accès supprimée",
+      "failed_login": "Connexion échouée",
+      "session_expired": "Session expirée"
+    },
+    "stats": {
+      "totalEntries": "Entrées totales",
+      "successfulLogins": "Connexions réussies",
+      "failedAttempts": "Tentatives échouées",
+      "uniqueDevices": "Appareils uniques"
+    }
+  },
+  "activity": {
+    "title": "Activité récente",
+    "recentAttempts": "tentatives de connexion récentes"
+  },
+  "recommendations": {
+    "title": "Recommandations de sécurité", 
+    "enable2fa": "Activez l'authentification à deux facteurs pour une meilleure sécurité",
+    "addPasskey": "Ajoutez une clé d'accès pour l'authentification sans mot de passe",
+    "strongPassword": "Utilisez un mot de passe plus fort avec des caractères mixtes"
+  }
+}

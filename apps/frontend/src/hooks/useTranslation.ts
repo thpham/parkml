@@ -12,9 +12,7 @@ import { changeLanguage, getCurrentLanguage, type SupportedLanguage } from '../i
  * - Namespace support
  */
 
-// Overloaded hook for namespace support
-export function useTranslation(): any;
-export function useTranslation(ns: string | string[]): any;
+// Enhanced useTranslation hook with namespace support
 export function useTranslation(ns?: string | string[]) {
   const { t, i18n, ready } = useI18nextTranslation(ns);
 
@@ -30,7 +28,7 @@ export function useTranslation(ns?: string | string[]) {
     params?: Record<string, string | number | Date>,
     options?: any
   ): string => {
-    const result = t(key, { ...params, ...options });
+    const result = t(key, { ...params, returnObjects: false, ...options });
     return typeof result === 'string' ? result : String(result);
   };
 

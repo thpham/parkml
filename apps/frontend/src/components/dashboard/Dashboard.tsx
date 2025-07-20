@@ -105,7 +105,7 @@ const Dashboard: React.FC = () => {
       } else {
         toast.error(data.error || t('errors.createPatient'));
       }
-    } catch (error) {
+    } catch {
       toast.error(t('errors.createPatient'));
     }
   };

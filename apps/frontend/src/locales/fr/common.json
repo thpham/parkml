@@ -86,5 +86,23 @@
   "language": {
     "selectLanguage": "Sélectionner la langue",
     "currentLanguage": "Langue actuelle"
-  }
+  },
+  "loading": "Chargement...",
+  "save": "Enregistrer",
+  "cancel": "Annuler",
+  "edit": "Modifier",
+  "delete": "Supprimer",
+  "change": "Changer",
+  "manage": "Gérer",
+  "view": "Voir",
+  "hide": "Masquer",
+  "show": "Afficher",
+  "copy": "Copier",
+  "download": "Télécharger",
+  "copied": "Copié dans le presse-papiers",
+  "generate": "Générer",
+  "filter": "Filtrer",
+  "refresh": "Actualiser",
+  "export": "Exporter",
+  "details": "Détails"
 }

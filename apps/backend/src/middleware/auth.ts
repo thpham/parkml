@@ -68,7 +68,7 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
 
     req.user = decoded;
     next();
-  } catch (error) {
+  } catch {
     const response: ApiResponse = {
       success: false,
       error: 'Invalid token',
