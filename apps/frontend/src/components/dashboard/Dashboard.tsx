@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Patient, SymptomEntry } from '@parkml/shared';
 import { Avatar } from '../shared';
@@ -16,18 +16,7 @@ const Dashboard: React.FC = () => {
   const [recentEntries, setRecentEntries] = useState<SymptomEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Redirect admin users to admin dashboard
-  if (isAdmin) {
-    return <AdminDashboard />;
-  }
-
-  useEffect(() => {
-    if (user && token) {
-      fetchDashboardData();
-    }
-  }, [user, token]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -67,7 +56,18 @@ const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, patients, t]);
+
+  useEffect(() => {
+    if (user && token && !isAdmin) {
+      fetchDashboardData();
+    }
+  }, [user, token, isAdmin, fetchDashboardData]);
+
+  // Redirect admin users to admin dashboard
+  if (isAdmin) {
+    return <AdminDashboard />;
+  }
 
   const handleCreatePatient = async () => {
     if (user?.role !== 'patient') {
