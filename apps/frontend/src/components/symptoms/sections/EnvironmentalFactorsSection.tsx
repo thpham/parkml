@@ -63,7 +63,7 @@ const EnvironmentalFactorsSection: React.FC<EnvironmentalFactorsSectionProps> = 
                   className="flex items-center gap-3 cursor-pointer hover:bg-base-100 p-2 rounded-lg transition-colors"
                 >
                   <input
-                    {...register(`environmentalFactors.weather` as any)}
+                    {...register(`environmentalFactors.weather` as keyof Partial<SymptomEntry>)}
                     type="checkbox"
                     value={weather}
                     className="checkbox checkbox-primary flex-shrink-0"

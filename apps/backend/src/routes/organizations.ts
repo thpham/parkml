@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { prisma } from '../database/prisma-client';
 import { ApiResponse } from '@parkml/shared';
 import {
@@ -9,121 +9,153 @@ import {
   AuthenticatedRequest,
 } from '../middleware/auth';
 
+// Type definitions for database query results
+type OrganizationWithCounts = {
+  id: string;
+  name: string;
+  description: string | null;
+  settings: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  _count: {
+    users: number;
+    patients: number;
+    auditLogs: number;
+  };
+};
+
+type OrganizationUpdateData = {
+  name?: string;
+  description?: string;
+  settings?: string;
+  isActive?: boolean;
+};
+
 const router = Router();
 
 // Get all organizations (super admin only)
-router.get('/', authenticateToken, requireSuperAdmin, async (_req: AuthenticatedRequest, res) => {
-  try {
-    const organizations = await prisma.organization.findMany({
-      include: {
-        _count: {
-          select: {
-            users: true,
-            patients: true,
-            auditLogs: true,
+router.get(
+  '/',
+  authenticateToken,
+  requireSuperAdmin,
+  async (_req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
+    try {
+      const organizations = await prisma.organization.findMany({
+        include: {
+          _count: {
+            select: {
+              users: true,
+              patients: true,
+              auditLogs: true,
+            },
           },
         },
-      },
-      orderBy: { name: 'asc' },
-    });
+        orderBy: { name: 'asc' },
+      });
 
-    const response: ApiResponse = {
-      success: true,
-      data: organizations.map((org: any) => ({
-        id: org.id,
-        name: org.name,
-        description: org.description,
-        settings: JSON.parse(org.settings || '{}'),
-        isActive: org.isActive,
-        createdAt: org.createdAt,
-        updatedAt: org.updatedAt,
-        stats: {
-          userCount: org._count.users,
-          patientCount: org._count.patients,
-          auditLogCount: org._count.auditLogs,
-        },
-      })),
-    };
+      const response: ApiResponse = {
+        success: true,
+        data: organizations.map((org: OrganizationWithCounts) => ({
+          id: org.id,
+          name: org.name,
+          description: org.description,
+          settings: JSON.parse(org.settings || '{}'),
+          isActive: org.isActive,
+          createdAt: org.createdAt,
+          updatedAt: org.updatedAt,
+          stats: {
+            userCount: org._count.users,
+            patientCount: org._count.patients,
+            auditLogCount: org._count.auditLogs,
+          },
+        })),
+      };
 
-    res.json(response);
-  } catch (error) {
-    console.error('Get organizations error:', error);
-    const response: ApiResponse = {
-      success: false,
-      error: 'Internal server error',
-    };
-    res.status(500).json(response);
+      res.json(response);
+    } catch (error) {
+      console.error('Get organizations error:', error);
+      const response: ApiResponse = {
+        success: false,
+        error: 'Internal server error',
+      };
+      res.status(500).json(response);
+    }
   }
-});
+);
 
 // Get current user's organization
-router.get('/current', authenticateToken, async (req: AuthenticatedRequest, res) => {
-  try {
-    if (!req.user) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'User not authenticated',
-      };
-      return res.status(401).json(response);
-    }
+router.get(
+  '/current',
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
+    try {
+      if (!req.user) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'User not authenticated',
+        };
+        return res.status(401).json(response);
+      }
 
-    if (!req.user.organizationId) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'User is not associated with any organization',
-      };
-      return res.status(404).json(response);
-    }
+      if (!req.user.organizationId) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'User is not associated with any organization',
+        };
+        return res.status(404).json(response);
+      }
 
-    const organization = await prisma.organization.findUnique({
-      where: { id: req.user.organizationId },
-      include: {
-        _count: {
-          select: {
-            users: true,
-            patients: true,
-            auditLogs: true,
+      const organization = await prisma.organization.findUnique({
+        where: { id: req.user.organizationId },
+        include: {
+          _count: {
+            select: {
+              users: true,
+              patients: true,
+              auditLogs: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    if (!organization) {
+      if (!organization) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Organization not found',
+        };
+        return res.status(404).json(response);
+      }
+
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          id: organization.id,
+          name: organization.name,
+          description: organization.description,
+          settings: JSON.parse(organization.settings || '{}'),
+          isActive: organization.isActive,
+          createdAt: organization.createdAt,
+          updatedAt: organization.updatedAt,
+          stats: {
+            userCount: organization._count.users,
+            patientCount: organization._count.patients,
+            auditLogCount: organization._count.auditLogs,
+          },
+        },
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error('Get current organization error:', error);
       const response: ApiResponse = {
         success: false,
-        error: 'Organization not found',
+        error: 'Internal server error',
       };
-      return res.status(404).json(response);
+      res.status(500).json(response);
     }
-
-    const response: ApiResponse = {
-      success: true,
-      data: {
-        id: organization.id,
-        name: organization.name,
-        description: organization.description,
-        settings: JSON.parse(organization.settings || '{}'),
-        isActive: organization.isActive,
-        createdAt: organization.createdAt,
-        updatedAt: organization.updatedAt,
-        stats: {
-          userCount: organization._count.users,
-          patientCount: organization._count.patients,
-          auditLogCount: organization._count.auditLogs,
-        },
-      },
-    };
-
-    res.json(response);
-  } catch (error) {
-    console.error('Get current organization error:', error);
-    const response: ApiResponse = {
-      success: false,
-      error: 'Internal server error',
-    };
-    res.status(500).json(response);
   }
-});
+);
 
 // Create new organization (super admin only)
 router.post(
@@ -131,7 +163,7 @@ router.post(
   authenticateToken,
   requireSuperAdmin,
   logUserActivity('CREATE', 'organization'),
-  async (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       const { name, description, settings } = req.body;
 
@@ -207,83 +239,87 @@ router.post(
 );
 
 // Get organization by ID
-router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
-  try {
-    if (!req.user) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'User not authenticated',
-      };
-      return res.status(401).json(response);
-    }
+router.get(
+  '/:id',
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
+    try {
+      if (!req.user) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'User not authenticated',
+        };
+        return res.status(401).json(response);
+      }
 
-    const { id } = req.params;
+      const { id } = req.params;
 
-    // Check authorization
-    if (req.user.role !== 'super_admin' && req.user.organizationId !== id) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'Access denied to this organization',
-      };
-      return res.status(403).json(response);
-    }
+      // Check authorization
+      if (req.user.role !== 'super_admin' && req.user.organizationId !== id) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Access denied to this organization',
+        };
+        return res.status(403).json(response);
+      }
 
-    const organization = await prisma.organization.findUnique({
-      where: { id },
-      include: {
-        _count: {
-          select: {
-            users: true,
-            patients: true,
-            auditLogs: true,
+      const organization = await prisma.organization.findUnique({
+        where: { id },
+        include: {
+          _count: {
+            select: {
+              users: true,
+              patients: true,
+              auditLogs: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    if (!organization) {
+      if (!organization) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Organization not found',
+        };
+        return res.status(404).json(response);
+      }
+
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          id: organization.id,
+          name: organization.name,
+          description: organization.description,
+          settings: JSON.parse(organization.settings || '{}'),
+          isActive: organization.isActive,
+          createdAt: organization.createdAt,
+          updatedAt: organization.updatedAt,
+          stats: {
+            userCount: organization._count.users,
+            patientCount: organization._count.patients,
+            auditLogCount: organization._count.auditLogs,
+          },
+        },
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error('Get organization error:', error);
       const response: ApiResponse = {
         success: false,
-        error: 'Organization not found',
+        error: 'Internal server error',
       };
-      return res.status(404).json(response);
+      res.status(500).json(response);
     }
-
-    const response: ApiResponse = {
-      success: true,
-      data: {
-        id: organization.id,
-        name: organization.name,
-        description: organization.description,
-        settings: JSON.parse(organization.settings || '{}'),
-        isActive: organization.isActive,
-        createdAt: organization.createdAt,
-        updatedAt: organization.updatedAt,
-        stats: {
-          userCount: organization._count.users,
-          patientCount: organization._count.patients,
-          auditLogCount: organization._count.auditLogs,
-        },
-      },
-    };
-
-    res.json(response);
-  } catch (error) {
-    console.error('Get organization error:', error);
-    const response: ApiResponse = {
-      success: false,
-      error: 'Internal server error',
-    };
-    res.status(500).json(response);
   }
-});
+);
 
 // Update organization
 router.put(
   '/:id',
   authenticateToken,
   logUserActivity('UPDATE', 'organization'),
-  async (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       if (!req.user) {
         const response: ApiResponse = {
@@ -348,7 +384,7 @@ router.put(
       }
 
       // Prepare update data
-      const updateData: any = {};
+      const updateData: OrganizationUpdateData = {};
       if (name !== undefined) updateData.name = name;
       if (description !== undefined) updateData.description = description;
       if (settings !== undefined) updateData.settings = JSON.stringify(settings);
@@ -405,7 +441,7 @@ router.delete(
   authenticateToken,
   requireSuperAdmin,
   logUserActivity('DELETE', 'organization'),
-  async (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       const { id } = req.params;
 
@@ -468,7 +504,7 @@ router.get(
   '/:id/users',
   authenticateToken,
   requireClinicAdmin,
-  async (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       if (!req.user) {
         const response: ApiResponse = {
@@ -534,7 +570,7 @@ router.get(
   '/:id/patients',
   authenticateToken,
   requireClinicAdmin,
-  async (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       if (!req.user) {
         const response: ApiResponse = {
@@ -580,20 +616,21 @@ router.get(
 
       const response: ApiResponse = {
         success: true,
-        data: patients.map((patient: any) => ({
+        data: patients.map((patient: Record<string, unknown>) => ({
           id: patient.id,
           name: patient.name,
           dateOfBirth: patient.dateOfBirth,
           diagnosisDate: patient.diagnosisDate,
-          emergencyContact: JSON.parse(patient.emergencyContact || '{}'),
-          privacySettings: JSON.parse(patient.privacySettings || '{}'),
+          emergencyContact: JSON.parse((patient.emergencyContact as string) || '{}'),
+          privacySettings: JSON.parse((patient.privacySettings as string) || '{}'),
           user: patient.user,
           createdAt: patient.createdAt,
           updatedAt: patient.updatedAt,
           stats: {
-            caregiverCount: patient._count.caregiverAssignments,
-            symptomEntryCount: patient._count.symptomEntries,
-            weeklySummaryCount: patient._count.weeklySummaries,
+            caregiverCount: (patient._count as { caregiverAssignments: number })
+              .caregiverAssignments,
+            symptomEntryCount: (patient._count as { symptomEntries: number }).symptomEntries,
+            weeklySummaryCount: (patient._count as { weeklySummaries: number }).weeklySummaries,
           },
         })),
       };
@@ -616,7 +653,7 @@ router.post(
   authenticateToken,
   requireSuperAdmin,
   logUserActivity('SWITCH', 'organization'),
-  async (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       if (!req.user) {
         const response: ApiResponse = {

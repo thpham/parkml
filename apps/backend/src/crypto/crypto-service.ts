@@ -3,6 +3,40 @@
  * Main service orchestrating all cryptographic operations for the ParkML platform
  */
 
+import { Request, Response, NextFunction } from 'express';
+import { Prisma } from '@prisma/client';
+
+/**
+ * User role types for crypto service operations
+ */
+type UserRole =
+  | 'super_admin'
+  | 'clinic_admin'
+  | 'professional_caregiver'
+  | 'family_caregiver'
+  | 'patient';
+
+/**
+ * Authenticated user interface for crypto operations
+ */
+interface AuthenticatedUser {
+  userId: string;
+  organizationId?: string;
+  role: UserRole;
+}
+
+/**
+ * Express request with authenticated user context
+ */
+interface AuthenticatedRequest extends Request {
+  user?: AuthenticatedUser;
+  encryptionContext?: RequestEncryptionContextProvider;
+}
+
+// Extend Request interface to include encryption context
+interface CryptoRequest extends Request {
+  encryptionContext?: RequestEncryptionContextProvider;
+}
 import { prisma } from '../database/prisma-client';
 import { ABECrypto } from './abe-crypto';
 import { WASMCryptoLoader, HomomorphicEncryption } from './wasm-loader';
@@ -263,7 +297,7 @@ export class CryptoService {
   /**
    * Get encryption middleware for Prisma
    */
-  public createEncryptionMiddleware(): any {
+  public createEncryptionMiddleware(): Prisma.Middleware {
     if (!this.isInitialized) {
       throw new Error('Crypto service not initialized');
     }
@@ -282,7 +316,7 @@ export class CryptoService {
   /**
    * Create request encryption context provider
    */
-  public createRequestContextProvider(req: any): RequestEncryptionContextProvider {
+  public createRequestContextProvider(req: AuthenticatedRequest): RequestEncryptionContextProvider {
     return new RequestEncryptionContextProvider(req, this.abeCrypto);
   }
 
@@ -416,7 +450,7 @@ export async function initializeCrypto(): Promise<void> {
  * Express middleware factory for encryption context
  */
 export function createCryptoMiddleware() {
-  return (req: any, res: any, next: any) => {
+  return (req: CryptoRequest, res: Response, next: NextFunction) => {
     if (!cryptoService.isReady()) {
       return res.status(503).json({
         success: false,

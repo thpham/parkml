@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Patient, SymptomEntry } from '@parkml/shared';
 import { Avatar } from '../shared';
@@ -16,18 +16,7 @@ const Dashboard: React.FC = () => {
   const [recentEntries, setRecentEntries] = useState<SymptomEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Redirect admin users to admin dashboard
-  if (isAdmin) {
-    return <AdminDashboard />;
-  }
-
-  useEffect(() => {
-    if (user && token) {
-      fetchDashboardData();
-    }
-  }, [user, token]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -42,22 +31,25 @@ const Dashboard: React.FC = () => {
         const patientsData = await patientsResponse.json();
         if (patientsData.success) {
           setPatients(patientsData.data);
-        }
-      }
 
-      // Fetch recent entries if there are patients
-      if (patients.length > 0) {
-        const patientId = patients[0].id;
-        const entriesResponse = await fetch(`/api/symptom-entries?patientId=${patientId}&limit=5`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+          // Fetch recent entries if there are patients
+          if (patientsData.data.length > 0) {
+            const patientId = patientsData.data[0].id;
+            const entriesResponse = await fetch(
+              `/api/symptom-entries?patientId=${patientId}&limit=5`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
 
-        if (entriesResponse.ok) {
-          const entriesData = await entriesResponse.json();
-          if (entriesData.success) {
-            setRecentEntries(entriesData.data);
+            if (entriesResponse.ok) {
+              const entriesData = await entriesResponse.json();
+              if (entriesData.success) {
+                setRecentEntries(entriesData.data);
+              }
+            }
           }
         }
       }
@@ -67,7 +59,19 @@ const Dashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, t]);
+
+  useEffect(() => {
+    if (user && token && !isAdmin) {
+      fetchDashboardData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchDashboardData excluded to prevent infinite loop
+  }, [user, token, isAdmin]);
+
+  // Redirect admin users to admin dashboard
+  if (isAdmin) {
+    return <AdminDashboard />;
+  }
 
   const handleCreatePatient = async () => {
     if (user?.role !== 'patient') {

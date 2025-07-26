@@ -243,7 +243,7 @@ export interface CohortCriteria {
   /** Exclude specific patients */
   excludePatientIds?: string[];
   /** Additional filters */
-  additionalFilters?: Record<string, any>;
+  additionalFilters?: Record<string, unknown>;
 }
 
 /**

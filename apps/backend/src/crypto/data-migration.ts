@@ -19,6 +19,21 @@ import { prisma } from '../database/prisma-client';
 import { sha256 } from '@noble/hashes/sha256';
 import { DataCategory } from '@parkml/shared';
 
+// Type definitions
+type DataMigrationRecord = {
+  id: string;
+  status: string;
+  config: string;
+  totalRecords: number;
+  processedRecords: number;
+  encryptedRecords: number;
+  failedRecords: number;
+  errorMessage: string | null;
+  startedAt: Date;
+  completedAt: Date | null;
+  lastUpdated: Date;
+};
+
 /**
  * Migration configuration and options
  */
@@ -715,7 +730,7 @@ export class DataMigrationEngine {
   /**
    * Get migration status and progress
    */
-  public async getMigrationStatus(migrationId: string): Promise<any> {
+  public async getMigrationStatus(migrationId: string): Promise<DataMigrationRecord | null> {
     return prisma.dataMigration.findUnique({
       where: { id: migrationId },
     });
@@ -724,7 +739,7 @@ export class DataMigrationEngine {
   /**
    * List all migrations
    */
-  public async listMigrations(): Promise<any[]> {
+  public async listMigrations(): Promise<DataMigrationRecord[]> {
     return prisma.dataMigration.findMany({
       orderBy: { startedAt: 'desc' },
       take: 20,

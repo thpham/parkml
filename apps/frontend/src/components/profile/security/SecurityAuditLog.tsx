@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Clock,
   MapPin,
@@ -88,17 +88,7 @@ const SecurityAuditLog: React.FC<SecurityAuditLogProps> = () => {
   const [showLogoutOthersConfirm, setShowLogoutOthersConfirm] = useState(false);
   const [showLogoutAllConfirm, setShowLogoutAllConfirm] = useState(false);
 
-  useEffect(() => {
-    loadAuditLogs();
-  }, [currentPage, entriesPerPage, searchTerm, filterAction, filterSession]);
-
-  useEffect(() => {
-    if (showSessionManagement) {
-      loadActiveSessions();
-    }
-  }, [showSessionManagement]);
-
-  const loadActiveSessions = async () => {
+  const loadActiveSessions = useCallback(async () => {
     try {
       setIsSessionsLoading(true);
       const response = await fetch('/api/sessions', {
@@ -119,9 +109,9 @@ const SecurityAuditLog: React.FC<SecurityAuditLogProps> = () => {
     } finally {
       setIsSessionsLoading(false);
     }
-  };
+  }, []);
 
-  const loadAuditLogs = async () => {
+  const loadAuditLogs = useCallback(async () => {
     try {
       setIsLoading(true);
 
@@ -166,7 +156,17 @@ const SecurityAuditLog: React.FC<SecurityAuditLogProps> = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage, entriesPerPage, searchTerm, filterAction, filterSession]);
+
+  useEffect(() => {
+    loadAuditLogs();
+  }, [loadAuditLogs]);
+
+  useEffect(() => {
+    if (showSessionManagement) {
+      loadActiveSessions();
+    }
+  }, [showSessionManagement, loadActiveSessions]);
 
   const getActionIcon = (action: string) => {
     switch (action) {

@@ -189,21 +189,21 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = () => {
   const handleSettingChange = (
     category: keyof NotificationSettings,
     key: string,
-    value: any,
+    value: boolean | string,
     nested?: string
   ) => {
     setSettings(prev => ({
       ...prev,
       [category]: nested
         ? {
-            ...(prev[category] as any),
+            ...(prev[category] as Record<string, unknown>),
             [nested]: {
-              ...(prev[category] as any)[nested],
+              ...((prev[category] as Record<string, unknown>)[nested] as Record<string, unknown>),
               [key]: value,
             },
           }
         : {
-            ...(prev[category] as any),
+            ...(prev[category] as Record<string, unknown>),
             [key]: value,
           },
     }));

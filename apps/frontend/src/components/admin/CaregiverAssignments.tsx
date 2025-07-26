@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useAuth } from '../../contexts/AuthContext';
 import { CaregiverAssignment, ApiResponse, User, Patient } from '@parkml/shared';
@@ -10,6 +10,13 @@ interface AssignmentWithDetails extends CaregiverAssignment {
   patient: Patient;
   caregiver: User;
   assignedByUser?: User;
+}
+
+interface AssignmentFormData {
+  patientId: string;
+  caregiverId: string;
+  caregiverType: string;
+  notes: string;
 }
 
 const CaregiverAssignments: React.FC = () => {
@@ -24,13 +31,7 @@ const CaregiverAssignments: React.FC = () => {
     caregiverType: '',
   });
 
-  useEffect(() => {
-    if (user && token) {
-      fetchAssignments();
-    }
-  }, [user, token, filters]);
-
-  const fetchAssignments = async () => {
+  const fetchAssignments = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams(
@@ -56,9 +57,16 @@ const CaregiverAssignments: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, token, t]);
 
-  const handleCreateAssignment = async (formData: any) => {
+  useEffect(() => {
+    if (user && token) {
+      fetchAssignments();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchAssignments excluded to prevent infinite loop
+  }, [user, token, filters]);
+
+  const handleCreateAssignment = async (formData: AssignmentFormData) => {
     try {
       const response = await fetch('/api/assignments', {
         method: 'POST',
@@ -372,7 +380,7 @@ const CaregiverAssignments: React.FC = () => {
 
 // Assignment Form Component
 interface AssignmentFormProps {
-  onSubmit: (formData: any) => void;
+  onSubmit: (formData: AssignmentFormData) => void;
   onCancel: () => void;
 }
 
@@ -389,12 +397,7 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
   const [caregivers, setCaregivers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchPatients();
-    fetchCaregivers();
-  }, []);
-
-  const fetchPatients = async () => {
+  const fetchPatients = useCallback(async () => {
     try {
       const response = await fetch('/api/patients', {
         headers: {
@@ -410,9 +413,9 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
     } catch (error) {
       console.error('Error fetching patients:', error);
     }
-  };
+  }, [token]);
 
-  const fetchCaregivers = async () => {
+  const fetchCaregivers = useCallback(async () => {
     try {
       const response = await fetch('/api/users?role=professional_caregiver&role=family_caregiver', {
         headers: {
@@ -428,7 +431,12 @@ const AssignmentForm: React.FC<AssignmentFormProps> = ({ onSubmit, onCancel }) =
     } catch (error) {
       console.error('Error fetching caregivers:', error);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchPatients();
+    fetchCaregivers();
+  }, [fetchPatients, fetchCaregivers]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

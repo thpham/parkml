@@ -18,6 +18,129 @@ import { WASMCryptoLoader } from './wasm-loader';
 import { prisma } from '../database/prisma-client';
 import { sha256 } from '@noble/hashes/sha256';
 import { DataCategory, AccessLevel } from '@parkml/shared';
+import { SEALLibrary } from 'node-seal/implementation/seal';
+import { Context } from 'node-seal/implementation/context';
+import { KeyGenerator } from 'node-seal/implementation/key-generator';
+import { CKKSEncoder } from 'node-seal/implementation/ckks-encoder';
+import { Evaluator } from 'node-seal/implementation/evaluator';
+import { Encryptor } from 'node-seal/implementation/encryptor';
+import { Decryptor } from 'node-seal/implementation/decryptor';
+import { PublicKey } from 'node-seal/implementation/public-key';
+import { SecretKey } from 'node-seal/implementation/secret-key';
+import { RelinKeys } from 'node-seal/implementation/relin-keys';
+
+/**
+ * Extended HomomorphicContext interface with additional key properties
+ */
+export interface ExtendedHomomorphicContext {
+  seal: SEALLibrary;
+  context: Context;
+  keyGenerator: KeyGenerator;
+  encoder: CKKSEncoder;
+  evaluator: Evaluator;
+  decryptor: Decryptor | null;
+  encryptor: Encryptor | null;
+  publicKey?: PublicKey;
+  secretKey?: SecretKey;
+  relinKeys?: RelinKeys;
+}
+
+/**
+ * Database query where clause for patient cohort filtering
+ */
+export interface PatientWhereClause {
+  isActive?: boolean;
+  organizationId?: {
+    in: string[];
+  };
+  diagnosisDate?: {
+    gte: Date;
+    lte: Date;
+  };
+  [key: string]: unknown;
+}
+
+/**
+ * Symptom entry data structure for feature extraction
+ */
+export interface SymptomEntryData {
+  id: string;
+  entryDate: Date;
+  motorSymptoms: string | MotorSymptomsData | null;
+  nonMotorSymptoms: string | NonMotorSymptomsData | null;
+  autonomicSymptoms: string | AutonomicSymptomsData | null;
+  [key: string]: unknown;
+}
+
+/**
+ * Motor symptoms data structure
+ */
+export interface MotorSymptomsData {
+  tremors?: Array<{ severity: number; [key: string]: unknown }>;
+  rigidity?: Array<{ severity: number; [key: string]: unknown }>;
+  bradykinesia?: { severity: number; [key: string]: unknown };
+  balance?: { fallsToday: number; [key: string]: unknown };
+  [key: string]: unknown;
+}
+
+/**
+ * Non-motor symptoms data structure
+ */
+export interface NonMotorSymptomsData {
+  sleep?: { totalSleepHours: number; [key: string]: unknown };
+  [key: string]: unknown;
+}
+
+/**
+ * Autonomic symptoms data structure
+ */
+export interface AutonomicSymptomsData {
+  bloodPressure?: Array<{
+    systolic: number;
+    diastolic: number;
+    [key: string]: unknown;
+  }>;
+  [key: string]: unknown;
+}
+
+/**
+ * Computation result summary for listing
+ */
+export interface ComputationSummary {
+  id: string;
+  computationType: string;
+  status: string;
+  purpose: string;
+  dataCategories: DataCategory[];
+  createdAt: Date;
+  computedAt: Date | null;
+  hasResult: boolean;
+}
+
+/**
+ * Detailed computation result
+ */
+export interface DetailedComputationResult {
+  id: string;
+  computationType: string;
+  status: string;
+  result: ComputationResult | null;
+  errorMessage: string | null;
+  computedAt: Date | null;
+  createdAt: Date;
+  purpose: string;
+  dataCategories: DataCategory[];
+  cohortCriteria: CohortCriteria;
+}
+
+/**
+ * Database query where clause for computation filtering
+ */
+export interface ComputationWhereClause {
+  requesterId: string;
+  organizationId?: string;
+  [key: string]: unknown;
+}
 
 /**
  * Homomorphic computation request
@@ -91,7 +214,7 @@ export interface ComputationResult {
  */
 export class HomomorphicAnalytics {
   private static instance: HomomorphicAnalytics;
-  private heContext: any;
+  private heContext: ExtendedHomomorphicContext | null = null;
   private isInitialized = false;
 
   private constructor() {}
@@ -121,7 +244,9 @@ export class HomomorphicAnalytics {
       await WASMCryptoLoader.initializeSEAL();
 
       // Create homomorphic context for analytics
-      this.heContext = WASMCryptoLoader.createHomomorphicContext('tc128');
+      this.heContext = WASMCryptoLoader.createHomomorphicContext(
+        'tc128'
+      ) as ExtendedHomomorphicContext;
 
       // Generate keys for homomorphic operations
       const keys = WASMCryptoLoader.generateHomomorphicKeys(this.heContext);
@@ -158,7 +283,7 @@ export class HomomorphicAnalytics {
    * Submit a homomorphic computation request
    */
   public async submitComputation(request: HomomorphicComputationRequest): Promise<string> {
-    if (!this.isInitialized) {
+    if (!this.isInitialized || !this.heContext) {
       await this.initialize();
     }
 
@@ -437,7 +562,7 @@ export class HomomorphicAnalytics {
     console.log('🔍 Fetching encrypted cohort data...');
 
     // Build cohort query
-    const whereClause: any = {
+    const whereClause: PatientWhereClause = {
       isActive: true,
     };
 
@@ -484,53 +609,59 @@ export class HomomorphicAnalytics {
   /**
    * Extract numerical features from symptom entry
    */
-  private extractNumericalFeatures(entry: any, dataCategories: DataCategory[]): number[] {
+  private extractNumericalFeatures(
+    entry: SymptomEntryData,
+    dataCategories: DataCategory[]
+  ): number[] {
     const features: number[] = [];
 
     try {
-      // Parse symptom data
-      const motorSymptoms =
-        typeof entry.motorSymptoms === 'string'
-          ? JSON.parse(entry.motorSymptoms)
-          : entry.motorSymptoms;
+      // Parse symptom data with null handling
+      const motorSymptoms: MotorSymptomsData | null = entry.motorSymptoms
+        ? typeof entry.motorSymptoms === 'string'
+          ? (JSON.parse(entry.motorSymptoms) as MotorSymptomsData)
+          : (entry.motorSymptoms as MotorSymptomsData)
+        : null;
 
-      const nonMotorSymptoms =
-        typeof entry.nonMotorSymptoms === 'string'
-          ? JSON.parse(entry.nonMotorSymptoms)
-          : entry.nonMotorSymptoms;
+      const nonMotorSymptoms: NonMotorSymptomsData | null = entry.nonMotorSymptoms
+        ? typeof entry.nonMotorSymptoms === 'string'
+          ? (JSON.parse(entry.nonMotorSymptoms) as NonMotorSymptomsData)
+          : (entry.nonMotorSymptoms as NonMotorSymptomsData)
+        : null;
 
-      const autonomicSymptoms =
-        typeof entry.autonomicSymptoms === 'string'
-          ? JSON.parse(entry.autonomicSymptoms)
-          : entry.autonomicSymptoms;
+      const autonomicSymptoms: AutonomicSymptomsData | null = entry.autonomicSymptoms
+        ? typeof entry.autonomicSymptoms === 'string'
+          ? (JSON.parse(entry.autonomicSymptoms) as AutonomicSymptomsData)
+          : (entry.autonomicSymptoms as AutonomicSymptomsData)
+        : null;
 
       // Extract numerical features based on data categories
-      if (dataCategories.includes(DataCategory.MOTOR_SYMPTOMS)) {
-        if (motorSymptoms?.tremors?.[0]?.severity) {
+      if (dataCategories.includes(DataCategory.MOTOR_SYMPTOMS) && motorSymptoms) {
+        if (motorSymptoms.tremors?.[0]?.severity) {
           features.push(motorSymptoms.tremors[0].severity);
         }
-        if (motorSymptoms?.rigidity?.[0]?.severity) {
+        if (motorSymptoms.rigidity?.[0]?.severity) {
           features.push(motorSymptoms.rigidity[0].severity);
         }
-        if (motorSymptoms?.bradykinesia?.severity) {
+        if (motorSymptoms.bradykinesia?.severity) {
           features.push(motorSymptoms.bradykinesia.severity);
         }
-        if (motorSymptoms?.balance?.fallsToday !== undefined) {
+        if (motorSymptoms.balance?.fallsToday !== undefined) {
           features.push(motorSymptoms.balance.fallsToday);
         }
       }
 
-      if (dataCategories.includes(DataCategory.NON_MOTOR_SYMPTOMS)) {
-        if (nonMotorSymptoms?.sleep?.totalSleepHours !== undefined) {
+      if (dataCategories.includes(DataCategory.NON_MOTOR_SYMPTOMS) && nonMotorSymptoms) {
+        if (nonMotorSymptoms.sleep?.totalSleepHours !== undefined) {
           features.push(nonMotorSymptoms.sleep.totalSleepHours);
         }
       }
 
-      if (dataCategories.includes(DataCategory.AUTONOMIC_SYMPTOMS)) {
-        if (autonomicSymptoms?.bloodPressure?.[0]?.systolic) {
+      if (dataCategories.includes(DataCategory.AUTONOMIC_SYMPTOMS) && autonomicSymptoms) {
+        if (autonomicSymptoms.bloodPressure?.[0]?.systolic) {
           features.push(autonomicSymptoms.bloodPressure[0].systolic);
         }
-        if (autonomicSymptoms?.bloodPressure?.[0]?.diastolic) {
+        if (autonomicSymptoms.bloodPressure?.[0]?.diastolic) {
           features.push(autonomicSymptoms.bloodPressure[0].diastolic);
         }
       }
@@ -544,7 +675,10 @@ export class HomomorphicAnalytics {
   /**
    * Get computation result
    */
-  public async getComputationResult(computationId: string, requesterId: string): Promise<any> {
+  public async getComputationResult(
+    computationId: string,
+    requesterId: string
+  ): Promise<DetailedComputationResult> {
     const computation = await prisma.homomorphicComputation.findUnique({
       where: { id: computationId },
     });
@@ -578,8 +712,11 @@ export class HomomorphicAnalytics {
   /**
    * List user's computations
    */
-  public async listComputations(requesterId: string, organizationId?: string): Promise<any[]> {
-    const where: any = { requesterId };
+  public async listComputations(
+    requesterId: string,
+    organizationId?: string
+  ): Promise<ComputationSummary[]> {
+    const where: ComputationWhereClause = { requesterId };
 
     if (organizationId) {
       where.organizationId = organizationId;

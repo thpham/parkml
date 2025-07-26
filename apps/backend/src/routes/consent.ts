@@ -8,6 +8,55 @@ import {
   AuthenticatedRequest,
 } from '../middleware/auth';
 
+// Type definitions for consent management
+interface ConsentPermissions {
+  [key: string]: boolean | string | number;
+}
+
+interface PatientInfo {
+  id: string;
+  name: string;
+  userId: string;
+  user?: {
+    email: string;
+    name: string;
+  };
+}
+
+interface CaregiverInfo {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface AssignedByUserInfo {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+interface ConsentAssignmentWithIncludes {
+  id: string;
+  patientId: string;
+  caregiverId: string;
+  caregiverType: string;
+  status: string;
+  permissions: string;
+  startDate: Date | null;
+  endDate: Date | null;
+  notes: string | null;
+  consentGiven: boolean;
+  consentDate: Date | null;
+  assignedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  patient: PatientInfo;
+  caregiver: CaregiverInfo;
+  assignedByUser: AssignedByUserInfo | null;
+}
+
 const router = Router();
 
 // Get pending consent requests for a patient
@@ -75,7 +124,7 @@ router.get(
           id: assignment.id,
           caregiverId: assignment.caregiverId,
           caregiverType: assignment.caregiverType,
-          permissions: JSON.parse(assignment.permissions || '{}'),
+          permissions: JSON.parse(assignment.permissions || '{}') as ConsentPermissions,
           notes: assignment.notes,
           caregiver: assignment.caregiver,
           assignedBy: assignment.assignedBy,
@@ -213,16 +262,16 @@ router.post(
           caregiverId: updatedAssignment.caregiverId,
           caregiverType: updatedAssignment.caregiverType,
           status: updatedAssignment.status,
-          permissions: JSON.parse(updatedAssignment.permissions || '{}'),
+          permissions: JSON.parse(updatedAssignment.permissions || '{}') as ConsentPermissions,
           startDate: updatedAssignment.startDate,
           endDate: updatedAssignment.endDate,
           notes: updatedAssignment.notes,
           consentGiven: updatedAssignment.consentGiven,
           consentDate: updatedAssignment.consentDate,
-          patient: (updatedAssignment as any).patient,
-          caregiver: (updatedAssignment as any).caregiver,
+          patient: (updatedAssignment as ConsentAssignmentWithIncludes).patient,
+          caregiver: (updatedAssignment as ConsentAssignmentWithIncludes).caregiver,
           assignedBy: updatedAssignment.assignedBy,
-          assignedByUser: (updatedAssignment as any).assignedByUser,
+          assignedByUser: (updatedAssignment as ConsentAssignmentWithIncludes).assignedByUser,
           createdAt: updatedAssignment.createdAt,
           updatedAt: updatedAssignment.updatedAt,
         },
@@ -357,16 +406,16 @@ router.post(
           caregiverId: updatedAssignment.caregiverId,
           caregiverType: updatedAssignment.caregiverType,
           status: updatedAssignment.status,
-          permissions: JSON.parse(updatedAssignment.permissions || '{}'),
+          permissions: JSON.parse(updatedAssignment.permissions || '{}') as ConsentPermissions,
           startDate: updatedAssignment.startDate,
           endDate: updatedAssignment.endDate,
           notes: updatedAssignment.notes,
           consentGiven: updatedAssignment.consentGiven,
           consentDate: updatedAssignment.consentDate,
-          patient: (updatedAssignment as any).patient,
-          caregiver: (updatedAssignment as any).caregiver,
+          patient: (updatedAssignment as ConsentAssignmentWithIncludes).patient,
+          caregiver: (updatedAssignment as ConsentAssignmentWithIncludes).caregiver,
           assignedBy: updatedAssignment.assignedBy,
-          assignedByUser: (updatedAssignment as any).assignedByUser,
+          assignedByUser: (updatedAssignment as ConsentAssignmentWithIncludes).assignedByUser,
           createdAt: updatedAssignment.createdAt,
           updatedAt: updatedAssignment.updatedAt,
         },
@@ -498,16 +547,16 @@ router.put(
           caregiverId: updatedAssignment.caregiverId,
           caregiverType: updatedAssignment.caregiverType,
           status: updatedAssignment.status,
-          permissions: JSON.parse(updatedAssignment.permissions || '{}'),
+          permissions: JSON.parse(updatedAssignment.permissions || '{}') as ConsentPermissions,
           startDate: updatedAssignment.startDate,
           endDate: updatedAssignment.endDate,
           notes: updatedAssignment.notes,
           consentGiven: updatedAssignment.consentGiven,
           consentDate: updatedAssignment.consentDate,
-          patient: (updatedAssignment as any).patient,
-          caregiver: (updatedAssignment as any).caregiver,
+          patient: (updatedAssignment as ConsentAssignmentWithIncludes).patient,
+          caregiver: (updatedAssignment as ConsentAssignmentWithIncludes).caregiver,
           assignedBy: updatedAssignment.assignedBy,
-          assignedByUser: (updatedAssignment as any).assignedByUser,
+          assignedByUser: (updatedAssignment as ConsentAssignmentWithIncludes).assignedByUser,
           createdAt: updatedAssignment.createdAt,
           updatedAt: updatedAssignment.updatedAt,
         },
@@ -635,16 +684,16 @@ router.post(
           caregiverId: updatedAssignment.caregiverId,
           caregiverType: updatedAssignment.caregiverType,
           status: updatedAssignment.status,
-          permissions: JSON.parse(updatedAssignment.permissions || '{}'),
+          permissions: JSON.parse(updatedAssignment.permissions || '{}') as ConsentPermissions,
           startDate: updatedAssignment.startDate,
           endDate: updatedAssignment.endDate,
           notes: updatedAssignment.notes,
           consentGiven: updatedAssignment.consentGiven,
           consentDate: updatedAssignment.consentDate,
-          patient: (updatedAssignment as any).patient,
-          caregiver: (updatedAssignment as any).caregiver,
+          patient: (updatedAssignment as ConsentAssignmentWithIncludes).patient,
+          caregiver: (updatedAssignment as ConsentAssignmentWithIncludes).caregiver,
           assignedBy: updatedAssignment.assignedBy,
-          assignedByUser: (updatedAssignment as any).assignedByUser,
+          assignedByUser: (updatedAssignment as ConsentAssignmentWithIncludes).assignedByUser,
           createdAt: updatedAssignment.createdAt,
           updatedAt: updatedAssignment.updatedAt,
         },

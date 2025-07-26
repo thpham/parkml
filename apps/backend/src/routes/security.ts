@@ -8,6 +8,34 @@ import QRCode from 'qrcode';
 import crypto from 'crypto';
 import { generateRegistrationOptions, verifyRegistrationResponse } from '@simplewebauthn/server';
 
+// Type definitions
+type AuditLogFilters = {
+  userId: string;
+  action?: string;
+  riskLevel?: string;
+  timestamp?: {
+    gte?: Date;
+    lte?: Date;
+  };
+  OR?: Array<{
+    timestamp?: {
+      gte?: Date;
+    };
+    ipAddress?: {
+      contains: string;
+    };
+    userAgent?: {
+      contains: string;
+    };
+    location?: {
+      contains: string;
+    };
+    details?: {
+      contains: string;
+    };
+  }>;
+};
+
 // Debug TOTP configuration on startup
 
 // Temporary storage for WebAuthn challenges (in production, use Redis or proper session store)
@@ -1182,16 +1210,16 @@ router.get('/audit-logs', authenticateToken, async (req: AuthenticatedRequest, r
     const offset = (pageNum - 1) * limitNum;
 
     // Build filters
-    const filters: any = {
+    const filters: AuditLogFilters = {
       userId: req.user.userId,
     };
 
     if (action) {
-      filters.action = action;
+      filters.action = action as string;
     }
 
     if (riskLevel) {
-      filters.riskLevel = riskLevel;
+      filters.riskLevel = riskLevel as string;
     }
 
     if (startDate || endDate) {
@@ -1276,7 +1304,7 @@ router.get('/audit-logs', authenticateToken, async (req: AuthenticatedRequest, r
     const logs = rawLogs.map(log => ({
       id: log.id,
       timestamp: log.timestamp.toISOString(),
-      action: log.action as any, // Cast to frontend action type
+      action: log.action as string, // Cast to frontend action type
       deviceType: detectDeviceType(log.userAgent),
       deviceName: extractDeviceName(log.userAgent),
       ipAddress: log.ipAddress || 'Unknown',
@@ -1367,7 +1395,7 @@ router.get('/audit-logs/export', authenticateToken, async (req: AuthenticatedReq
     const { format = 'csv', startDate, endDate } = req.query;
 
     // Build filters
-    const filters: any = {
+    const filters: AuditLogFilters = {
       userId: req.user.userId,
     };
 

@@ -68,14 +68,14 @@ repos:
     hooks:
       - id: eslint-backend
         name: ESLint Backend
-        entry: bash -c 'cd apps/backend && npm run lint -- --max-warnings 10'
+        entry: bash -c 'cd apps/backend && npm run lint'
         language: system
         files: ^apps/backend/.*\.(ts|js)$
         pass_filenames: false
 
       - id: eslint-frontend
         name: ESLint Frontend
-        entry: bash -c 'cd apps/frontend && npm run lint -- --max-warnings 10'
+        entry: bash -c 'cd apps/frontend && npm run lint'
         language: system
         files: ^apps/frontend/.*\.(ts|tsx|js|jsx)$
         pass_filenames: false

@@ -24,6 +24,18 @@ import {
 } from '../crypto/homomorphic-analytics';
 import { prisma } from '../database/prisma-client';
 
+// Type definitions
+type AnalyticsAuditWhereClause = {
+  operation: {
+    in: string[];
+  };
+  organizationId?: string;
+  computationType?: string;
+  encryptionContext?: {
+    contains: string;
+  };
+};
+
 const router = Router();
 
 /**
@@ -383,7 +395,7 @@ router.get(
     try {
       const { limit = 50, computationType } = req.query;
 
-      const where: any = {
+      const where: AnalyticsAuditWhereClause = {
         operation: {
           in: ['homomorphic_computation_requested', 'homomorphic_computation_completed'],
         },

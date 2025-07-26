@@ -17,6 +17,10 @@ import { secp256k1 } from '@noble/curves/secp256k1';
 import { prisma } from '../database/prisma-client';
 import { AccessLevel, DataCategory } from '@parkml/shared';
 
+// Type definitions
+
+type AuditDetails = Record<string, unknown>;
+
 /**
  * Proxy re-encryption key pair
  */
@@ -395,17 +399,17 @@ export class ProxyReEncryption {
       orderBy: { createdAt: 'desc' },
     });
 
-    return delegations.map((d: any) => ({
-      id: d.id,
-      delegatorId: d.delegatorId,
-      delegateeId: d.delegateeId,
-      dataCategories: JSON.parse(d.dataCategories),
+    return delegations.map((d: Record<string, unknown>) => ({
+      id: d.id as string,
+      delegatorId: d.delegatorId as string,
+      delegateeId: d.delegateeId as string,
+      dataCategories: JSON.parse(d.dataCategories as string),
       accessLevel: d.accessLevel as AccessLevel,
-      keyData: d.keyData,
-      validFrom: d.validFrom,
-      validUntil: d.validUntil,
-      isRevoked: d.isRevoked,
-      organizationId: d.organizationId,
+      keyData: d.keyData as string,
+      validFrom: d.validFrom as Date,
+      validUntil: d.validUntil as Date,
+      isRevoked: d.isRevoked as boolean,
+      organizationId: d.organizationId as string,
     }));
   }
 
@@ -477,7 +481,7 @@ export class ProxyReEncryption {
     dataCategories: DataCategory[];
     accessLevel: AccessLevel;
     success: boolean;
-    details: any;
+    details: AuditDetails;
   }): Promise<void> {
     await prisma.cryptoAuditEntry.create({
       data: {
@@ -512,7 +516,7 @@ export class ProxyReEncryption {
     operation: string;
     delegatorId: string;
     delegateeId: string;
-    details: any;
+    details: AuditDetails;
   }): Promise<string> {
     const proofData = {
       operation: entry.operation,

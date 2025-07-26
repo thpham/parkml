@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { prisma } from '../database/prisma-client';
 import { ApiResponse } from '@parkml/shared';
 import {
@@ -8,239 +8,312 @@ import {
   AuthenticatedRequest,
 } from '../middleware/auth';
 
+// Type definitions for assignment-related data structures
+interface PatientInfo {
+  id: string;
+  name: string | null;
+  userId: string;
+  user: {
+    email: string;
+    name: string | null;
+  };
+}
+
+interface CaregiverInfo {
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+}
+
+interface AssignedByUserInfo {
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+}
+
+interface AssignmentWithIncludes {
+  id: string;
+  patientId: string;
+  caregiverId: string;
+  caregiverType: string;
+  status: string;
+  permissions: string | null;
+  startDate: Date | null;
+  endDate: Date | null;
+  notes: string | null;
+  consentGiven: boolean;
+  consentDate: Date | null;
+  assignedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  patient: PatientInfo;
+  caregiver: CaregiverInfo;
+  assignedByUser: AssignedByUserInfo | null;
+}
+
+interface AssignmentPermissions {
+  view_all_symptoms?: boolean;
+  edit_symptoms?: boolean;
+  generate_reports?: boolean;
+  set_reminders?: boolean;
+  communicate_all?: boolean;
+  emergency_contact?: boolean;
+  view_symptoms?: boolean;
+  view_reports?: boolean;
+  receive_notifications?: boolean;
+  communicate_professional?: boolean;
+}
+
+type AssignmentStatus = 'pending' | 'active' | 'inactive' | 'declined' | 'revoked';
+
+interface AssignmentUpdateData {
+  status?: AssignmentStatus;
+  permissions?: string;
+  notes?: string;
+  consentGiven?: boolean;
+  consentDate?: Date;
+  endDate?: Date | null;
+}
+
 const router = Router();
 
 // Get all caregiver assignments (filtered by user role)
-router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
-  try {
-    if (!req.user) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'User not authenticated',
-      };
-      return res.status(401).json(response);
-    }
-
-    let assignments: any[] = [];
-
-    switch (req.user.role) {
-      case 'super_admin':
-        assignments = await prisma.caregiverAssignment.findMany({
-          include: {
-            patient: {
-              select: {
-                id: true,
-                name: true,
-                userId: true,
-                user: {
-                  select: {
-                    email: true,
-                    name: true,
-                  },
-                },
-              },
-            },
-            caregiver: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-              },
-            },
-            assignedByUser: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-              },
-            },
-          },
-          orderBy: { createdAt: 'desc' },
-        });
-        break;
-
-      case 'clinic_admin':
-        assignments = await prisma.caregiverAssignment.findMany({
-          where: {
-            patient: {
-              organizationId: req.user.organizationId,
-            },
-          },
-          include: {
-            patient: {
-              select: {
-                id: true,
-                name: true,
-                userId: true,
-                user: {
-                  select: {
-                    email: true,
-                    name: true,
-                  },
-                },
-              },
-            },
-            caregiver: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-              },
-            },
-            assignedByUser: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-              },
-            },
-          },
-          orderBy: { createdAt: 'desc' },
-        });
-        break;
-
-      case 'professional_caregiver':
-      case 'family_caregiver':
-        assignments = await prisma.caregiverAssignment.findMany({
-          where: {
-            caregiverId: req.user.userId,
-          },
-          include: {
-            patient: {
-              select: {
-                id: true,
-                name: true,
-                userId: true,
-                user: {
-                  select: {
-                    email: true,
-                    name: true,
-                  },
-                },
-              },
-            },
-            caregiver: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-              },
-            },
-            assignedByUser: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-              },
-            },
-          },
-          orderBy: { createdAt: 'desc' },
-        });
-        break;
-
-      case 'patient': {
-        // Get patient ID from patient record
-        const patientRecord = await prisma.patient.findUnique({
-          where: { userId: req.user.userId },
-          select: { id: true },
-        });
-
-        if (!patientRecord) {
-          const response: ApiResponse = {
-            success: false,
-            error: 'Patient record not found',
-          };
-          return res.status(404).json(response);
-        }
-
-        assignments = await prisma.caregiverAssignment.findMany({
-          where: {
-            patientId: patientRecord.id,
-          },
-          include: {
-            patient: {
-              select: {
-                id: true,
-                name: true,
-                userId: true,
-                user: {
-                  select: {
-                    email: true,
-                    name: true,
-                  },
-                },
-              },
-            },
-            caregiver: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-              },
-            },
-            assignedByUser: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-              },
-            },
-          },
-          orderBy: { createdAt: 'desc' },
-        });
-        break;
-      }
-
-      default: {
+router.get(
+  '/',
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
+    try {
+      if (!req.user) {
         const response: ApiResponse = {
           success: false,
-          error: 'Unauthorized role',
+          error: 'User not authenticated',
         };
-        return res.status(403).json(response);
+        return res.status(401).json(response);
       }
+
+      let assignments: AssignmentWithIncludes[] = [];
+
+      switch (req.user.role) {
+        case 'super_admin':
+          assignments = await prisma.caregiverAssignment.findMany({
+            include: {
+              patient: {
+                select: {
+                  id: true,
+                  name: true,
+                  userId: true,
+                  user: {
+                    select: {
+                      email: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+              caregiver: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  role: true,
+                },
+              },
+              assignedByUser: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  role: true,
+                },
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+          });
+          break;
+
+        case 'clinic_admin':
+          assignments = await prisma.caregiverAssignment.findMany({
+            where: {
+              patient: {
+                organizationId: req.user.organizationId,
+              },
+            },
+            include: {
+              patient: {
+                select: {
+                  id: true,
+                  name: true,
+                  userId: true,
+                  user: {
+                    select: {
+                      email: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+              caregiver: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  role: true,
+                },
+              },
+              assignedByUser: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  role: true,
+                },
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+          });
+          break;
+
+        case 'professional_caregiver':
+        case 'family_caregiver':
+          assignments = await prisma.caregiverAssignment.findMany({
+            where: {
+              caregiverId: req.user.userId,
+            },
+            include: {
+              patient: {
+                select: {
+                  id: true,
+                  name: true,
+                  userId: true,
+                  user: {
+                    select: {
+                      email: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+              caregiver: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  role: true,
+                },
+              },
+              assignedByUser: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  role: true,
+                },
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+          });
+          break;
+
+        case 'patient': {
+          // Get patient ID from patient record
+          const patientRecord = await prisma.patient.findUnique({
+            where: { userId: req.user.userId },
+            select: { id: true },
+          });
+
+          if (!patientRecord) {
+            const response: ApiResponse = {
+              success: false,
+              error: 'Patient record not found',
+            };
+            return res.status(404).json(response);
+          }
+
+          assignments = await prisma.caregiverAssignment.findMany({
+            where: {
+              patientId: patientRecord.id,
+            },
+            include: {
+              patient: {
+                select: {
+                  id: true,
+                  name: true,
+                  userId: true,
+                  user: {
+                    select: {
+                      email: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+              caregiver: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  role: true,
+                },
+              },
+              assignedByUser: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  role: true,
+                },
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+          });
+          break;
+        }
+
+        default: {
+          const response: ApiResponse = {
+            success: false,
+            error: 'Unauthorized role',
+          };
+          return res.status(403).json(response);
+        }
+      }
+
+      const response: ApiResponse = {
+        success: true,
+        data: assignments.map(assignment => ({
+          id: assignment.id,
+          patientId: assignment.patientId,
+          caregiverId: assignment.caregiverId,
+          caregiverType: assignment.caregiverType,
+          status: assignment.status,
+          permissions: JSON.parse(assignment.permissions || '{}'),
+          startDate: assignment.startDate,
+          endDate: assignment.endDate,
+          notes: assignment.notes,
+          consentGiven: assignment.consentGiven,
+          consentDate: assignment.consentDate,
+          patient: assignment.patient,
+          caregiver: assignment.caregiver,
+          assignedBy: assignment.assignedBy,
+          assignedByUser: assignment.assignedByUser,
+          createdAt: assignment.createdAt,
+          updatedAt: assignment.updatedAt,
+        })),
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error('Get assignments error:', error);
+      const response: ApiResponse = {
+        success: false,
+        error: 'Internal server error',
+      };
+      res.status(500).json(response);
     }
-
-    const response: ApiResponse = {
-      success: true,
-      data: assignments.map(assignment => ({
-        id: assignment.id,
-        patientId: assignment.patientId,
-        caregiverId: assignment.caregiverId,
-        caregiverType: assignment.caregiverType,
-        status: assignment.status,
-        permissions: JSON.parse(assignment.permissions || '{}'),
-        startDate: assignment.startDate,
-        endDate: assignment.endDate,
-        notes: assignment.notes,
-        consentGiven: assignment.consentGiven,
-        consentDate: assignment.consentDate,
-        patient: assignment.patient,
-        caregiver: assignment.caregiver,
-        assignedBy: assignment.assignedBy,
-        assignedByUser: assignment.assignedByUser,
-        createdAt: assignment.createdAt,
-        updatedAt: assignment.updatedAt,
-      })),
-    };
-
-    res.json(response);
-  } catch (error) {
-    console.error('Get assignments error:', error);
-    const response: ApiResponse = {
-      success: false,
-      error: 'Internal server error',
-    };
-    res.status(500).json(response);
   }
-});
+);
 
 // Create new caregiver assignment
 router.post(
@@ -248,7 +321,7 @@ router.post(
   authenticateToken,
   authorizeRole(['super_admin', 'clinic_admin', 'patient']),
   logUserActivity('CREATE', 'assignment'),
-  async (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       if (!req.user) {
         const response: ApiResponse = {
@@ -374,7 +447,7 @@ router.post(
       }
 
       // Set default permissions based on caregiver type
-      const defaultPermissions =
+      const defaultPermissions: AssignmentPermissions =
         caregiverType === 'professional'
           ? {
               view_all_symptoms: true,
@@ -392,7 +465,7 @@ router.post(
               communicate_professional: true,
             };
 
-      const finalPermissions = permissions || defaultPermissions;
+      const finalPermissions: AssignmentPermissions = permissions || defaultPermissions;
 
       // Determine initial status based on caregiver type and who's creating
       let initialStatus = 'pending';
@@ -418,7 +491,7 @@ router.post(
           patientId,
           caregiverId,
           caregiverType,
-          status: initialStatus as any,
+          status: initialStatus as AssignmentStatus,
           permissions: JSON.stringify(finalPermissions),
           startDate: new Date(),
           notes: notes || '',
@@ -473,10 +546,10 @@ router.post(
           notes: assignment.notes,
           consentGiven: assignment.consentGiven,
           consentDate: assignment.consentDate,
-          patient: (assignment as any).patient,
-          caregiver: (assignment as any).caregiver,
+          patient: assignment.patient,
+          caregiver: assignment.caregiver,
           assignedBy: assignment.assignedBy,
-          assignedByUser: (assignment as any).assignedByUser,
+          assignedByUser: assignment.assignedByUser,
           createdAt: assignment.createdAt,
           updatedAt: assignment.updatedAt,
         },
@@ -495,126 +568,130 @@ router.post(
 );
 
 // Get assignment by ID
-router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
-  try {
-    if (!req.user) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'User not authenticated',
-      };
-      return res.status(401).json(response);
-    }
+router.get(
+  '/:id',
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
+    try {
+      if (!req.user) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'User not authenticated',
+        };
+        return res.status(401).json(response);
+      }
 
-    const { id } = req.params;
+      const { id } = req.params;
 
-    const assignment = await prisma.caregiverAssignment.findUnique({
-      where: { id },
-      include: {
-        patient: {
-          select: {
-            id: true,
-            name: true,
-            userId: true,
-            organizationId: true,
-            user: {
-              select: {
-                email: true,
-                name: true,
+      const assignment = await prisma.caregiverAssignment.findUnique({
+        where: { id },
+        include: {
+          patient: {
+            select: {
+              id: true,
+              name: true,
+              userId: true,
+              organizationId: true,
+              user: {
+                select: {
+                  email: true,
+                  name: true,
+                },
               },
             },
           },
-        },
-        caregiver: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
+          caregiver: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+            },
+          },
+          assignedByUser: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+            },
           },
         },
-        assignedByUser: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-          },
+      });
+
+      if (!assignment) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Assignment not found',
+        };
+        return res.status(404).json(response);
+      }
+
+      // Check authorization
+      let hasAccess = false;
+
+      if (req.user.role === 'super_admin') {
+        hasAccess = true;
+      } else if (
+        req.user.role === 'clinic_admin' &&
+        assignment.patient.organizationId === req.user.organizationId
+      ) {
+        hasAccess = true;
+      } else if (assignment.caregiverId === req.user.userId) {
+        hasAccess = true;
+      } else if (assignment.patient.userId === req.user.userId) {
+        hasAccess = true;
+      }
+
+      if (!hasAccess) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Access denied',
+        };
+        return res.status(403).json(response);
+      }
+
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          id: assignment.id,
+          patientId: assignment.patientId,
+          caregiverId: assignment.caregiverId,
+          caregiverType: assignment.caregiverType,
+          status: assignment.status,
+          permissions: JSON.parse(assignment.permissions || '{}'),
+          startDate: assignment.startDate,
+          endDate: assignment.endDate,
+          notes: assignment.notes,
+          consentGiven: assignment.consentGiven,
+          consentDate: assignment.consentDate,
+          patient: assignment.patient,
+          caregiver: assignment.caregiver,
+          assignedBy: assignment.assignedBy,
+          assignedByUser: assignment.assignedByUser,
+          createdAt: assignment.createdAt,
+          updatedAt: assignment.updatedAt,
         },
-      },
-    });
+      };
 
-    if (!assignment) {
+      res.json(response);
+    } catch (error) {
+      console.error('Get assignment error:', error);
       const response: ApiResponse = {
         success: false,
-        error: 'Assignment not found',
+        error: 'Internal server error',
       };
-      return res.status(404).json(response);
+      res.status(500).json(response);
     }
-
-    // Check authorization
-    let hasAccess = false;
-
-    if (req.user.role === 'super_admin') {
-      hasAccess = true;
-    } else if (
-      req.user.role === 'clinic_admin' &&
-      assignment.patient.organizationId === req.user.organizationId
-    ) {
-      hasAccess = true;
-    } else if (assignment.caregiverId === req.user.userId) {
-      hasAccess = true;
-    } else if (assignment.patient.userId === req.user.userId) {
-      hasAccess = true;
-    }
-
-    if (!hasAccess) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'Access denied',
-      };
-      return res.status(403).json(response);
-    }
-
-    const response: ApiResponse = {
-      success: true,
-      data: {
-        id: assignment.id,
-        patientId: assignment.patientId,
-        caregiverId: assignment.caregiverId,
-        caregiverType: assignment.caregiverType,
-        status: assignment.status,
-        permissions: JSON.parse(assignment.permissions || '{}'),
-        startDate: assignment.startDate,
-        endDate: assignment.endDate,
-        notes: assignment.notes,
-        consentGiven: assignment.consentGiven,
-        consentDate: assignment.consentDate,
-        patient: assignment.patient,
-        caregiver: assignment.caregiver,
-        assignedBy: assignment.assignedBy,
-        assignedByUser: assignment.assignedByUser,
-        createdAt: assignment.createdAt,
-        updatedAt: assignment.updatedAt,
-      },
-    };
-
-    res.json(response);
-  } catch (error) {
-    console.error('Get assignment error:', error);
-    const response: ApiResponse = {
-      success: false,
-      error: 'Internal server error',
-    };
-    res.status(500).json(response);
   }
-});
+);
 
 // Update assignment (for status changes, permissions, etc.)
 router.put(
   '/:id',
   authenticateToken,
   logUserActivity('UPDATE', 'assignment'),
-  async (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       if (!req.user) {
         const response: ApiResponse = {
@@ -676,7 +753,7 @@ router.put(
       }
 
       // Prepare update data
-      const updateData: any = {};
+      const updateData: AssignmentUpdateData = {};
 
       if (status !== undefined) {
         // Validate status changes
@@ -688,7 +765,7 @@ router.put(
           };
           return res.status(400).json(response);
         }
-        updateData.status = status as any;
+        updateData.status = status as AssignmentStatus;
       }
 
       if (permissions !== undefined) {
@@ -793,7 +870,7 @@ router.delete(
   authenticateToken,
   authorizeRole(['super_admin', 'clinic_admin', 'patient']),
   logUserActivity('DELETE', 'assignment'),
-  async (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       if (!req.user) {
         const response: ApiResponse = {

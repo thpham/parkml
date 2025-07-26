@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { prisma } from '../database/prisma-client';
 import { ApiResponse, DataCategory } from '@parkml/shared';
 import { authenticateToken } from '../middleware/auth';
@@ -8,6 +8,35 @@ import {
   hasDataCategoryAccess,
   getMaxAccessLevel,
 } from '../crypto/access-control-middleware';
+
+// Type definitions
+type SymptomEntryWithUser = {
+  id: string;
+  patientId: string;
+  entryDate: Date;
+  completedBy: string;
+  completedByUser: {
+    name: string | null;
+  };
+  motorSymptoms: string | null;
+  nonMotorSymptoms: string | null;
+  medicationEvents?: string | null;
+  autonomicSymptoms?: string | null;
+  dailyActivities?: string | null;
+  environmentalFactors?: string | null;
+  safetyIncidents?: string | null;
+  notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type PrismaWhereClause = {
+  patientId: string;
+  entryDate?: {
+    gte?: Date;
+    lte?: Date;
+  };
+};
 
 const router = Router();
 
@@ -23,7 +52,7 @@ router.get(
     DataCategory.ENVIRONMENTAL_FACTORS,
     DataCategory.SAFETY_INCIDENTS,
   ]),
-  async (req: AccessControlRequest, res) => {
+  async (req: AccessControlRequest, res: Response): Promise<Response | void> => {
     try {
       const { patientId, startDate, endDate, limit = 50 } = req.query;
 
@@ -36,7 +65,7 @@ router.get(
       }
 
       // Build query for symptom entries with date filtering
-      const whereClause: any = {
+      const whereClause: PrismaWhereClause = {
         patientId: patientId as string,
       };
 
@@ -69,7 +98,7 @@ router.get(
 
       const response: ApiResponse = {
         success: true,
-        data: symptomEntries.map((entry: any) => ({
+        data: symptomEntries.map((entry: SymptomEntryWithUser) => ({
           id: entry.id,
           patientId: entry.patientId,
           entryDate: entry.entryDate,
@@ -127,7 +156,7 @@ router.post(
     DataCategory.ENVIRONMENTAL_FACTORS,
     DataCategory.SAFETY_INCIDENTS,
   ]),
-  async (req: AccessControlRequest, res) => {
+  async (req: AccessControlRequest, res: Response): Promise<Response | void> => {
     try {
       const {
         patientId,
@@ -181,7 +210,7 @@ router.post(
         data: {
           patientId,
           entryDate: new Date(entryDate),
-          completedBy: req.user?.id!,
+          completedBy: req.user?.userId!,
           motorSymptoms: JSON.stringify(motorSymptoms),
           nonMotorSymptoms: JSON.stringify(nonMotorSymptoms),
           autonomicSymptoms: JSON.stringify(autonomicSymptoms),
@@ -261,7 +290,7 @@ router.get('/:id', authenticateToken, async (req: AccessControlRequest, res) => 
 
     // Check access control
     await new Promise<void>((resolve, reject) => {
-      accessMiddleware(req, res, (error?: any) => {
+      accessMiddleware(req, res, (error?: unknown) => {
         if (error) reject(error);
         else resolve();
       });

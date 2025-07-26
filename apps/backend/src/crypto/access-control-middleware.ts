@@ -5,12 +5,30 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { accessControlEngine } from './access-control';
-import { AccessLevel, DataCategory, EncryptionContext, ApiResponse } from '@parkml/shared';
+import {
+  AccessLevel,
+  DataCategory,
+  EncryptionContext,
+  ApiResponse,
+  User,
+  EmergencyAccessContext,
+} from '@parkml/shared';
+import { AuthenticatedRequest } from '../middleware/auth';
+
+/**
+ * Type alias for user roles to ensure type safety
+ */
+type UserRole = User['role'];
+
+/**
+ * Type alias for emergency access types to ensure type safety
+ */
+type EmergencyAccessType = EmergencyAccessContext['accessType'];
 
 /**
  * Extended Request interface with access control context
  */
-export interface AccessControlRequest extends Request {
+export interface AccessControlRequest extends AuthenticatedRequest {
   accessControl?: {
     context: EncryptionContext;
     granted: boolean;
@@ -18,11 +36,6 @@ export interface AccessControlRequest extends Request {
     accessibleCategories: DataCategory[];
     encryptionKeys: string[];
     expiresAt?: Date;
-  };
-  user?: {
-    id: string;
-    role: string;
-    organizationId?: string;
   };
 }
 
@@ -56,10 +69,10 @@ export function requireDataAccess(
       // Build encryption context
       const context: EncryptionContext = {
         patientId: patientId as string,
-        requesterId: req.user.id,
+        requesterId: req.user!.userId,
         accessLevel: minimumAccessLevel,
-        organizationId: req.user.organizationId || '',
-        requesterRole: req.user.role as any,
+        organizationId: req.user!.organizationId || '',
+        requesterRole: req.user!.role as UserRole,
         dataCategories: requiredCategories,
         emergencyContext: await extractEmergencyContext(req),
         timestamp: new Date(),
@@ -153,7 +166,7 @@ export function requireEmergencyAccess() {
         } as ApiResponse);
       }
 
-      if (emergencyAccess.userId !== req.user.id) {
+      if (emergencyAccess.userId !== req.user!.userId) {
         return res.status(403).json({
           success: false,
           error: 'Emergency access belongs to different user',
@@ -170,13 +183,13 @@ export function requireEmergencyAccess() {
       // Build emergency context
       const context: EncryptionContext = {
         patientId: emergencyAccess.patientId,
-        requesterId: req.user.id,
+        requesterId: req.user!.userId,
         accessLevel: AccessLevel.EMERGENCY_ACCESS,
-        organizationId: req.user.organizationId || '',
-        requesterRole: req.user.role as any,
+        organizationId: req.user!.organizationId || '',
+        requesterRole: req.user!.role as UserRole,
         dataCategories: Object.values(DataCategory), // Emergency access to all categories
         emergencyContext: {
-          accessType: emergencyAccess.accessType as any,
+          accessType: emergencyAccess.accessType as EmergencyAccessType,
           reason: emergencyAccess.reason,
           durationHours: 24, // Default emergency duration
           emergencyAccessId: emergencyAccess.id,
@@ -229,7 +242,7 @@ export function requirePatientAccess() {
         } as ApiResponse);
       }
 
-      if (req.user.role !== 'patient') {
+      if (req.user!.role !== 'patient') {
         return res.status(403).json({
           success: false,
           error: 'Patient access required',
@@ -249,7 +262,7 @@ export function requirePatientAccess() {
       const patient = await prisma.patient.findFirst({
         where: {
           id: patientId as string,
-          userId: req.user.id,
+          userId: req.user!.userId,
         },
       });
 
@@ -264,9 +277,9 @@ export function requirePatientAccess() {
       req.accessControl = {
         context: {
           patientId: patient.id,
-          requesterId: req.user.id,
+          requesterId: req.user!.userId,
           accessLevel: AccessLevel.PATIENT_FULL,
-          organizationId: req.user.organizationId || '',
+          organizationId: req.user!.organizationId || '',
           requesterRole: 'patient',
           dataCategories: Object.values(DataCategory),
           timestamp: new Date(),
@@ -274,7 +287,7 @@ export function requirePatientAccess() {
         granted: true,
         accessLevel: AccessLevel.PATIENT_FULL,
         accessibleCategories: Object.values(DataCategory),
-        encryptionKeys: [`patient_key_${req.user.id}`],
+        encryptionKeys: [`patient_key_${req.user!.userId}`],
       };
 
       next();
@@ -302,7 +315,7 @@ export function requireOrganizationAdmin() {
         } as ApiResponse);
       }
 
-      if (!['clinic_admin', 'super_admin'].includes(req.user.role)) {
+      if (!['clinic_admin', 'super_admin'].includes(req.user!.role)) {
         return res.status(403).json({
           success: false,
           error: 'Administrative access required',
@@ -334,7 +347,7 @@ export function requireSuperAdmin() {
         } as ApiResponse);
       }
 
-      if (req.user.role !== 'super_admin') {
+      if (req.user!.role !== 'super_admin') {
         return res.status(403).json({
           success: false,
           error: 'Super admin access required',
@@ -355,7 +368,7 @@ export function requireSuperAdmin() {
 /**
  * Extract emergency context from request if present
  */
-async function extractEmergencyContext(req: Request): Promise<any> {
+async function extractEmergencyContext(req: Request): Promise<EmergencyAccessContext | undefined> {
   const emergencyAccessId = req.headers['x-emergency-access-id'] as string;
   if (!emergencyAccessId) {
     return undefined;
@@ -372,7 +385,7 @@ async function extractEmergencyContext(req: Request): Promise<any> {
     }
 
     return {
-      accessType: emergencyAccess.accessType,
+      accessType: emergencyAccess.accessType as EmergencyAccessType,
       reason: emergencyAccess.reason,
       durationHours: 24, // Default duration
       emergencyAccessId: emergencyAccess.id,

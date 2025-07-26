@@ -5,20 +5,52 @@
 
 // SEAL WASM bindings for homomorphic encryption
 import SEAL from 'node-seal';
+import { SEALLibrary } from 'node-seal/implementation/seal';
+import { Context } from 'node-seal/implementation/context';
+import { KeyGenerator } from 'node-seal/implementation/key-generator';
+import { CKKSEncoder } from 'node-seal/implementation/ckks-encoder';
+import { Evaluator } from 'node-seal/implementation/evaluator';
+import { Encryptor } from 'node-seal/implementation/encryptor';
+import { Decryptor } from 'node-seal/implementation/decryptor';
+import { PublicKey } from 'node-seal/implementation/public-key';
+import { SecretKey } from 'node-seal/implementation/secret-key';
+import { RelinKeys } from 'node-seal/implementation/relin-keys';
+import { GaloisKeys } from 'node-seal/implementation/galois-keys';
+
+// TypeScript type aliases for SEAL WASM types
+type SEALInstance = SEALLibrary;
+
+// Properly typed interfaces using actual node-seal types
+interface HomomorphicContext {
+  seal: SEALInstance;
+  context: Context;
+  keyGenerator: KeyGenerator;
+  encoder: CKKSEncoder;
+  evaluator: Evaluator;
+  decryptor: Decryptor | null;
+  encryptor: Encryptor | null;
+}
+
+interface HomomorphicKeys {
+  publicKey: string;
+  secretKey: string;
+  relinKeys: string;
+  galoisKeys: string;
+}
 
 /**
  * WASM Crypto Module Manager
  * Handles initialization and lifecycle of WASM cryptographic modules
  */
 export class WASMCryptoLoader {
-  private static sealInstance: any = null;
+  private static sealInstance: SEALInstance | null = null;
   private static isInitialized = false;
   private static initializationPromise: Promise<void> | null = null;
 
   /**
    * Initialize SEAL WASM module for homomorphic encryption
    */
-  public static async initializeSEAL(): Promise<any> {
+  public static async initializeSEAL(): Promise<SEALInstance> {
     if (this.sealInstance && this.isInitialized) {
       return this.sealInstance;
     }
@@ -26,11 +58,17 @@ export class WASMCryptoLoader {
     // Prevent multiple concurrent initializations
     if (this.initializationPromise) {
       await this.initializationPromise;
+      if (!this.sealInstance) {
+        throw new Error('SEAL initialization failed');
+      }
       return this.sealInstance;
     }
 
     this.initializationPromise = this._initializeSEAL();
     await this.initializationPromise;
+    if (!this.sealInstance) {
+      throw new Error('SEAL initialization failed');
+    }
     return this.sealInstance;
   }
 
@@ -80,7 +118,7 @@ export class WASMCryptoLoader {
   /**
    * Get the initialized SEAL instance
    */
-  public static getSEAL(): any {
+  public static getSEAL(): SEALInstance {
     if (!this.isInitialized || !this.sealInstance) {
       throw new Error('SEAL WASM module not initialized. Call initializeSEAL() first.');
     }
@@ -99,7 +137,7 @@ export class WASMCryptoLoader {
    */
   public static createHomomorphicContext(
     securityLevel: 'tc128' | 'tc192' | 'tc256' = 'tc128'
-  ): any {
+  ): HomomorphicContext {
     const seal = this.getSEAL();
 
     // Configure CKKS scheme for floating-point operations (medical analytics)
@@ -135,12 +173,7 @@ export class WASMCryptoLoader {
   /**
    * Generate homomorphic encryption keys
    */
-  public static generateHomomorphicKeys(context: any): {
-    publicKey: string;
-    secretKey: string;
-    relinKeys: string;
-    galoisKeys: string;
-  } {
+  public static generateHomomorphicKeys(context: HomomorphicContext): HomomorphicKeys {
     const { keyGenerator } = context;
 
     const secretKey = keyGenerator.secretKey();
@@ -175,11 +208,11 @@ export class WASMCryptoLoader {
  * Provides high-level interface for medical data analytics
  */
 export class HomomorphicEncryption {
-  private context: any;
-  private publicKey: any;
-  private secretKey: any;
-  private relinKeys: any;
-  private galoisKeys: any;
+  private context: HomomorphicContext;
+  private publicKey: PublicKey | null;
+  private secretKey: SecretKey | null;
+  private relinKeys: RelinKeys | null;
+  private galoisKeys: GaloisKeys | null;
 
   constructor(
     publicKeyData?: string,
@@ -188,6 +221,10 @@ export class HomomorphicEncryption {
     galoisKeysData?: string
   ) {
     this.context = WASMCryptoLoader.createHomomorphicContext();
+    this.publicKey = null;
+    this.secretKey = null;
+    this.relinKeys = null;
+    this.galoisKeys = null;
 
     if (publicKeyData) {
       this.publicKey = this.context.seal.PublicKey();
@@ -220,8 +257,11 @@ export class HomomorphicEncryption {
       throw new Error('Public key not available for encryption');
     }
 
+    // Convert number[] to Float64Array as required by SEAL
+    const float64Array = new Float64Array(numbers);
+
     const plaintext = this.context.seal.PlainText();
-    this.context.encoder.encode(numbers, scale, plaintext);
+    this.context.encoder.encode(float64Array, scale, plaintext);
 
     const ciphertext = this.context.seal.CipherText();
     this.context.encryptor.encrypt(plaintext, ciphertext);
@@ -243,10 +283,9 @@ export class HomomorphicEncryption {
     const plaintext = this.context.seal.PlainText();
     this.context.decryptor.decrypt(ciphertext, plaintext);
 
-    const result: number[] = [];
-    this.context.encoder.decode(plaintext, result);
-
-    return result;
+    // SEAL's decode method returns Float64Array, convert to number[]
+    const float64Result = this.context.encoder.decode(plaintext);
+    return Array.from(float64Result);
   }
 
   /**

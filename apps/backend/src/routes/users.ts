@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import { prisma } from '../database/prisma-client';
 import { ApiResponse } from '@parkml/shared';
 import {
@@ -8,148 +8,213 @@ import {
   logUserActivity,
   AuthenticatedRequest,
 } from '../middleware/auth';
+import type { Prisma, Role } from '@prisma/client';
+
+// TypeScript interfaces for type safety
+type UserWhereClause = Prisma.UserWhereInput;
+
+type UserWithDetails = Prisma.UserGetPayload<{
+  select: {
+    id: true;
+    email: true;
+    name: true;
+    role: true;
+    organizationId: true;
+    isActive: true;
+    lastLoginAt: true;
+    createdAt: true;
+    updatedAt: true;
+    organization: {
+      select: {
+        id: true;
+        name: true;
+        isActive: true;
+      };
+    };
+    patient: {
+      select: {
+        id: true;
+        name: true;
+        dateOfBirth: true;
+        diagnosisDate: true;
+      };
+    };
+    _count: {
+      select: {
+        caregiverAssignments: true;
+        createdAssignments: true;
+        sentInvitations: true;
+        symptomEntries: true;
+        auditLogs: true;
+      };
+    };
+  };
+}>;
+
+type UserUpdateData = Prisma.UserUpdateInput;
+
+type UserWithCounts = Prisma.UserGetPayload<{
+  include: {
+    _count: {
+      select: {
+        caregiverAssignments: true;
+        createdAssignments: true;
+        symptomEntries: true;
+      };
+    };
+  };
+}>;
 
 const router = Router();
 
 // Get all users (filtered by organization for clinic admins)
-router.get('/', authenticateToken, requireClinicAdmin, async (req: AuthenticatedRequest, res) => {
-  try {
-    if (!req.user) {
+router.get(
+  '/',
+  authenticateToken,
+  requireClinicAdmin,
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
+    try {
+      if (!req.user) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'User not authenticated',
+        };
+        return res.status(401).json(response);
+      }
+
+      const { page = 1, limit = 50, role, isActive, search } = req.query;
+
+      // Build where clause
+      const whereClause: UserWhereClause = {};
+
+      // Organization filtering
+      if (req.user.role === 'clinic_admin') {
+        whereClause.organizationId = req.user.organizationId;
+      } else if (req.user.role === 'super_admin') {
+        // Super admin can see all users
+        // Optional organization filter can be added here
+      }
+
+      // Role filtering
+      if (role) {
+        if (Array.isArray(role)) {
+          whereClause.role = { in: role as Role[] };
+        } else {
+          whereClause.role = role as Role;
+        }
+      }
+
+      // Active status filtering
+      if (isActive !== undefined) {
+        whereClause.isActive = isActive === 'true';
+      }
+
+      // Search filtering
+      if (search) {
+        whereClause.OR = [
+          { name: { contains: search as string } },
+          { email: { contains: search as string } },
+        ];
+      }
+
+      // Calculate pagination
+      const skip = (Number(page) - 1) * Number(limit);
+
+      const [users, totalCount] = await Promise.all([
+        prisma.user.findMany({
+          where: whereClause,
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+            organizationId: true,
+            isActive: true,
+            lastLoginAt: true,
+            createdAt: true,
+            updatedAt: true,
+            organization: {
+              select: {
+                id: true,
+                name: true,
+                isActive: true,
+              },
+            },
+            patient: {
+              select: {
+                id: true,
+                name: true,
+                dateOfBirth: true,
+                diagnosisDate: true,
+              },
+            },
+            _count: {
+              select: {
+                caregiverAssignments: true,
+                createdAssignments: true,
+                sentInvitations: true,
+                symptomEntries: true,
+                auditLogs: true,
+              },
+            },
+          },
+          orderBy: { name: 'asc' },
+          skip,
+          take: Number(limit),
+        }),
+        prisma.user.count({ where: whereClause }),
+      ]);
+
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          users: users.map((user: UserWithDetails) => ({
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            organizationId: user.organizationId,
+            organization: user.organization,
+            isActive: user.isActive,
+            lastLoginAt: user.lastLoginAt,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+            patient: user.patient,
+            stats: {
+              caregiverAssignmentCount: user._count.caregiverAssignments,
+              createdAssignmentCount: user._count.createdAssignments,
+              sentInvitationCount: user._count.sentInvitations,
+              symptomEntryCount: user._count.symptomEntries,
+              auditLogCount: user._count.auditLogs,
+            },
+          })),
+          pagination: {
+            page: Number(page),
+            limit: Number(limit),
+            total: totalCount,
+            totalPages: Math.ceil(totalCount / Number(limit)),
+          },
+        },
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error('Get users error:', error);
       const response: ApiResponse = {
         success: false,
-        error: 'User not authenticated',
+        error: 'Internal server error',
       };
-      return res.status(401).json(response);
+      res.status(500).json(response);
     }
-
-    const { page = 1, limit = 50, role, isActive, search } = req.query;
-
-    // Build where clause
-    const whereClause: any = {};
-
-    // Organization filtering
-    if (req.user.role === 'clinic_admin') {
-      whereClause.organizationId = req.user.organizationId;
-    } else if (req.user.role === 'super_admin') {
-      // Super admin can see all users
-      // Optional organization filter can be added here
-    }
-
-    // Role filtering
-    if (role) {
-      whereClause.role = Array.isArray(role) ? { in: role } : role;
-    }
-
-    // Active status filtering
-    if (isActive !== undefined) {
-      whereClause.isActive = isActive === 'true';
-    }
-
-    // Search filtering
-    if (search) {
-      whereClause.OR = [
-        { name: { contains: search as string } },
-        { email: { contains: search as string } },
-      ];
-    }
-
-    // Calculate pagination
-    const skip = (Number(page) - 1) * Number(limit);
-
-    const [users, totalCount] = await Promise.all([
-      prisma.user.findMany({
-        where: whereClause,
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          organizationId: true,
-          isActive: true,
-          lastLoginAt: true,
-          createdAt: true,
-          updatedAt: true,
-          organization: {
-            select: {
-              id: true,
-              name: true,
-              isActive: true,
-            },
-          },
-          patient: {
-            select: {
-              id: true,
-              name: true,
-              dateOfBirth: true,
-              diagnosisDate: true,
-            },
-          },
-          _count: {
-            select: {
-              caregiverAssignments: true,
-              createdAssignments: true,
-              sentInvitations: true,
-              symptomEntries: true,
-              auditLogs: true,
-            },
-          },
-        },
-        orderBy: { name: 'asc' },
-        skip,
-        take: Number(limit),
-      }),
-      prisma.user.count({ where: whereClause }),
-    ]);
-
-    const response: ApiResponse = {
-      success: true,
-      data: {
-        users: users.map((user: any) => ({
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          organizationId: user.organizationId,
-          organization: user.organization,
-          isActive: user.isActive,
-          lastLoginAt: user.lastLoginAt,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
-          patient: user.patient,
-          stats: {
-            caregiverAssignmentCount: user._count.caregiverAssignments,
-            createdAssignmentCount: user._count.createdAssignments,
-            sentInvitationCount: user._count.sentInvitations,
-            symptomEntryCount: user._count.symptomEntries,
-            auditLogCount: user._count.auditLogs,
-          },
-        })),
-        pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total: totalCount,
-          totalPages: Math.ceil(totalCount / Number(limit)),
-        },
-      },
-    };
-
-    res.json(response);
-  } catch (error) {
-    console.error('Get users error:', error);
-    const response: ApiResponse = {
-      success: false,
-      error: 'Internal server error',
-    };
-    res.status(500).json(response);
   }
-});
+);
 
 // Get user by ID
 router.get(
   '/:id',
   authenticateToken,
   requireClinicAdmin,
-  async (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       if (!req.user) {
         const response: ApiResponse = {
@@ -269,7 +334,7 @@ router.put(
   authenticateToken,
   requireClinicAdmin,
   logUserActivity('UPDATE', 'user'),
-  async (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       if (!req.user) {
         const response: ApiResponse = {
@@ -383,12 +448,16 @@ router.put(
       }
 
       // Prepare update data
-      const updateData: any = {};
+      const updateData: UserUpdateData = {};
       if (name !== undefined) updateData.name = name;
       if (email !== undefined) updateData.email = email;
-      if (role !== undefined) updateData.role = role;
+      if (role !== undefined) updateData.role = role as Role;
       if (isActive !== undefined) updateData.isActive = isActive;
-      if (organizationId !== undefined) updateData.organizationId = organizationId;
+      if (organizationId !== undefined) {
+        updateData.organization = organizationId
+          ? { connect: { id: organizationId } }
+          : { disconnect: true };
+      }
 
       // Update user
       const updatedUser = await prisma.user.update({
@@ -448,7 +517,7 @@ router.post(
   authenticateToken,
   requireClinicAdmin,
   logUserActivity('DEACTIVATE', 'user'),
-  async (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       if (!req.user) {
         const response: ApiResponse = {
@@ -556,7 +625,7 @@ router.post(
   authenticateToken,
   requireClinicAdmin,
   logUserActivity('REACTIVATE', 'user'),
-  async (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       if (!req.user) {
         const response: ApiResponse = {
@@ -642,7 +711,7 @@ router.delete(
   authenticateToken,
   requireSuperAdmin,
   logUserActivity('DELETE', 'user'),
-  async (req: AuthenticatedRequest, res) => {
+  async (req: AuthenticatedRequest, res: Response): Promise<Response | void> => {
     try {
       if (!req.user) {
         const response: ApiResponse = {
@@ -686,10 +755,11 @@ router.delete(
       }
 
       // Check if user has data that prevents deletion
+      const userWithCounts = currentUser as UserWithCounts;
       if (
-        (currentUser as any)._count.caregiverAssignments > 0 ||
-        (currentUser as any)._count.createdAssignments > 0 ||
-        (currentUser as any)._count.symptomEntries > 0
+        userWithCounts._count.caregiverAssignments > 0 ||
+        userWithCounts._count.createdAssignments > 0 ||
+        userWithCounts._count.symptomEntries > 0
       ) {
         const response: ApiResponse = {
           success: false,

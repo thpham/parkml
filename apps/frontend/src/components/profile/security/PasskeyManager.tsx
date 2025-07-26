@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Shield,
   Plus,
@@ -35,11 +35,7 @@ const PasskeyManager: React.FC<PasskeyManagerProps> = ({ onPasskeyCountChange })
   const [newDeviceName, setNewDeviceName] = useState('');
   const loadingRef = useRef(false);
 
-  useEffect(() => {
-    loadPasskeys();
-  }, []);
-
-  const loadPasskeys = async () => {
+  const loadPasskeys = useCallback(async () => {
     // Prevent multiple simultaneous calls
     if (isLoading || loadingRef.current) {
       return;
@@ -68,7 +64,11 @@ const PasskeyManager: React.FC<PasskeyManagerProps> = ({ onPasskeyCountChange })
       setIsLoading(false);
       loadingRef.current = false;
     }
-  };
+  }, [isLoading]);
+
+  useEffect(() => {
+    loadPasskeys();
+  }, [loadPasskeys]);
 
   const registerPasskey = async () => {
     if (!newDeviceName.trim()) {
@@ -122,11 +122,12 @@ const PasskeyManager: React.FC<PasskeyManagerProps> = ({ onPasskeyCountChange })
       } else {
         throw new Error('Failed to complete passkey registration');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Passkey registration error:', error);
-      if (error.name === 'NotAllowedError') {
+      const errorName = error instanceof Error ? error.name : '';
+      if (errorName === 'NotAllowedError') {
         toast.error(t('security:passkeys.errors.userCancelled'));
-      } else if (error.name === 'NotSupportedError') {
+      } else if (errorName === 'NotSupportedError') {
         toast.error(t('security:passkeys.errors.notSupported'));
       } else {
         toast.error(t('security:passkeys.errors.registrationFailed'));

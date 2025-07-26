@@ -24,12 +24,16 @@ const loadNamespaceForLanguage = async (language: string, namespace: string) => 
 const customBackend = {
   type: 'backend' as const,
   init: () => {},
-  read: async (language: string, namespace: string, callback: any) => {
+  read: async (
+    language: string,
+    namespace: string,
+    callback: (error: Error | null, data: Record<string, unknown> | null) => void
+  ) => {
     try {
       const resources = await loadNamespaceForLanguage(language, namespace);
       callback(null, resources);
     } catch (error) {
-      callback(error, null);
+      callback(error instanceof Error ? error : new Error(String(error)), null);
     }
   },
 };

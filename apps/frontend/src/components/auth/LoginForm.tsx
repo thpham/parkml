@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from '../../hooks/useTranslation';
 import toast from 'react-hot-toast';
 import { Eye, EyeOff, LogIn, Smartphone, Key, Shield, ArrowLeft, CheckCircle } from 'lucide-react';
+import { User, ApiResponse } from '@parkml/shared';
 
 interface LoginFormData {
   email: string;
@@ -20,6 +21,11 @@ type TwoFactorMethod = 'totp' | 'backup';
 interface TwoFactorResponse {
   requiresTwoFactor: boolean;
   userId: string;
+}
+
+interface LoginResponse {
+  token: string;
+  user: User;
 }
 
 const LoginForm: React.FC = () => {
@@ -121,7 +127,11 @@ const LoginForm: React.FC = () => {
   };
 
   // Complete the login process
-  const completeLogin = async (loginResult: any) => {
+  const completeLogin = async (loginResult: ApiResponse<LoginResponse>) => {
+    if (!loginResult.data) {
+      throw new Error('Login response data is missing');
+    }
+
     // Store user data in localStorage and update auth context
     localStorage.setItem('parkml_token', loginResult.data.token);
     localStorage.setItem('parkml_user', JSON.stringify(loginResult.data.user));

@@ -8,7 +8,7 @@ export interface SecurityEvent {
   resourceId?: string;
   status: 'success' | 'failed' | 'suspicious';
   riskLevel?: 'low' | 'medium' | 'high' | 'critical';
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   sessionId?: string;
   organizationId?: string;
 }

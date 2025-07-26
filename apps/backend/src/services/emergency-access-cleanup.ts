@@ -1,5 +1,57 @@
 import { prisma } from '../database/prisma-client';
 
+// Type definitions for database query results
+type EmergencyAccessRecord = {
+  id: string;
+  userId: string;
+  patientId: string;
+  reason: string;
+  accessType: string;
+  endTime: Date | null;
+  user: {
+    organizationId: string | null;
+  };
+};
+
+type AccessByTypeResult = {
+  accessType: string;
+  _count: {
+    id: number;
+  };
+};
+
+type AccessByUserResult = {
+  userId: string;
+  _count: {
+    id: number;
+  };
+};
+
+type UserWithOrganization = {
+  id: string;
+  organizationId: string | null;
+  organization: {
+    name: string;
+  } | null;
+};
+
+type OrganizationStat = {
+  organizationId: string;
+  organizationName: string;
+  count: number;
+};
+
+type EmergencyAccessWithUser = {
+  id: string;
+  userId: string;
+  patientId: string;
+  reason: string;
+  endTime: Date | null;
+  user: {
+    email: string;
+  };
+};
+
 /**
  * Service to clean up expired emergency access records
  */
@@ -66,7 +118,7 @@ export class EmergencyAccessCleanupService {
         });
 
         // Create audit log entries for expired access
-        const auditLogEntries = expiredRecords.map((record: any) => ({
+        const auditLogEntries = expiredRecords.map((record: EmergencyAccessRecord) => ({
           userId: record.userId,
           organizationId: record.user.organizationId || 'default_org',
           action: 'EXPIRE_EMERGENCY_ACCESS',
@@ -158,7 +210,7 @@ export class EmergencyAccessCleanupService {
       });
 
       const byType = accessByType.reduce(
-        (acc: any, item: any) => {
+        (acc: Record<string, number>, item: AccessByTypeResult) => {
           acc[item.accessType] = item._count.id;
           return acc;
         },
@@ -192,30 +244,25 @@ export class EmergencyAccessCleanupService {
       });
 
       const byOrganization = accessByOrg
-        .map((item: any) => {
-          const user = users.find((u: any) => u.id === item.userId);
+        .map((item: AccessByUserResult) => {
+          const user = users.find((u: UserWithOrganization) => u.id === item.userId);
           return {
             organizationId: user?.organizationId || 'unknown',
             organizationName: user?.organization?.name || 'Unknown Organization',
             count: item._count.id,
           };
         })
-        .reduce(
-          (acc: any, item: any) => {
-            const existing = acc.find((a: any) => a.organizationId === item.organizationId);
-            if (existing) {
-              existing.count += item.count;
-            } else {
-              acc.push(item);
-            }
-            return acc;
-          },
-          [] as Array<{
-            organizationId: string;
-            organizationName: string;
-            count: number;
-          }>
-        );
+        .reduce((acc: OrganizationStat[], item: OrganizationStat) => {
+          const existing = acc.find(
+            (a: OrganizationStat) => a.organizationId === item.organizationId
+          );
+          if (existing) {
+            existing.count += item.count;
+          } else {
+            acc.push(item);
+          }
+          return acc;
+        }, [] as OrganizationStat[]);
 
       return {
         total,
@@ -267,7 +314,7 @@ export class EmergencyAccessCleanupService {
         },
       });
 
-      const records = soonToExpire.map((record: any) => ({
+      const records = soonToExpire.map((record: EmergencyAccessWithUser) => ({
         id: record.id,
         userId: record.userId,
         userEmail: record.user.email,
@@ -282,11 +329,13 @@ export class EmergencyAccessCleanupService {
         console.log(
           `⚠️  Emergency access expiration alerts: ${records.length} records expiring soon`
         );
-        records.forEach((record: any) => {
-          console.log(
-            `  - User ${record.userEmail} (${record.userId}) emergency access to patient ${record.patientId} expires at ${record.expiresAt.toISOString()}`
-          );
-        });
+        records.forEach(
+          (record: { userEmail: string; userId: string; patientId: string; expiresAt: Date }) => {
+            console.log(
+              `  - User ${record.userEmail} (${record.userId}) emergency access to patient ${record.patientId} expires at ${record.expiresAt.toISOString()}`
+            );
+          }
+        );
       }
 
       return {

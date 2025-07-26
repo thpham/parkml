@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -12,6 +12,7 @@ import {
   Activity,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { CaregiverAssignment } from '@parkml/shared';
 
 interface AdminStats {
   totalUsers: number;
@@ -37,13 +38,7 @@ const AdminDashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user && token && isAdmin) {
-      fetchAdminStats();
-    }
-  }, [user, token, isAdmin]);
-
-  const fetchAdminStats = async () => {
+  const fetchAdminStats = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -85,7 +80,7 @@ const AdminDashboard: React.FC = () => {
         const assignmentData = await assignmentsResponse.json();
         if (assignmentData.success) {
           pendingAssignments = assignmentData.data.filter(
-            (a: any) => a.status === 'pending'
+            (a: CaregiverAssignment) => a.status === 'pending'
           ).length;
         }
       }
@@ -104,7 +99,14 @@ const AdminDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, t]);
+
+  useEffect(() => {
+    if (user && token && isAdmin) {
+      fetchAdminStats();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchAdminStats excluded to prevent infinite loop
+  }, [user, token, isAdmin]);
 
   if (!isAdmin) {
     return (

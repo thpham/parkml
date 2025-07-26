@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { CaregiverAssignment } from '@parkml/shared';
 import {
   LogOut,
   User,
@@ -45,7 +46,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           const data = await response.json();
           if (data.success && data.data) {
             const pending = data.data.filter(
-              (assignment: any) => assignment.status === 'pending'
+              (assignment: CaregiverAssignment) => assignment.status === 'pending'
             ).length;
             setPendingAssignments(pending);
           }
